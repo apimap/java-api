@@ -1,0 +1,44 @@
+spring:
+  main:
+    banner-mode: "off"
+  session:
+    store-type: none
+springdoc:
+  api-docs:
+    enabled: true
+  swagger-ui:
+    enabled: true
+    operationsSorter: alpha
+    tagsSorter: alpha
+logging:
+  level:
+    root: INFO
+server:
+  port: 8080
+  error:
+    include-stacktrace: always
+    include-message: always
+    include-exception: true
+    whitelabel:
+      enabled: false
+management:
+  health:
+    mail:
+      enabled: false
+  endpoint:
+    health:
+      enabled: true
+  endpoints:
+    enabled-by-default: false
+nitrite:
+  filePath: "/var/apimap"
+apimap:
+  metadata:
+    copyright: "The Apimap.io project"
+    faq: "https://www.apimap.io"
+    support: "https://www.apimap.io"
+  host-identifier:
+    enabled: true
+  openapi:
+    enabled: true
+  version: ${project.version}

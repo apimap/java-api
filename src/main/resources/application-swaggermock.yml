@@ -1,0 +1,35 @@
+springdoc:
+  api-docs:
+    enabled: true
+  swagger-ui:
+    enabled: true
+    operationsSorter: alpha
+    tagsSorter: alpha
+spring:
+  datasource:
+    url: ""
+    username: ""
+    password: ""
+    driver-class-name: ""
+  mail:
+    host: ""
+logging:
+  level:
+    root: INFO
+server:
+  port: 8080
+  error:
+    whitelabel:
+      enabled: false
+management:
+  health:
+    mail:
+      enabled: false
+  endpoint:
+    health:
+      enabled: true
+  endpoints:
+    enabled-by-default: false
+apicatalog:
+  nitrite:
+    filePath: "/989"
