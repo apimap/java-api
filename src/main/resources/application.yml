@@ -15,6 +15,7 @@ logging:
     root: INFO
 server:
   port: 8080
+  forward-headers-strategy: NATIVE
   error:
     include-stacktrace: always
     include-message: always
