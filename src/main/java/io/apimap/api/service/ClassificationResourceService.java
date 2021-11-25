@@ -19,6 +19,7 @@ under the License.
 
 package io.apimap.api.service;
 
+import io.apimap.api.configuration.ApimapConfiguration;
 import io.apimap.api.repository.IApiRepository;
 import io.apimap.api.repository.IClassificationRepository;
 import io.apimap.api.repository.nitrite.entity.support.ApiCollection;
@@ -37,11 +38,14 @@ import java.util.List;
 public class ClassificationResourceService extends FilteredResourceService {
     protected IClassificationRepository classificationRepository;
     protected IApiRepository apiRepository;
+    protected ApimapConfiguration apimapConfiguration;
 
     public ClassificationResourceService(IClassificationRepository classificationRepository,
-                                         IApiRepository apiRepository) {
+                                         IApiRepository apiRepository,
+                                         ApimapConfiguration apimapConfiguration) {
         this.classificationRepository = classificationRepository;
         this.apiRepository = apiRepository;
+        this.apimapConfiguration = apimapConfiguration;
     }
 
     @NotNull
@@ -51,7 +55,7 @@ public class ClassificationResourceService extends FilteredResourceService {
         }
 
         return ClassificationResponseBuilder
-                .builder()
+                .builder(apimapConfiguration)
                 .withResourceURI(request.uri())
                 .withEmptyBody()
                 .okResource();
@@ -66,7 +70,7 @@ public class ClassificationResourceService extends FilteredResourceService {
         }
 
         return ClassificationResponseBuilder
-                .builder()
+                .builder(apimapConfiguration)
                 .withResourceURI(request.uri())
                 .withEmptyBody()
                 .okResource();
@@ -77,7 +81,7 @@ public class ClassificationResourceService extends FilteredResourceService {
         List<ClassificationTreeCollection> collection = classificationRepository.classificationTree(apiCollection, parentClassificationURN);
 
         ClassificationResponseBuilder builder = ClassificationResponseBuilder
-                .builder()
+                .builder(apimapConfiguration)
                 .withResourceURI(request.uri())
                 .withClassificationTreeCollectionBody(collection);
 

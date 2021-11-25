@@ -19,6 +19,7 @@ under the License.
 
 package io.apimap.api.service.response;
 
+import io.apimap.api.configuration.ApimapConfiguration;
 import io.apimap.api.repository.nitrite.entity.db.ApiClassification;
 import io.apimap.api.repository.nitrite.entity.support.ClassificationCollection;
 import io.apimap.api.repository.nitrite.entity.support.ClassificationTreeCollection;
@@ -46,12 +47,12 @@ public class ClassificationResponseBuilder extends ResponseBuilder<Classificatio
 
     protected ArrayList<Object> includedObjects = new ArrayList<>();
 
-    public ClassificationResponseBuilder(long startTime) {
-        super(startTime);
+    public ClassificationResponseBuilder(long startTime, ApimapConfiguration apimapConfiguration) {
+        super(startTime, apimapConfiguration);
     }
 
-    public static ClassificationResponseBuilder builder() {
-        return new ClassificationResponseBuilder(System.currentTimeMillis());
+    public static ClassificationResponseBuilder builder(ApimapConfiguration apimapConfiguration) {
+        return new ClassificationResponseBuilder(System.currentTimeMillis(), apimapConfiguration);
     }
 
     public ClassificationResponseBuilder includeObject(Object object) {

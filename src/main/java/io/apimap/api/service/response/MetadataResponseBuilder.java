@@ -19,17 +19,18 @@ under the License.
 
 package io.apimap.api.service.response;
 
+import io.apimap.api.configuration.ApimapConfiguration;
 import io.apimap.api.repository.nitrite.entity.db.Metadata;
 import io.apimap.api.rest.MetadataDataRestEntity;
 import io.apimap.api.rest.jsonapi.JsonApiRestResponseWrapper;
 
 public class MetadataResponseBuilder extends ResponseBuilder<MetadataResponseBuilder> {
-    public MetadataResponseBuilder(long startTime) {
-        super(startTime);
+    public MetadataResponseBuilder(long startTime, ApimapConfiguration apimapConfiguration) {
+        super(startTime, apimapConfiguration);
     }
 
-    public static MetadataResponseBuilder builder() {
-        return new MetadataResponseBuilder(System.currentTimeMillis());
+    public static MetadataResponseBuilder builder(ApimapConfiguration apimapConfiguration) {
+        return new MetadataResponseBuilder(System.currentTimeMillis(), apimapConfiguration);
     }
 
     public MetadataResponseBuilder withMetadataBody(Metadata value) {

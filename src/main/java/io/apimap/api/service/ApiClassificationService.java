@@ -19,6 +19,7 @@ under the License.
 
 package io.apimap.api.service;
 
+import io.apimap.api.configuration.ApimapConfiguration;
 import io.apimap.api.repository.IApiRepository;
 import io.apimap.api.repository.IClassificationRepository;
 import io.apimap.api.repository.nitrite.entity.db.ApiClassification;
@@ -44,16 +45,20 @@ public class ApiClassificationService {
     protected IClassificationRepository classificationRepository;
     protected IApiRepository apiRepository;
 
+    protected ApimapConfiguration apimapConfiguration;
+
     public ApiClassificationService(IClassificationRepository classificationRepository,
-                                    IApiRepository apiRepository) {
+                                    IApiRepository apiRepository,
+                                    ApimapConfiguration apimapConfiguration) {
         this.classificationRepository = classificationRepository;
         this.apiRepository = apiRepository;
+        this.apimapConfiguration = apimapConfiguration;
     }
 
     @NotNull
     @PreAuthorize("@Authorizer.isValidApiAccessToken(#request)")
     public Mono<ServerResponse> deleteClassification(ServerRequest request) {
-        final ApiResponseBuilder responseBuilder = ApiResponseBuilder.builder();
+        final ApiResponseBuilder responseBuilder = ApiResponseBuilder.builder(apimapConfiguration);
         final String apiName = RequestUtil.apiNameFromRequest(request);
         final String apiVersion = RequestUtil.apiVersionFromRequest(request);
         final String apiId = apiRepository.apiId(apiName);
@@ -75,7 +80,7 @@ public class ApiClassificationService {
         final String apiId = apiRepository.apiId(apiName);
 
         if(apiRepository.getApi(apiName).isEmpty() || apiRepository.getApiVersion(apiId, apiVersion).isEmpty()){
-            return ApiResponseBuilder.builder().notFound();
+            return ApiResponseBuilder.builder(apimapConfiguration).notFound();
         }
 
         classificationRepository.delete(apiId, apiVersion);
@@ -85,7 +90,7 @@ public class ApiClassificationService {
 
     @NotNull
     public Mono<ServerResponse> getClassification(ServerRequest request) {
-        final ClassificationResponseBuilder responseBuilder = ClassificationResponseBuilder.builder();
+        final ClassificationResponseBuilder responseBuilder = ClassificationResponseBuilder.builder(apimapConfiguration);
         final String apiName = RequestUtil.apiNameFromRequest(request);
         final String apiVersion = RequestUtil.apiVersionFromRequest(request);
         final String apiId = apiRepository.apiId(apiName);
@@ -103,7 +108,7 @@ public class ApiClassificationService {
     @NotNull
     @PreAuthorize("@Authorizer.isValidApiAccessToken(#request)")
     public Mono<ServerResponse> createClassification(ServerRequest request) {
-        final ClassificationResponseBuilder responseBuilder = ClassificationResponseBuilder.builder();
+        final ClassificationResponseBuilder responseBuilder = ClassificationResponseBuilder.builder(apimapConfiguration);
         final String apiName = RequestUtil.apiNameFromRequest(request);
         final String apiVersion = RequestUtil.apiVersionFromRequest(request);
         final String apiId = apiRepository.apiId(apiName);

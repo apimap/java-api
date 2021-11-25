@@ -19,6 +19,7 @@ under the License.
 
 package io.apimap.api.service;
 
+import io.apimap.api.configuration.ApimapConfiguration;
 import io.apimap.api.repository.IApiRepository;
 import io.apimap.api.repository.IMetadataRepository;
 import io.apimap.api.repository.ITaxonomyRepository;
@@ -47,18 +48,21 @@ public class StatisticsService {
     protected IApiRepository apiRepository;
     protected ITaxonomyRepository taxonomyRepository;
     protected IMetadataRepository metadataRepository;
+    protected ApimapConfiguration apimapConfiguration;
 
     public StatisticsService(IApiRepository apiRepository,
                              ITaxonomyRepository taxonomyRepository,
-                             IMetadataRepository metadataRepository) {
+                             IMetadataRepository metadataRepository,
+                             ApimapConfiguration apimapConfiguration) {
         this.apiRepository = apiRepository;
         this.taxonomyRepository = taxonomyRepository;
         this.metadataRepository = metadataRepository;
+        this.apimapConfiguration = apimapConfiguration;
     }
 
     @NotNull
     public Mono<ServerResponse> allStatistics(ServerRequest request) {
-        StatisticsResponseBuilder responseBuilder = StatisticsResponseBuilder.builder();
+        StatisticsResponseBuilder responseBuilder = StatisticsResponseBuilder.builder(apimapConfiguration);
 
         final ArrayList<StatisticsCollection> allStatisticsCollectionList = new ArrayList<>();
         allStatisticsCollectionList.add(new StatisticsCollection("apis", "Number of APIs"));
@@ -75,7 +79,7 @@ public class StatisticsService {
 
     @NotNull
     public Mono<ServerResponse> getApiCountStatistics(ServerRequest request) {
-        StatisticsResponseBuilder responseBuilder = StatisticsResponseBuilder.builder();
+        StatisticsResponseBuilder responseBuilder = StatisticsResponseBuilder.builder(apimapConfiguration);
 
         final ArrayList<StatisticsValue> apiCountStatisticsList = new ArrayList<>();
         apiCountStatisticsList.add(new StatisticsValue("global", this.apiRepository.numberOfApis().toString()));
@@ -89,7 +93,7 @@ public class StatisticsService {
 
     @NotNull
     public Mono<ServerResponse> getTaxonomiesStatistics(ServerRequest request) {
-        StatisticsResponseBuilder responseBuilder = StatisticsResponseBuilder.builder();
+        StatisticsResponseBuilder responseBuilder = StatisticsResponseBuilder.builder(apimapConfiguration);
 
         final ArrayList<StatisticsValue> numberOfTaxonomiesStatistic = new ArrayList<>();
         numberOfTaxonomiesStatistic.add(new StatisticsValue("global", this.taxonomyRepository.numberOfTaxonomies().toString()));
@@ -103,7 +107,7 @@ public class StatisticsService {
 
     @NotNull
     public Mono<ServerResponse> getInterfaceSpecificationStatistics(ServerRequest request) {
-        StatisticsResponseBuilder responseBuilder = StatisticsResponseBuilder.builder();
+        StatisticsResponseBuilder responseBuilder = StatisticsResponseBuilder.builder(apimapConfiguration);
 
         final StatisticsValueCollection statisticsValueCollection = new StatisticsValueCollection(interfaceSpecificationsStatistics());
 
@@ -115,7 +119,7 @@ public class StatisticsService {
 
     @NotNull
     public Mono<ServerResponse> getArchitectureLayerStatistics(ServerRequest request) {
-        StatisticsResponseBuilder responseBuilder = StatisticsResponseBuilder.builder();
+        StatisticsResponseBuilder responseBuilder = StatisticsResponseBuilder.builder(apimapConfiguration);
 
         final StatisticsValueCollection statisticsValueCollection = new StatisticsValueCollection(architectureLayerStatistics());
 

@@ -19,6 +19,7 @@ under the License.
 
 package io.apimap.api.service.response;
 
+import io.apimap.api.configuration.ApimapConfiguration;
 import io.apimap.api.repository.nitrite.entity.db.Api;
 import io.apimap.api.repository.nitrite.entity.db.ApiVersion;
 import io.apimap.api.repository.nitrite.entity.support.ApiCollection;
@@ -37,12 +38,12 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public class ApiResponseBuilder extends ResponseBuilder<ApiResponseBuilder> {
-    public ApiResponseBuilder(long startTime) {
-        super(startTime);
+    public ApiResponseBuilder(long startTime, ApimapConfiguration apimapConfiguration) {
+        super(startTime, apimapConfiguration);
     }
 
-    public static ApiResponseBuilder builder() {
-        return new ApiResponseBuilder(System.currentTimeMillis());
+    public static ApiResponseBuilder builder(ApimapConfiguration apimapConfiguration) {
+        return new ApiResponseBuilder(System.currentTimeMillis(), apimapConfiguration);
     }
 
     public ApiResponseBuilder withApiVersionCollectionBody(ApiVersionCollection value) {

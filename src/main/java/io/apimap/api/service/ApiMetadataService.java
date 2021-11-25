@@ -19,6 +19,7 @@ under the License.
 
 package io.apimap.api.service;
 
+import io.apimap.api.configuration.ApimapConfiguration;
 import io.apimap.api.repository.IApiRepository;
 import io.apimap.api.repository.IMetadataRepository;
 import io.apimap.api.repository.nitrite.entity.db.Metadata;
@@ -41,17 +42,20 @@ public class ApiMetadataService {
 
     protected IMetadataRepository metadataRepository;
     protected IApiRepository apiRepository;
+    protected ApimapConfiguration apimapConfiguration;
 
     public ApiMetadataService(IMetadataRepository metadataRepository,
-                              IApiRepository apiRepository) {
+                              IApiRepository apiRepository,
+                              ApimapConfiguration apimapConfiguration) {
         this.metadataRepository = metadataRepository;
         this.apiRepository = apiRepository;
+        this.apimapConfiguration = apimapConfiguration;
     }
 
     @NotNull
     @PreAuthorize("@Authorizer.isValidApiAccessToken(#request)")
     public Mono<ServerResponse> deleteMetadata(ServerRequest request) {
-        final MetadataResponseBuilder responseBuilder = MetadataResponseBuilder.builder();
+        final MetadataResponseBuilder responseBuilder = MetadataResponseBuilder.builder(apimapConfiguration);
         final String apiName = RequestUtil.apiNameFromRequest(request);
         final String apiVersion = RequestUtil.apiVersionFromRequest(request);
         final String apiId = apiRepository.apiId(apiName);
@@ -68,7 +72,7 @@ public class ApiMetadataService {
     @NotNull
     @PreAuthorize("@Authorizer.isValidApiAccessToken(#request)")
     public Mono<ServerResponse> updateMetadata(ServerRequest request) {
-        final MetadataResponseBuilder responseBuilder = MetadataResponseBuilder.builder();
+        final MetadataResponseBuilder responseBuilder = MetadataResponseBuilder.builder(apimapConfiguration);
         final String apiName = RequestUtil.apiNameFromRequest(request);
         final String apiVersion = RequestUtil.apiVersionFromRequest(request);
         final String apiId = apiRepository.apiId(apiName);
@@ -101,7 +105,7 @@ public class ApiMetadataService {
 
     @NotNull
     public Mono<ServerResponse> getMetadata(ServerRequest request) {
-        final MetadataResponseBuilder responseBuilder = MetadataResponseBuilder.builder();
+        final MetadataResponseBuilder responseBuilder = MetadataResponseBuilder.builder(apimapConfiguration);
         final String apiName = RequestUtil.apiNameFromRequest(request);
         final String apiVersion = RequestUtil.apiVersionFromRequest(request);
         final String apiId = apiRepository.apiId(apiName);
@@ -128,7 +132,7 @@ public class ApiMetadataService {
     @NotNull
     @PreAuthorize("@Authorizer.isValidApiAccessToken(#request)")
     public Mono<ServerResponse> createMetadata(ServerRequest request) {
-        final MetadataResponseBuilder responseBuilder = MetadataResponseBuilder.builder();
+        final MetadataResponseBuilder responseBuilder = MetadataResponseBuilder.builder(apimapConfiguration);
         final String apiName = RequestUtil.apiNameFromRequest(request);
         final String apiVersion = RequestUtil.apiVersionFromRequest(request);
         final String apiId = apiRepository.apiId(apiName);

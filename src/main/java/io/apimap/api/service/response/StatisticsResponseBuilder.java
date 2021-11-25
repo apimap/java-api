@@ -19,6 +19,7 @@ under the License.
 
 package io.apimap.api.service.response;
 
+import io.apimap.api.configuration.ApimapConfiguration;
 import io.apimap.api.repository.nitrite.entity.support.StatisticsCollectionCollection;
 import io.apimap.api.repository.nitrite.entity.support.StatisticsValueCollection;
 import io.apimap.api.rest.StatisticsCollectionCollectionRootRestEntity;
@@ -32,12 +33,12 @@ import java.util.ArrayList;
 import java.util.stream.Collectors;
 
 public class StatisticsResponseBuilder extends ResponseBuilder<StatisticsResponseBuilder> {
-    public StatisticsResponseBuilder(long startTime) {
-        super(startTime);
+    public StatisticsResponseBuilder(long startTime, ApimapConfiguration apimapConfiguration) {
+        super(startTime, apimapConfiguration);
     }
 
-    public static StatisticsResponseBuilder builder() {
-        return new StatisticsResponseBuilder(System.currentTimeMillis());
+    public static StatisticsResponseBuilder builder(ApimapConfiguration apimapConfiguration) {
+        return new StatisticsResponseBuilder(System.currentTimeMillis(), apimapConfiguration);
     }
 
     public StatisticsResponseBuilder withStatisticsValueCollectionBody(StatisticsValueCollection value) {

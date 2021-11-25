@@ -19,6 +19,7 @@ under the License.
 
 package io.apimap.api.service;
 
+import io.apimap.api.configuration.ApimapConfiguration;
 import io.apimap.api.repository.ITaxonomyRepository;
 import io.apimap.api.repository.nitrite.entity.db.TaxonomyCollection;
 import io.apimap.api.repository.nitrite.entity.db.TaxonomyCollectionVersion;
@@ -43,8 +44,12 @@ import static org.springframework.web.reactive.function.server.ServerResponse.ba
 public class TaxonomyResourceService {
     protected ITaxonomyRepository taxonomyRepository;
 
-    public TaxonomyResourceService(ITaxonomyRepository taxonomyRepository) {
+    protected ApimapConfiguration apimapConfiguration;
+
+    public TaxonomyResourceService(ITaxonomyRepository taxonomyRepository,
+                                   ApimapConfiguration apimapConfiguration) {
         this.taxonomyRepository = taxonomyRepository;
+        this.apimapConfiguration = apimapConfiguration;
     }
 
     /*
@@ -54,7 +59,7 @@ public class TaxonomyResourceService {
     @NotNull
     public Mono<ServerResponse> allCollections(ServerRequest request) {
         return TaxonomyResponseBuilder
-                .builder()
+                .builder(apimapConfiguration)
                 .withResourceURI(request.uri())
                 .withTaxonomyCollectionCollectionBody(taxonomyRepository.allTaxonomyCollection())
                 .okCollection();
@@ -62,7 +67,7 @@ public class TaxonomyResourceService {
 
     @NotNull
     public Mono<ServerResponse> createCollection(ServerRequest request) {
-        TaxonomyResponseBuilder responseBuilder = TaxonomyResponseBuilder.builder();
+        TaxonomyResponseBuilder responseBuilder = TaxonomyResponseBuilder.builder(apimapConfiguration);
 
         final Optional<TaxonomyCollection> entity = TaxonomyRequestParser
                 .parser()
@@ -93,7 +98,7 @@ public class TaxonomyResourceService {
     @NotNull
     @PreAuthorize("@Authorizer.isValidTaxonomyToken(#request)")
     public Mono<ServerResponse> deleteCollection(ServerRequest request) {
-        TaxonomyResponseBuilder responseBuilder = TaxonomyResponseBuilder.builder();
+        TaxonomyResponseBuilder responseBuilder = TaxonomyResponseBuilder.builder(apimapConfiguration);
 
         final String taxonomyNid = RequestUtil.taxonomyNidFromRequest(request);
 
@@ -106,7 +111,7 @@ public class TaxonomyResourceService {
 
     @NotNull
     public Mono<ServerResponse> getCollection(ServerRequest request) {
-        TaxonomyResponseBuilder responseBuilder = TaxonomyResponseBuilder.builder();
+        TaxonomyResponseBuilder responseBuilder = TaxonomyResponseBuilder.builder(apimapConfiguration);
 
         final String taxonomyNid = RequestUtil.taxonomyNidFromRequest(request);
 
@@ -129,7 +134,7 @@ public class TaxonomyResourceService {
 
     @NotNull
     public Mono<ServerResponse> getVersion(ServerRequest request) {
-        TaxonomyResponseBuilder responseBuilder = TaxonomyResponseBuilder.builder();
+        TaxonomyResponseBuilder responseBuilder = TaxonomyResponseBuilder.builder(apimapConfiguration);
 
         final String taxonomyNid = RequestUtil.taxonomyNidFromRequest(request);
         final String taxonomyVersion = RequestUtil.taxonomyVersionFromRequest(request);
@@ -156,7 +161,7 @@ public class TaxonomyResourceService {
 
     @NotNull
     public Mono<ServerResponse> allVersions(ServerRequest request) {
-        TaxonomyResponseBuilder responseBuilder = TaxonomyResponseBuilder.builder();
+        TaxonomyResponseBuilder responseBuilder = TaxonomyResponseBuilder.builder(apimapConfiguration);
 
         final String taxonomyNid = RequestUtil.taxonomyNidFromRequest(request);
 
@@ -169,7 +174,7 @@ public class TaxonomyResourceService {
     @NotNull
     @PreAuthorize("@Authorizer.isValidTaxonomyToken(#request)")
     public Mono<ServerResponse> createVersion(ServerRequest request) {
-        TaxonomyResponseBuilder responseBuilder = TaxonomyResponseBuilder.builder();
+        TaxonomyResponseBuilder responseBuilder = TaxonomyResponseBuilder.builder(apimapConfiguration);
 
         final Optional<TaxonomyCollectionVersion> entity = TaxonomyRequestParser
                 .parser()
@@ -195,7 +200,7 @@ public class TaxonomyResourceService {
     @NotNull
     @PreAuthorize("@Authorizer.isValidTaxonomyToken(#request)")
     public Mono<ServerResponse> deleteVersion(ServerRequest request) {
-        TaxonomyResponseBuilder responseBuilder = TaxonomyResponseBuilder.builder();
+        TaxonomyResponseBuilder responseBuilder = TaxonomyResponseBuilder.builder(apimapConfiguration);
 
         final String taxonomyVersion = RequestUtil.taxonomyVersionFromRequest(request);
         final String taxonomyNid = RequestUtil.taxonomyNidFromRequest(request);
@@ -216,7 +221,7 @@ public class TaxonomyResourceService {
 
     @NotNull
     public Mono<ServerResponse> allURNs(ServerRequest request) {
-        TaxonomyResponseBuilder responseBuilder = TaxonomyResponseBuilder.builder();
+        TaxonomyResponseBuilder responseBuilder = TaxonomyResponseBuilder.builder(apimapConfiguration);
 
         final String taxonomyVersion = RequestUtil.taxonomyVersionFromRequest(request);
         final String taxonomyNid = RequestUtil.taxonomyNidFromRequest(request);
@@ -238,7 +243,7 @@ public class TaxonomyResourceService {
 
     @NotNull
     public Mono<ServerResponse> getURN(ServerRequest request) {
-        TaxonomyResponseBuilder responseBuilder = TaxonomyResponseBuilder.builder();
+        TaxonomyResponseBuilder responseBuilder = TaxonomyResponseBuilder.builder(apimapConfiguration);
 
         final String taxonomyUrn = RequestUtil.taxonomyUrnFromRequest(request);
         final String taxonomyVersion = RequestUtil.taxonomyVersionFromRequest(request);
@@ -267,7 +272,7 @@ public class TaxonomyResourceService {
     @NotNull
     @PreAuthorize("@Authorizer.isValidTaxonomyToken(#request)")
     public Mono<ServerResponse> deleteURN(ServerRequest request) {
-        TaxonomyResponseBuilder responseBuilder = TaxonomyResponseBuilder.builder();
+        TaxonomyResponseBuilder responseBuilder = TaxonomyResponseBuilder.builder(apimapConfiguration);
 
         final String taxonomyUrn = RequestUtil.taxonomyUrnFromRequest(request);
         final String taxonomyVersion = RequestUtil.taxonomyVersionFromRequest(request);
@@ -283,7 +288,7 @@ public class TaxonomyResourceService {
     @NotNull
     @PreAuthorize("@Authorizer.isValidTaxonomyToken(#request)")
     public Mono<ServerResponse> createURN(ServerRequest request) {
-        TaxonomyResponseBuilder responseBuilder = TaxonomyResponseBuilder.builder();
+        TaxonomyResponseBuilder responseBuilder = TaxonomyResponseBuilder.builder(apimapConfiguration);
 
         final Optional<TaxonomyCollectionVersionURN> entity = TaxonomyRequestParser.parser().withRequest(request).taxonomyTree();
 

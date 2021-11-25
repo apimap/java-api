@@ -19,6 +19,7 @@ under the License.
 
 package io.apimap.api.service;
 
+import io.apimap.api.configuration.ApimapConfiguration;
 import io.apimap.api.repository.IApiRepository;
 import io.apimap.api.repository.IClassificationRepository;
 import io.apimap.api.repository.IMetadataRepository;
@@ -56,14 +57,18 @@ public class ApiResourceService extends FilteredResourceService {
     protected ITaxonomyRepository taxonomyRepository;
     protected IClassificationRepository classificationRepository;
 
+    protected ApimapConfiguration apimapConfiguration;
+
     public ApiResourceService(IApiRepository apiRepository,
                               IMetadataRepository metadataRepository,
                               ITaxonomyRepository taxonomyRepository,
-                              IClassificationRepository classificationRepository) {
+                              IClassificationRepository classificationRepository,
+                              ApimapConfiguration apimapConfiguration) {
         this.apiRepository = apiRepository;
         this.taxonomyRepository = taxonomyRepository;
         this.metadataRepository = metadataRepository;
         this.classificationRepository = classificationRepository;
+        this.apimapConfiguration = apimapConfiguration;
     }
 
     /*
@@ -80,7 +85,7 @@ public class ApiResourceService extends FilteredResourceService {
     }
 
     protected Mono<ServerResponse> allUnfilteredApis(ServerRequest request) {
-        ApiResponseBuilder responseBuilder = ApiResponseBuilder.builder();
+        ApiResponseBuilder responseBuilder = ApiResponseBuilder.builder(apimapConfiguration);
 
         ApiCollection collection = apiRepository.allApis();
 
@@ -91,7 +96,7 @@ public class ApiResourceService extends FilteredResourceService {
     }
 
     protected Mono<ServerResponse> allFilteredApis(ServerRequest request) {
-        ApiResponseBuilder responseBuilder = ApiResponseBuilder.builder();
+        ApiResponseBuilder responseBuilder = ApiResponseBuilder.builder(apimapConfiguration);
 
         ApiCollection collection = apiRepository.allApis(requestQueryFilters(request));
 
@@ -103,7 +108,7 @@ public class ApiResourceService extends FilteredResourceService {
 
     @NotNull
     public Mono<ServerResponse> createApi(ServerRequest request) {
-        ApiResponseBuilder responseBuilder = ApiResponseBuilder.builder();
+        ApiResponseBuilder responseBuilder = ApiResponseBuilder.builder(apimapConfiguration);
         ApiRequestParser requestParser = ApiRequestParser
                 .parser()
                 .withRequest(request)
@@ -142,7 +147,7 @@ public class ApiResourceService extends FilteredResourceService {
     @NotNull
     @PreAuthorize("@Authorizer.isValidApiAccessToken(#request)")
     public Mono<ServerResponse> updateApi(ServerRequest request) {
-        ApiResponseBuilder responseBuilder = ApiResponseBuilder.builder();
+        ApiResponseBuilder responseBuilder = ApiResponseBuilder.builder(apimapConfiguration);
 
         final String apiName = RequestUtil.apiNameFromRequest(request);
 
@@ -173,7 +178,7 @@ public class ApiResourceService extends FilteredResourceService {
 
     @NotNull
     public Mono<ServerResponse> getApi(ServerRequest request) {
-        ApiResponseBuilder responseBuilder = ApiResponseBuilder.builder();
+        ApiResponseBuilder responseBuilder = ApiResponseBuilder.builder(apimapConfiguration);
 
         final Optional<Api> entity = apiRepository.getApi(RequestUtil.apiNameFromRequest(request));
 
@@ -191,7 +196,7 @@ public class ApiResourceService extends FilteredResourceService {
     @NotNull
     @PreAuthorize("@Authorizer.isValidApiAccessToken(#request)")
     public Mono<ServerResponse> deleteApi(ServerRequest request) {
-        ApiResponseBuilder responseBuilder = ApiResponseBuilder.builder();
+        ApiResponseBuilder responseBuilder = ApiResponseBuilder.builder(apimapConfiguration);
 
         final String apiName = RequestUtil.apiNameFromRequest(request);
 
@@ -209,7 +214,7 @@ public class ApiResourceService extends FilteredResourceService {
 
     @NotNull
     public Mono<ServerResponse> getApiVersion(ServerRequest request) {
-        ApiResponseBuilder responseBuilder = ApiResponseBuilder.builder();
+        ApiResponseBuilder responseBuilder = ApiResponseBuilder.builder(apimapConfiguration);
 
         final String apiName = RequestUtil.apiNameFromRequest(request);
         final String apiVersion = RequestUtil.apiVersionFromRequest(request);
@@ -231,7 +236,7 @@ public class ApiResourceService extends FilteredResourceService {
 
     @NotNull
     public Mono<ServerResponse> allApiVersions(ServerRequest request) {
-        ApiResponseBuilder responseBuilder = ApiResponseBuilder.builder();
+        ApiResponseBuilder responseBuilder = ApiResponseBuilder.builder(apimapConfiguration);
 
         final String apiName = RequestUtil.apiNameFromRequest(request);
         final String apiId = apiRepository.apiId(apiName);
@@ -248,7 +253,7 @@ public class ApiResourceService extends FilteredResourceService {
     @NotNull
     @PreAuthorize("@Authorizer.isValidApiAccessToken(#request)")
     public Mono<ServerResponse> createApiVersion(ServerRequest request) {
-        ApiResponseBuilder responseBuilder = ApiResponseBuilder.builder();
+        ApiResponseBuilder responseBuilder = ApiResponseBuilder.builder(apimapConfiguration);
 
         final String apiName = RequestUtil.apiNameFromRequest(request);
 
@@ -282,7 +287,7 @@ public class ApiResourceService extends FilteredResourceService {
     @NotNull
     @PreAuthorize("@Authorizer.isValidApiAccessToken(#request)")
     public Mono<ServerResponse> deleteApiVersion(ServerRequest request) {
-        ApiResponseBuilder responseBuilder = ApiResponseBuilder.builder();
+        ApiResponseBuilder responseBuilder = ApiResponseBuilder.builder(apimapConfiguration);
 
         final String apiName = RequestUtil.apiNameFromRequest(request);
         final String apiVersion = RequestUtil.apiVersionFromRequest(request);

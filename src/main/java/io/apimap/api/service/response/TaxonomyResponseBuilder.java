@@ -19,6 +19,7 @@ under the License.
 
 package io.apimap.api.service.response;
 
+import io.apimap.api.configuration.ApimapConfiguration;
 import io.apimap.api.repository.nitrite.entity.db.TaxonomyCollection;
 import io.apimap.api.repository.nitrite.entity.db.TaxonomyCollectionVersion;
 import io.apimap.api.repository.nitrite.entity.db.TaxonomyCollectionVersionURN;
@@ -42,12 +43,12 @@ import java.util.stream.Collectors;
 
 public class TaxonomyResponseBuilder extends ResponseBuilder<TaxonomyResponseBuilder> {
 
-    public TaxonomyResponseBuilder(long startTime) {
-        super(startTime);
+    public TaxonomyResponseBuilder(long startTime, ApimapConfiguration apimapConfiguration) {
+        super(startTime, apimapConfiguration);
     }
 
-    public static TaxonomyResponseBuilder builder() {
-        return new TaxonomyResponseBuilder(System.currentTimeMillis());
+    public static TaxonomyResponseBuilder builder(ApimapConfiguration apimapConfiguration) {
+        return new TaxonomyResponseBuilder(System.currentTimeMillis(), apimapConfiguration);
     }
 
     public TaxonomyResponseBuilder withTaxonomyCollectionVersionURNBody(TaxonomyCollectionVersionURN value) {

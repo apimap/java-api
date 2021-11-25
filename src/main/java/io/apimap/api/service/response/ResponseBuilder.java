@@ -47,17 +47,13 @@ public class ResponseBuilder<T> {
 
     protected ArrayList<HashMap> relatedReferences = new ArrayList<>();
 
-    public ResponseBuilder(long startTime) {
-        this.responseMetricsStartTime = startTime;
-    }
-
     public ResponseBuilder(long startTime, ApimapConfiguration apimapConfiguration) {
         this.responseMetricsStartTime = startTime;
         this.apimapConfiguration = apimapConfiguration;
     }
 
-    public static ResponseBuilder builder() {
-        return new ResponseBuilder<>(System.currentTimeMillis());
+    public static ResponseBuilder builder(ApimapConfiguration apimapConfiguration) {
+        return new ResponseBuilder<>(System.currentTimeMillis(), apimapConfiguration);
     }
 
     public Mono<ServerResponse> badRequest() {
