@@ -63,7 +63,7 @@ public class NitriteApiRepository extends NitriteRepository implements IApiRepos
     Api
      */
 
-    public ApiCollection allApis() {
+    public ApiCollection all() {
         ObjectRepository<Api> repository = database.getRepository(Api.class);
         Cursor<Api> cursor = repository.find();
 
@@ -83,7 +83,7 @@ public class NitriteApiRepository extends NitriteRepository implements IApiRepos
         }).collect(Collectors.toList()));
     }
 
-    public ApiCollection allApis(List<QueryFilter> filters) {
+    public ApiCollection all(List<QueryFilter> filters) {
         MetadataCollection metadataCollection = nitriteMetadataRepository.queryFilters(filters);
         ClassificationCollection classificationCollection = nitriteClassificationRepository.queryFilters(filters);
 
@@ -142,18 +142,18 @@ public class NitriteApiRepository extends NitriteRepository implements IApiRepos
         }).collect(Collectors.toList()));
     }
 
-    public Optional<Api> addApi(Api entity) {
+    public Optional<Api> add(Api entity) {
         ObjectRepository<Api> repository = database.getRepository(Api.class);
         entity.generateToken();
         return Optional.ofNullable(repository.getById(repository.insert(entity).iterator().next()));
     }
 
-    public Optional<Api> updateApi(Api entity, String apiName) {
+    public Optional<Api> update(Api entity, String apiName) {
         ObjectRepository<Api> repository = database.getRepository(Api.class);
 
         // Override static values
         Optional<Api> returnvalue = Optional.empty();
-        Optional<Api> existingEntity = getApi(apiName, true);
+        Optional<Api> existingEntity = get(apiName, true);
 
         if (existingEntity.isPresent()) {
             existingEntity.get().setName(entity.getName());
@@ -166,16 +166,16 @@ public class NitriteApiRepository extends NitriteRepository implements IApiRepos
         return returnvalue;
     }
 
-    public Optional<Api> getApi(String apiName) {
-        return getApi(apiName, false);
+    public Optional<Api> get(String apiName) {
+        return get(apiName, false);
     }
 
     public String apiId(String apiName) {
-        Optional<Api> api = getApi(apiName);
+        Optional<Api> api = get(apiName);
         return api.map(Api::getId).orElse(null);
     }
 
-    public Optional<Api> getApi(String apiName, Boolean returnWithToken) {
+    public Optional<Api> get(String apiName, Boolean returnWithToken) {
         ObjectRepository<Api> repository = database.getRepository(Api.class);
         Optional<Api> returnvalue = Optional.ofNullable(repository.find(
                 eq("name", apiName)
@@ -188,7 +188,7 @@ public class NitriteApiRepository extends NitriteRepository implements IApiRepos
         return returnvalue;
     }
 
-    public void deleteApi(String apiName) {
+    public void delete(String apiName) {
         ObjectRepository<Api> repository = database.getRepository(Api.class);
         repository.remove(eq("name", apiName));
     }

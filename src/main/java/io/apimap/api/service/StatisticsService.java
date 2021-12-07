@@ -130,7 +130,7 @@ public class StatisticsService {
     }
 
     private List<StatisticsValue> interfaceSpecificationsStatistics() {
-        final List<StatisticsValue> interfaceSpecificationStream = apiRepository.allApis().getItems()
+        final List<StatisticsValue> interfaceSpecificationStream = apiRepository.all().getItems()
                 .stream()
                 .map(api -> api.getMetadata().isPresent() ? api.getMetadata().get() : null)
                 .filter(Objects::nonNull)
@@ -144,7 +144,7 @@ public class StatisticsService {
     }
 
     private List<StatisticsValue> architectureLayerStatistics() {
-        final List<StatisticsValue> interfaceSpecificationStream = apiRepository.allApis().getItems()
+        final List<StatisticsValue> interfaceSpecificationStream = apiRepository.all().getItems()
                 .stream()
                 .map(api -> api.getMetadata().isPresent() ? api.getMetadata().get() : null)
                 .filter(Objects::nonNull)

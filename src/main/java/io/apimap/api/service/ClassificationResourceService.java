@@ -77,7 +77,7 @@ public class ClassificationResourceService extends FilteredResourceService {
     }
 
     protected Mono<ServerResponse> allFilteredClassifications(ServerRequest request, String parentClassificationURN) {
-        ApiCollection apiCollection = apiRepository.allApis(requestQueryFilters(request));
+        ApiCollection apiCollection = apiRepository.all(requestQueryFilters(request));
         List<ClassificationTreeCollection> collection = classificationRepository.classificationTree(apiCollection, parentClassificationURN);
 
         ClassificationResponseBuilder builder = ClassificationResponseBuilder

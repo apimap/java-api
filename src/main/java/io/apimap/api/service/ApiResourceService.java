@@ -38,6 +38,7 @@ import io.apimap.api.utils.URIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.MediaType;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.server.ServerRequest;
@@ -76,6 +77,40 @@ public class ApiResourceService extends FilteredResourceService {
      */
 
     @NotNull
+    public Mono<ServerResponse> allApisZipArchive(ServerRequest request) {
+        return ServerResponse.ok()
+                .header("Access-Control-Allow-Origin", "*")
+                .header("Access-Control-Request-Method", "GET,POST,DELETE")
+                .header("Content-Disposition", "attachment; filename=\"apis.zip\"")
+                .contentType(MediaType.valueOf("application/zip"))
+                .bodyValue("hello");/*
+        String s = "hello world";
+
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        try(ZipOutputStream zos = new ZipOutputStream(baos)) {
+
+  /* File is not on the disk, test.txt indicates
+     only the file name to be put into the zip
+            ZipEntry entry = new ZipEntry("test.txt");
+
+            zos.putNextEntry(entry);
+            zos.write(s.getBytes());
+            zos.closeEntry();
+
+  /* use more Entries to add more files
+     and use closeEntry() to close each file entry
+
+
+
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+*/
+      //  return null;
+    }
+
+    @NotNull
     public Mono<ServerResponse> allApis(ServerRequest request) {
         if (!requestQueryFilters(request).isEmpty()) {
             return allFilteredApis(request);
@@ -87,7 +122,7 @@ public class ApiResourceService extends FilteredResourceService {
     protected Mono<ServerResponse> allUnfilteredApis(ServerRequest request) {
         ApiResponseBuilder responseBuilder = ApiResponseBuilder.builder(apimapConfiguration);
 
-        ApiCollection collection = apiRepository.allApis();
+        ApiCollection collection = apiRepository.all();
 
         return responseBuilder
                 .withResourceURI(request.uri())
@@ -98,7 +133,7 @@ public class ApiResourceService extends FilteredResourceService {
     protected Mono<ServerResponse> allFilteredApis(ServerRequest request) {
         ApiResponseBuilder responseBuilder = ApiResponseBuilder.builder(apimapConfiguration);
 
-        ApiCollection collection = apiRepository.allApis(requestQueryFilters(request));
+        ApiCollection collection = apiRepository.all(requestQueryFilters(request));
 
         return responseBuilder
                 .withResourceURI(request.uri())
@@ -121,11 +156,11 @@ public class ApiResourceService extends FilteredResourceService {
             return responseBuilder.badRequest();
         }
 
-        if (apiRepository.getApi(entity.get().getName()).isPresent()) {
+        if (apiRepository.get(entity.get().getName()).isPresent()) {
             return responseBuilder.conflict();
         }
 
-        final Optional<Api> insertedEntity = apiRepository.addApi(entity.get());
+        final Optional<Api> insertedEntity = apiRepository.add(entity.get());
 
         if (insertedEntity.isEmpty()) {
             return responseBuilder.badRequest();
@@ -161,7 +196,7 @@ public class ApiResourceService extends FilteredResourceService {
             return responseBuilder.badRequest();
         }
 
-        final Optional<Api> updatedEntity = apiRepository.updateApi(entity.get(), apiName);
+        final Optional<Api> updatedEntity = apiRepository.update(entity.get(), apiName);
 
         if (updatedEntity.isEmpty()) {
             return responseBuilder.notFound();
@@ -180,7 +215,7 @@ public class ApiResourceService extends FilteredResourceService {
     public Mono<ServerResponse> getApi(ServerRequest request) {
         ApiResponseBuilder responseBuilder = ApiResponseBuilder.builder(apimapConfiguration);
 
-        final Optional<Api> entity = apiRepository.getApi(RequestUtil.apiNameFromRequest(request));
+        final Optional<Api> entity = apiRepository.get(RequestUtil.apiNameFromRequest(request));
 
         if (entity.isEmpty()) {
             return notFound().build();
@@ -201,7 +236,7 @@ public class ApiResourceService extends FilteredResourceService {
         final String apiName = RequestUtil.apiNameFromRequest(request);
 
         //Clear all connected information
-        apiRepository.deleteApi(apiName);
+        apiRepository.delete(apiName);
         classificationRepository.delete(apiName);
         metadataRepository.delete(apiName);
 
@@ -257,7 +292,7 @@ public class ApiResourceService extends FilteredResourceService {
 
         final String apiName = RequestUtil.apiNameFromRequest(request);
 
-        if(apiRepository.getApi(apiName).isEmpty()){
+        if(apiRepository.get(apiName).isEmpty()){
             return responseBuilder.notFound();
         }
 

@@ -63,7 +63,7 @@ public class ApiClassificationService {
         final String apiVersion = RequestUtil.apiVersionFromRequest(request);
         final String apiId = apiRepository.apiId(apiName);
 
-        if(apiRepository.getApi(apiName).isEmpty() || apiRepository.getApiVersion(apiId, apiVersion).isEmpty()){
+        if(apiRepository.get(apiName).isEmpty() || apiRepository.getApiVersion(apiId, apiVersion).isEmpty()){
             return responseBuilder.notFound();
         }
 
@@ -79,7 +79,7 @@ public class ApiClassificationService {
         final String apiVersion = RequestUtil.apiVersionFromRequest(request);
         final String apiId = apiRepository.apiId(apiName);
 
-        if(apiRepository.getApi(apiName).isEmpty() || apiRepository.getApiVersion(apiId, apiVersion).isEmpty()){
+        if(apiRepository.get(apiName).isEmpty() || apiRepository.getApiVersion(apiId, apiVersion).isEmpty()){
             return ApiResponseBuilder.builder(apimapConfiguration).notFound();
         }
 
@@ -95,7 +95,7 @@ public class ApiClassificationService {
         final String apiVersion = RequestUtil.apiVersionFromRequest(request);
         final String apiId = apiRepository.apiId(apiName);
 
-        if(apiRepository.getApi(apiName).isEmpty() || apiRepository.getApiVersion(apiId, apiVersion).isEmpty()){
+        if(apiRepository.get(apiName).isEmpty() || apiRepository.getApiVersion(apiId, apiVersion).isEmpty()){
             return responseBuilder.notFound();
         }
 
@@ -113,7 +113,7 @@ public class ApiClassificationService {
         final String apiVersion = RequestUtil.apiVersionFromRequest(request);
         final String apiId = apiRepository.apiId(apiName);
 
-        if(apiRepository.getApi(apiName).isEmpty() || apiRepository.getApiVersion(apiId, apiVersion).isEmpty()){
+        if(apiRepository.get(apiName).isEmpty() || apiRepository.getApiVersion(apiId, apiVersion).isEmpty()){
             return responseBuilder.notFound();
         }
 

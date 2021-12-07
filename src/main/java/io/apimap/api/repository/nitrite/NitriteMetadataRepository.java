@@ -21,6 +21,7 @@ package io.apimap.api.repository.nitrite;
 
 import io.apimap.api.configuration.NitriteConfiguration;
 import io.apimap.api.repository.IMetadataRepository;
+import io.apimap.api.repository.nitrite.entity.db.Api;
 import io.apimap.api.repository.nitrite.entity.db.Metadata;
 import io.apimap.api.repository.nitrite.entity.query.MetadataQueryFilter;
 import io.apimap.api.repository.nitrite.entity.query.QueryFilter;
@@ -61,6 +62,13 @@ public class NitriteMetadataRepository extends NitriteRepository implements IMet
     public MetadataCollection all(String apiId) {
         ObjectRepository<Metadata> repository = database.getRepository(Metadata.class);
         Cursor<Metadata> cursor = repository.find(eq("apiId", apiId));
+        return new MetadataCollection(cursor.toList());
+    }
+
+    @Override
+    public MetadataCollection all() {
+        ObjectRepository<Metadata> repository = database.getRepository(Metadata.class);
+        Cursor<Metadata> cursor = repository.find();
         return new MetadataCollection(cursor.toList());
     }
 

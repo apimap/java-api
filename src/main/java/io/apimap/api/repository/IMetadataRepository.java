@@ -30,6 +30,7 @@ public interface IMetadataRepository {
     void clear();
     MetadataCollection filteredCollection(List<ObjectFilter> filters);
     MetadataCollection all(String apiId);
+    MetadataCollection all();
     Optional<Metadata> add(Metadata entity);
     Optional<Metadata> update(Metadata entity);
     Optional<Metadata> get(String apiId, String version);

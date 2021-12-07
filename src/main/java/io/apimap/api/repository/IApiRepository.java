@@ -29,15 +29,15 @@ import java.util.List;
 import java.util.Optional;
 
 public interface IApiRepository {
-    ApiCollection allApis();
-    ApiCollection allApis(List<QueryFilter> filters);
+    ApiCollection all();
+    ApiCollection all(List<QueryFilter> filters);
     ApiCollection filteredCollection(List<String> ids);
-    Optional<Api> addApi(Api entity);
-    Optional<Api> updateApi(Api entity, String apiName);
-    Optional<Api> getApi(String apiName);
+    Optional<Api> add(Api entity);
+    Optional<Api> update(Api entity, String apiName);
+    Optional<Api> get(String apiName);
+    Optional<Api> get(String apiName, Boolean returnWithToken);
+    void delete(String apiName);
     String apiId(String apiName);
-    Optional<Api> getApi(String apiName, Boolean returnWithToken);
-    void deleteApi(String apiName);
     Integer numberOfApis();
     Optional<ApiVersion> getLatestApiVersion(String apiId);
     void deleteApiVersion(String apiName, String apiVersion);
