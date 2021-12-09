@@ -89,10 +89,13 @@ public class Authorizer {
 
             Optional<Api> entity = nitriteApiRepository.get(apiName, true);
 
-            return entity.map(api -> {
-                if (api.getToken() == null) return false;
-                return api.getToken().equals(token);
-            }).orElse(false);
+            if(entity.isPresent()
+                && entity.get().getToken() != null
+                && entity.get().getToken().equals(token)){
+                return true;
+            }
+
+            return false;
         } catch (Exception e) {
             return false;
         }
