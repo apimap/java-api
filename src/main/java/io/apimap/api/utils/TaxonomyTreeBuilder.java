@@ -74,7 +74,7 @@ public class TaxonomyTreeBuilder {
     protected void recursiveInsert(ArrayList<TaxonomyTreeDataRestEntity> tree, TaxonomyTreeDataRestEntity node, String url, ArrayList<String> paths) {
         Optional<TaxonomyTreeDataRestEntity> deficientNode = tree
                 .stream()
-                .filter(e -> url.toLowerCase().startsWith(e.getUrl().toLowerCase()))
+                .filter(e -> e.getUrl().toLowerCase().startsWith(url.toLowerCase()))
                 .findAny();
 
         if (deficientNode.isPresent()) {
