@@ -130,7 +130,7 @@ public class ApiClassificationService {
         if(entities.get().isEmpty()) {
             return responseBuilder
                     .withResourceURI(request.uri())
-                    .withClassificationCollectionBody(new ClassificationCollection(Collections.emptyList(), "1.0"))
+                    .withClassificationCollectionBody(new ClassificationCollection(Collections.emptyList(), null, "1.0"))
                     .created(false);
         }
 

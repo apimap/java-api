@@ -24,26 +24,45 @@ import io.apimap.api.repository.nitrite.entity.db.ApiClassification;
 import java.util.List;
 
 public class ClassificationCollection {
-    private final List<ApiClassification> items;
-    private final String taxonomyVersion;
+    private List<ApiClassification> items;
+    private List<String> parents;
+    private String taxonomyVersion;
 
-    public ClassificationCollection(List<ApiClassification> items, String taxonomyVersion) {
+    public ClassificationCollection(List<ApiClassification> items, List<String> parents, String taxonomyVersion) {
         this.items = items;
+        this.parents = parents;
         this.taxonomyVersion = taxonomyVersion;
-    }
-
-    public String getTaxonomyVersion() {
-        return taxonomyVersion;
     }
 
     public List<ApiClassification> getItems() {
         return items;
     }
 
+    public void setItems(List<ApiClassification> items) {
+        this.items = items;
+    }
+
+    public List<String> getParents() {
+        return parents;
+    }
+
+    public void setParents(List<String> parents) {
+        this.parents = parents;
+    }
+
+    public String getTaxonomyVersion() {
+        return taxonomyVersion;
+    }
+
+    public void setTaxonomyVersion(String taxonomyVersion) {
+        this.taxonomyVersion = taxonomyVersion;
+    }
+
     @Override
     public String toString() {
         return "ClassificationCollection{" +
                 "items=" + items +
+                ", parents=" + parents +
                 ", taxonomyVersion='" + taxonomyVersion + '\'' +
                 '}';
     }

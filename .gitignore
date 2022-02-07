@@ -1,3 +1,5 @@
+
+*.token
 tools/docker-bundle/*.json
 tools/docker-bundle/*.nitrite
 

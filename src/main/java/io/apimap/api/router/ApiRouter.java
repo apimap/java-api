@@ -436,6 +436,7 @@ public class ApiRouter {
                                              ApiClassificationService classificationService) {
         return RouterFunctions
                 .route(GET(ROOT_PATH).and(accept(APPLICATION_JSON)), apiService::allApis)
+                .andRoute(GET(ROOT_PATH).and(accept(new MediaType("application", "zip"))), apiService::allApisZip)
                 .andRoute(POST(ROOT_PATH).and(contentType(APPLICATION_JSON)), apiService::createApi)
                 .andRoute(GET(ITEM_PATH).and(accept(APPLICATION_JSON)), apiService::getApi)
                 .andRoute(PUT(ITEM_PATH).and(contentType(APPLICATION_JSON)), apiService::updateApi)

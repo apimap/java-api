@@ -19,6 +19,8 @@ under the License.
 
 package io.apimap.api.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import io.apimap.api.configuration.ApimapConfiguration;
 import io.apimap.api.repository.IApiRepository;
 import io.apimap.api.repository.IClassificationRepository;
@@ -28,16 +30,22 @@ import io.apimap.api.repository.nitrite.entity.db.Api;
 import io.apimap.api.repository.nitrite.entity.db.ApiVersion;
 import io.apimap.api.repository.nitrite.entity.support.ApiCollection;
 import io.apimap.api.repository.nitrite.entity.support.ApiVersionCollection;
-import io.apimap.api.rest.ApiDataApiMetadataEntity;
+import io.apimap.api.repository.nitrite.entity.support.ClassificationCollection;
+import io.apimap.api.repository.nitrite.entity.support.MetadataCollection;
+import io.apimap.api.rest.ApiDataMetadataEntity;
 import io.apimap.api.rest.ApiDataRestEntity;
 import io.apimap.api.rest.jsonapi.JsonApiRestResponseWrapper;
 import io.apimap.api.service.request.ApiRequestParser;
 import io.apimap.api.service.response.ApiResponseBuilder;
 import io.apimap.api.utils.RequestUtil;
 import io.apimap.api.utils.URIUtil;
+import io.netty.buffer.UnpooledByteBufAllocator;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.core.io.buffer.DataBuffer;
+import org.springframework.core.io.buffer.NettyDataBufferFactory;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
@@ -46,6 +54,8 @@ import org.springframework.web.reactive.function.server.ServerResponse;
 import reactor.core.publisher.Mono;
 
 import java.util.Optional;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 import static org.springframework.web.reactive.function.server.ServerResponse.notFound;
 
@@ -72,44 +82,6 @@ public class ApiResourceService extends FilteredResourceService {
         this.apimapConfiguration = apimapConfiguration;
     }
 
-    /*
-    API
-     */
-
-    @NotNull
-    public Mono<ServerResponse> allApisZipArchive(ServerRequest request) {
-        return ServerResponse.ok()
-                .header("Access-Control-Allow-Origin", "*")
-                .header("Access-Control-Request-Method", "GET,POST,DELETE")
-                .header("Content-Disposition", "attachment; filename=\"apis.zip\"")
-                .contentType(MediaType.valueOf("application/zip"))
-                .bodyValue("hello");/*
-        String s = "hello world";
-
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        try(ZipOutputStream zos = new ZipOutputStream(baos)) {
-
-  /* File is not on the disk, test.txt indicates
-     only the file name to be put into the zip
-            ZipEntry entry = new ZipEntry("test.txt");
-
-            zos.putNextEntry(entry);
-            zos.write(s.getBytes());
-            zos.closeEntry();
-
-  /* use more Entries to add more files
-     and use closeEntry() to close each file entry
-
-
-
-
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-*/
-      //  return null;
-    }
-
     @NotNull
     public Mono<ServerResponse> allApis(ServerRequest request) {
         if (!requestQueryFilters(request).isEmpty()) {
@@ -128,6 +100,48 @@ public class ApiResourceService extends FilteredResourceService {
                 .withResourceURI(request.uri())
                 .withApiCollectionBody(collection)
                 .okCollection();
+    }
+
+    @PreAuthorize("@Authorizer.isValidAccessToken(#request)")
+    public Mono<ServerResponse> allApisZip(ServerRequest request) {
+        try {
+            NettyDataBufferFactory nettyDataBufferFactory = new NettyDataBufferFactory(new UnpooledByteBufAllocator(false));
+            DataBuffer dataBuffer = nettyDataBufferFactory.allocateBuffer();
+            ZipOutputStream zipOutputStream = new ZipOutputStream(dataBuffer.asOutputStream());
+
+            ObjectMapper mapper = new ObjectMapper();
+            mapper.configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
+
+            ZipEntry apis = new ZipEntry("apis.json");
+            zipOutputStream.putNextEntry(apis);
+
+            ApiCollection apiCollection = apiRepository.all();
+            zipOutputStream.write(mapper.writeValueAsBytes(apiCollection));
+
+            ZipEntry classifications = new ZipEntry("classifications.json");
+            zipOutputStream.putNextEntry(classifications);
+            ClassificationCollection classificationCollection = classificationRepository.all();
+            zipOutputStream.write(mapper.writeValueAsBytes(classificationCollection));
+
+            ZipEntry metadata = new ZipEntry("metadata.json");
+            zipOutputStream.putNextEntry(metadata);
+            MetadataCollection metadataCollection = metadataRepository.all();
+            zipOutputStream.write(mapper.writeValueAsBytes(metadataCollection));
+
+            zipOutputStream.closeEntry();
+            zipOutputStream.close();
+
+            return ServerResponse.status(HttpStatus.OK)
+                    .header("Access-Control-Allow-Origin", "*")
+                    .header("Access-Control-Request-Method", "GET")
+                    .contentType(new MediaType("application", "zip"))
+                    .body(Mono.just(dataBuffer), DataBuffer.class);
+        }catch (Exception e){
+            LOGGER.debug(e.getMessage());
+
+            ApiResponseBuilder responseBuilder = ApiResponseBuilder.builder(apimapConfiguration);
+            return responseBuilder.badRequest();
+        }
     }
 
     protected Mono<ServerResponse> allFilteredApis(ServerRequest request) {
@@ -152,7 +166,7 @@ public class ApiResourceService extends FilteredResourceService {
         final Optional<Api> entity = requestParser
                 .apiDbEntity();
 
-        if (entity.isEmpty()) {
+        if (entity.isEmpty() || entity.get().getName() == null) {
             return responseBuilder.badRequest();
         }
 
@@ -166,7 +180,7 @@ public class ApiResourceService extends FilteredResourceService {
             return responseBuilder.badRequest();
         }
 
-        final Optional<ApiDataApiMetadataEntity> apiMetadata = requestParser.apiMetadata();
+        final Optional<ApiDataMetadataEntity> apiMetadata = requestParser.apiMetadata();
 
         Mono<ServerResponse> response = responseBuilder
                 .withResourceURI(URIUtil.apiCollectionFromURI(request.uri()).append(insertedEntity.get().getName()).uriValue())
@@ -302,7 +316,7 @@ public class ApiResourceService extends FilteredResourceService {
                 .withApiRepository(apiRepository)
                 .apiVersionDbEntity();
 
-        if (entity.isEmpty()) {
+        if (entity.isEmpty() || entity.get().getVersion() == null) {
             return responseBuilder.badRequest();
         }
 

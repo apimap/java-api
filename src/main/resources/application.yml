@@ -23,9 +23,6 @@ server:
     whitelabel:
       enabled: false
 management:
-  health:
-    mail:
-      enabled: false
   endpoint:
     health:
       enabled: true

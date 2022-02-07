@@ -33,7 +33,7 @@ Based on Spring Boot, all the usual targets exist. The easiest way to build the 
 Building the Docker Image is a two-step process based on the [official Spring Boot documentation](https://docs.spring.io/spring-cloud-dataflow-admin-cloudfoundry/docs/1.2.x/reference/html/_deploying_docker_applications.html
 ). Fist we have to unpack the jar file, then build the image itself.
 
-> **Step 1:** mkdir -p build/dependency && (cd build/dependency; cp ../libs/api-1.0.1.jar .; jar -xf api-1.0.1.jar)
+> **Step 1:** mkdir -p build/dependency && (cd build/dependency; cp ../libs/api-1.1.0.jar .; jar -xf api-1.1.0.jar)
 
 > **Step 2:** docker build -t apimap/api .
 
@@ -86,6 +86,27 @@ This will remove all information associated with the URL (including metadata and
 3. Find the required version to updated and follow the URL detailed in links → self
 4. To update the metadata perform a PUT on the resource detailed in links → related → ref = "metadata:collection" → href
 5. To update the classifications perform a PUT on the resource detailed in links → related → ref = "classification:collection" → href 
+
+## API Errors
+
+When errors occure the server will respond with a status code and a json. The json has the error object array and contain multiple feedbacks to explain what failed.
+
+```json
+{
+  "links":{},
+  "meta":{},
+  "jsonapi":{
+    "version":"1.1"
+  },
+  "errors":[
+    {
+      "status":"409 CONFLICT",
+      "title":"The resource exists already"
+    }
+  ]
+}
+```
+
 
 ## Other Resources
 ___

@@ -30,6 +30,7 @@ import io.apimap.api.repository.nitrite.entity.support.ApiCollection;
 import io.apimap.api.repository.nitrite.entity.support.ClassificationCollection;
 import io.apimap.api.repository.nitrite.entity.support.ClassificationTreeCollection;
 import io.apimap.api.repository.nitrite.entity.support.TaxonomyCollectionVersionURNCollection;
+import io.apimap.api.rest.TaxonomyDataRestEntity;
 import org.dizitart.no2.objects.Cursor;
 import org.dizitart.no2.objects.ObjectFilter;
 import org.dizitart.no2.objects.ObjectRepository;
@@ -49,6 +50,9 @@ import static org.dizitart.no2.objects.filters.ObjectFilters.or;
 
 @Repository
 public class NitriteClassificationRepository extends NitriteRepository implements IClassificationRepository {
+
+    public static final String TAXONOMY_VERSION = "1";
+
     protected NitriteTaxonomyRepository nitriteTaxonomyRepository;
 
     public NitriteClassificationRepository(NitriteConfiguration nitriteConfiguration,
@@ -65,19 +69,19 @@ public class NitriteClassificationRepository extends NitriteRepository implement
         ObjectRepository<ApiClassification> repository = database.getRepository(ApiClassification.class);
         ObjectFilter combinedFilter = or(filters.toArray(ObjectFilter[]::new));
         Cursor<ApiClassification> cursor = repository.find(combinedFilter);
-        return new ClassificationCollection(cursor.toList(), "1");
+        return new ClassificationCollection(cursor.toList(), null, TAXONOMY_VERSION);
     }
 
     public ClassificationCollection all() {
         ObjectRepository<ApiClassification> repository = database.getRepository(ApiClassification.class);
         Cursor<ApiClassification> cursor = repository.find();
-        return new ClassificationCollection(cursor.toList(), "1");
+        return new ClassificationCollection(cursor.toList(), null, TAXONOMY_VERSION);
     }
 
     public ClassificationCollection all(String apiId) {
         ObjectRepository<ApiClassification> repository = database.getRepository(ApiClassification.class);
         Cursor<ApiClassification> cursor = repository.find(eq("apiId", apiId));
-        return new ClassificationCollection(cursor.toList(), "1");
+        return new ClassificationCollection(cursor.toList(), null, TAXONOMY_VERSION);
     }
 
     public ClassificationCollection all(String apiId, String apiVersion) {
@@ -85,7 +89,7 @@ public class NitriteClassificationRepository extends NitriteRepository implement
         Cursor<ApiClassification> cursor = repository.find(
                 and(eq("apiId", apiId), eq("apiVersion", apiVersion))
         );
-        return new ClassificationCollection(cursor.toList(), "1");
+        return new ClassificationCollection(cursor.toList(), null, TAXONOMY_VERSION);
     }
 
     public Optional<ApiClassification> update(ApiClassification entity, String apiId) {
@@ -113,7 +117,7 @@ public class NitriteClassificationRepository extends NitriteRepository implement
     public ClassificationCollection get(String apiId) {
         ObjectRepository<ApiClassification> repository = database.getRepository(ApiClassification.class);
         Cursor<ApiClassification> cursor = repository.find(eq("apiId", apiId));
-        return new ClassificationCollection(cursor.toList(), "1");
+        return new ClassificationCollection(cursor.toList(), null, TAXONOMY_VERSION);
     }
 
     public void delete(String apiId, String apiVersion) {
@@ -129,11 +133,11 @@ public class NitriteClassificationRepository extends NitriteRepository implement
     }
 
     public ClassificationCollection queryFilters(List<QueryFilter> filters) {
-        ArrayList<String> classificationFilters = filters
+        ArrayList<String> urls = filters
                 .stream()
                 .filter(e -> e instanceof ClassificationQueryFilter)
                 .map(e -> {
-                    Optional<TaxonomyCollectionVersionURN> data = nitriteTaxonomyRepository.getTaxonomyCollectionVersionURN(((ClassificationQueryFilter) e).getValue(), "1");
+                    Optional<TaxonomyCollectionVersionURN> data = nitriteTaxonomyRepository.getTaxonomyCollectionVersionURN(((ClassificationQueryFilter) e).getValue(), TAXONOMY_VERSION);
                     return data.map(TaxonomyCollectionVersionURN::getUrl).orElse(null);
                 })
                 .filter(Objects::nonNull)
@@ -141,8 +145,8 @@ public class NitriteClassificationRepository extends NitriteRepository implement
 
         ArrayList<ObjectFilter> urns = new ArrayList<>();
 
-        for (String ff : classificationFilters) {
-            TaxonomyCollectionVersionURNCollection f = nitriteTaxonomyRepository.allTaxonomyCollectionVersionURNsBellowUrl("1", ff);
+        for (String url : urls) {
+            TaxonomyCollectionVersionURNCollection f = nitriteTaxonomyRepository.allTaxonomyCollectionVersionURNsBellowUrl(TAXONOMY_VERSION, url);
             if (f != null) {
                 for (TaxonomyCollectionVersionURN item : f.getItems()) {
                     if (item.getUrn() != null) {
@@ -153,7 +157,9 @@ public class NitriteClassificationRepository extends NitriteRepository implement
         }
 
         if (!urns.isEmpty()) {
-            return filteredCollection(urns);
+            ClassificationCollection collection = filteredCollection(urns);
+            collection.setParents(urls);
+            return collection;
         }
 
         return null;
@@ -165,7 +171,7 @@ public class NitriteClassificationRepository extends NitriteRepository implement
         final Optional<TaxonomyCollectionVersionURN> parentTaxonomyCollectionVersionURN;
 
         if (parentClassificationURN != null) {
-            parentTaxonomyCollectionVersionURN = nitriteTaxonomyRepository.getTaxonomyCollectionVersionURN(parentClassificationURN, "1");
+            parentTaxonomyCollectionVersionURN = nitriteTaxonomyRepository.getTaxonomyCollectionVersionURN(parentClassificationURN, TAXONOMY_VERSION);
         } else {
             parentTaxonomyCollectionVersionURN = Optional.empty();
         }
@@ -175,6 +181,13 @@ public class NitriteClassificationRepository extends NitriteRepository implement
 
             classification.getItems().forEach(f -> {
                 Optional<TaxonomyCollectionVersionURN> taxonomyCollectionVersionURN = nitriteTaxonomyRepository.getTaxonomyCollectionVersionURN(f.getTaxonomyUrn(), f.getTaxonomyVersion());
+
+                if(taxonomyCollectionVersionURN.get().getType().equals(TaxonomyDataRestEntity.ReferenceType.REFERENCE.getValue())){
+                    taxonomyCollectionVersionURN = nitriteTaxonomyRepository.getTaxonomyCollectionVersionURN(
+                            taxonomyCollectionVersionURN.get().getUrl(),
+                            TaxonomyDataRestEntity.ReferenceType.CLASSIFICATION
+                    );
+                }
 
                 if (parentTaxonomyCollectionVersionURN.isPresent()) {
                     if (taxonomyCollectionVersionURN.get().getUrl().startsWith(parentTaxonomyCollectionVersionURN.get().getUrl())) {
@@ -194,22 +207,25 @@ public class NitriteClassificationRepository extends NitriteRepository implement
                         }
                     }
                 } else {
-                    if (taxonomyCollectionVersionURN.isPresent() && treeCollection.containsKey(taxonomyCollectionVersionURN.get().getId())) {
-                        ClassificationTreeCollection tr = treeCollection.get(taxonomyCollectionVersionURN.get().getId());
-                        tr.getItems().add(e.getMetadata().get());
-                    } else {
-                        if(taxonomyCollectionVersionURN.isPresent() && taxonomyCollectionVersionURN.get().getId() != null) {
-                            ClassificationTreeCollection collection = new ClassificationTreeCollection();
-                            collection.setTaxonomy(taxonomyCollectionVersionURN.get());
+                    Optional<TaxonomyCollectionVersionURN> finalTaxonomyCollectionVersionURN = taxonomyCollectionVersionURN;
+                    if(apiCollection.getParents().stream().anyMatch(z -> finalTaxonomyCollectionVersionURN.get().getUrl().startsWith(z))){
+                        if (treeCollection.containsKey(taxonomyCollectionVersionURN.get().getId())) {
+                            ClassificationTreeCollection tr = treeCollection.get(taxonomyCollectionVersionURN.get().getId());
+                            tr.getItems().add(e.getMetadata().get());
+                        } else {
+                            if(taxonomyCollectionVersionURN.get().getId() != null) {
+                                ClassificationTreeCollection collection = new ClassificationTreeCollection();
+                                collection.setTaxonomy(taxonomyCollectionVersionURN.get());
 
-                            ArrayList<Metadata> items = new ArrayList<>();
-                            if(e.getMetadata().isPresent()) {
-                                items.add(e.getMetadata().get());
+                                ArrayList<Metadata> items = new ArrayList<>();
+                                if(e.getMetadata().isPresent()) {
+                                    items.add(e.getMetadata().get());
+                                }
+
+                                collection.setItems(items);
+
+                                treeCollection.put(taxonomyCollectionVersionURN.get().getId(), collection);
                             }
-
-                            collection.setItems(items);
-
-                            treeCollection.put(taxonomyCollectionVersionURN.get().getId(), collection);
                         }
                     }
                 }

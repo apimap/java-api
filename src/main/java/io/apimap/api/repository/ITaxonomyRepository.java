@@ -29,6 +29,8 @@ import io.apimap.api.repository.nitrite.entity.support.TaxonomyCollectionVersion
 import java.util.Optional;
 
 public interface ITaxonomyRepository {
+    public static final String DEFAULT_TAXONOMY_TYPE = "classification";
+
     Integer numberOfTaxonomies();
     void clearTaxonomyCollection();
     TaxonomyCollectionCollection allTaxonomyCollection();

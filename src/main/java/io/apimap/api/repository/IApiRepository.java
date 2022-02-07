@@ -31,7 +31,7 @@ import java.util.Optional;
 public interface IApiRepository {
     ApiCollection all();
     ApiCollection all(List<QueryFilter> filters);
-    ApiCollection filteredCollection(List<String> ids);
+    ApiCollection filteredCollection(List<String> ids, List<String> parents);
     Optional<Api> add(Api entity);
     Optional<Api> update(Api entity, String apiName);
     Optional<Api> get(String apiName);

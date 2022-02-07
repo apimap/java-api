@@ -21,7 +21,7 @@ package io.apimap.api.router;
 
 import io.apimap.api.rest.TaxonomyCollectionDataRestEntity;
 import io.apimap.api.rest.TaxonomyCollectionRootRestEntity;
-import io.apimap.api.rest.TaxonomyTreeDataRestEntity;
+import io.apimap.api.rest.TaxonomyDataRestEntity;
 import io.apimap.api.rest.jsonapi.JsonApiRestResponseWrapper;
 import io.apimap.api.service.TaxonomyResourceService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -203,7 +203,7 @@ public class TaxonomyRouter {
                                     @ApiResponse(responseCode = "401", description = "Unauthorized, valid bearer token missing og faulty", content = @Content(schema = @Schema(implementation = JsonApiRestResponseWrapper.class)))
                             },
                             security = { @SecurityRequirement(name = "token") },
-                            requestBody = @RequestBody(content = @Content(schema = @Schema(implementation = TaxonomyTreeDataRestEntity.Attributes.class)))
+                            requestBody = @RequestBody(content = @Content(schema = @Schema(implementation = TaxonomyDataRestEntity.Attributes.class)))
                     )),
             @RouterOperation(
                     path = URN_PATH,
@@ -246,7 +246,7 @@ public class TaxonomyRouter {
                 .andRoute(POST(ROOT_PATH), service::createCollection)
                 .andRoute(DELETE(COLLECTION_PATH), service::deleteCollection)
                 .andRoute(GET(COLLECTION_PATH), service::getCollection)
-                .andRoute(POST(COLLECTION_PATH), service::createVersion)
+                .andRoute(POST(VERSIONED_PATH), service::createVersion)
                 .andRoute(GET(VERSIONED_PATH).and(accept(APPLICATION_JSON)), service::allVersions)
                 .andRoute(GET(VERSIONED_ITEM_PATH).and(accept(APPLICATION_JSON)), service::getVersion)
                 .andRoute(DELETE(VERSIONED_ITEM_PATH), service::deleteVersion)

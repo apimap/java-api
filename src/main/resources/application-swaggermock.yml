@@ -11,8 +11,6 @@ spring:
     username: ""
     password: ""
     driver-class-name: ""
-  mail:
-    host: ""
 logging:
   level:
     root: INFO
@@ -22,9 +20,6 @@ server:
     whitelabel:
       enabled: false
 management:
-  health:
-    mail:
-      enabled: false
   endpoint:
     health:
       enabled: true

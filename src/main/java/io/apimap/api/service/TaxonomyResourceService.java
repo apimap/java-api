@@ -290,7 +290,10 @@ public class TaxonomyResourceService {
     public Mono<ServerResponse> createURN(ServerRequest request) {
         TaxonomyResponseBuilder responseBuilder = TaxonomyResponseBuilder.builder(apimapConfiguration);
 
-        final Optional<TaxonomyCollectionVersionURN> entity = TaxonomyRequestParser.parser().withRequest(request).taxonomyTree();
+        final Optional<TaxonomyCollectionVersionURN> entity = TaxonomyRequestParser
+                .parser()
+                .withRequest(request)
+                .dataRestEntity();
 
         if (entity.isEmpty()) {
             return responseBuilder.badRequest();

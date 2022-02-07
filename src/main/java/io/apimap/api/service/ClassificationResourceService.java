@@ -22,6 +22,7 @@ package io.apimap.api.service;
 import io.apimap.api.configuration.ApimapConfiguration;
 import io.apimap.api.repository.IApiRepository;
 import io.apimap.api.repository.IClassificationRepository;
+import io.apimap.api.repository.nitrite.entity.query.QueryFilter;
 import io.apimap.api.repository.nitrite.entity.support.ApiCollection;
 import io.apimap.api.repository.nitrite.entity.support.ClassificationTreeCollection;
 import io.apimap.api.service.response.ClassificationResponseBuilder;
@@ -50,7 +51,9 @@ public class ClassificationResourceService extends FilteredResourceService {
 
     @NotNull
     public Mono<ServerResponse> allClassifications(ServerRequest request) {
-        if (!requestQueryFilters(request).isEmpty()) {
+        List<QueryFilter> filters = requestQueryFilters(request);
+
+        if (filters.size() > 0) {
             return allFilteredClassifications(request, null);
         }
 

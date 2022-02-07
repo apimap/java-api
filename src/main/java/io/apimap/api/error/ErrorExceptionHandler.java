@@ -43,8 +43,11 @@ import java.util.Map;
 @Component
 @Order(-2)
 public class ErrorExceptionHandler extends AbstractErrorWebExceptionHandler {
-    public ErrorExceptionHandler(ErrorAttributes errorAttributes, ServerCodecConfigurer serverCodecConfigurer, WebProperties.Resources resources, ApplicationContext applicationContext) {
-        super(errorAttributes, resources, applicationContext);
+    public ErrorExceptionHandler(ErrorAttributes errorAttributes,
+                                 ServerCodecConfigurer serverCodecConfigurer,
+                                 WebProperties webproperties,
+                                 ApplicationContext applicationContext) {
+        super(errorAttributes, webproperties.getResources(), applicationContext);
         super.setMessageWriters(serverCodecConfigurer.getWriters());
         super.setMessageReaders(serverCodecConfigurer.getReaders());
     }

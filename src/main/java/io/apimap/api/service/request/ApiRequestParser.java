@@ -24,7 +24,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.apimap.api.repository.IApiRepository;
 import io.apimap.api.repository.nitrite.entity.db.Api;
 import io.apimap.api.repository.nitrite.entity.db.ApiVersion;
-import io.apimap.api.rest.ApiDataApiMetadataEntity;
+import io.apimap.api.rest.ApiDataMetadataEntity;
 import io.apimap.api.rest.ApiDataRestEntity;
 import io.apimap.api.rest.ApiVersionDataRestEntity;
 import io.apimap.api.rest.jsonapi.JsonApiRestRequestWrapper;
@@ -89,7 +89,7 @@ public class ApiRequestParser extends RequestParser<ApiRequestParser> {
         ));
     }
 
-    public Optional<ApiDataApiMetadataEntity> apiMetadata() {
+    public Optional<ApiDataMetadataEntity> apiMetadata() {
         final ApiDataRestEntity entity = (ApiDataRestEntity) this.body;
 
         if (entity == null) {

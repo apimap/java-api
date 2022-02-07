@@ -26,7 +26,7 @@ import io.apimap.api.repository.nitrite.entity.support.ApiCollection;
 import io.apimap.api.repository.nitrite.entity.support.ApiVersionCollection;
 import io.apimap.api.rest.ApiCollectionDataRestEntity;
 import io.apimap.api.rest.ApiCollectionRootRestEntity;
-import io.apimap.api.rest.ApiDataApiMetadataEntity;
+import io.apimap.api.rest.ApiDataMetadataEntity;
 import io.apimap.api.rest.ApiDataRestEntity;
 import io.apimap.api.rest.ApiVersionDataRestEntity;
 import io.apimap.api.rest.jsonapi.JsonApiRelationships;
@@ -110,7 +110,7 @@ public class ApiResponseBuilder extends ResponseBuilder<ApiResponseBuilder> {
         );
 
         if (value.getToken() != null) {
-            apiRootRestEntity.setMeta(new ApiDataApiMetadataEntity(value.getToken()));
+            apiRootRestEntity.setMeta(new ApiDataMetadataEntity(value.getToken()));
         }
 
         this.body = new JsonApiRestResponseWrapper<ApiDataRestEntity>(apiRootRestEntity);

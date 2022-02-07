@@ -26,6 +26,7 @@ import io.apimap.api.repository.nitrite.entity.db.TaxonomyCollectionVersionURN;
 import io.apimap.api.repository.nitrite.entity.support.TaxonomyCollectionCollection;
 import io.apimap.api.repository.nitrite.entity.support.TaxonomyCollectionVersionCollection;
 import io.apimap.api.repository.nitrite.entity.support.TaxonomyCollectionVersionURNCollection;
+import io.apimap.api.rest.ApiDataMetadataEntity;
 import io.apimap.api.rest.TaxonomyCollectionDataRestEntity;
 import io.apimap.api.rest.TaxonomyCollectionRootRestEntity;
 import io.apimap.api.rest.TaxonomyDataRestEntity;
@@ -35,10 +36,12 @@ import io.apimap.api.rest.TaxonomyVersionCollectionDataRestEntity;
 import io.apimap.api.rest.TaxonomyVersionCollectionRootRestEntity;
 import io.apimap.api.rest.jsonapi.JsonApiRelationships;
 import io.apimap.api.rest.jsonapi.JsonApiRestResponseWrapper;
-import io.apimap.api.utils.TaxonomyTreeUtil;
+import io.apimap.api.utils.TaxonomyTreeBuilder;
 import io.apimap.api.utils.URIUtil;
 
 import java.util.ArrayList;
+import java.util.Locale;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 public class TaxonomyResponseBuilder extends ResponseBuilder<TaxonomyResponseBuilder> {
@@ -58,7 +61,8 @@ public class TaxonomyResponseBuilder extends ResponseBuilder<TaxonomyResponseBui
                 value.getUrl(),
                 value.getDescription(),
                 resourceURI.toString(),
-                value.getNid()
+                value.getNid(),
+                TaxonomyDataRestEntity.ReferenceType.valueOf(value.getType().toUpperCase())
         );
 
         this.body = new JsonApiRestResponseWrapper<>(taxonomyDataRestEntity);
@@ -67,21 +71,29 @@ public class TaxonomyResponseBuilder extends ResponseBuilder<TaxonomyResponseBui
 
     public TaxonomyResponseBuilder withTaxonomyCollectionVersionURNCollectionBody(TaxonomyCollectionVersionURNCollection value) {
         TaxonomyTreeRootRestEntity taxonomyTreeRootRestEntity = new TaxonomyTreeRootRestEntity(
-                value.getItems().stream().map(e -> new TaxonomyTreeDataRestEntity(
-                        e.getUrn(),
-                        e.getUrl(),
-                        e.getTitle(),
-                        e.getDescription(),
-                        URIUtil.fromURI(resourceURI).append(e.getUrn()).stringValue()
-                )).collect(Collectors.toCollection(ArrayList::new)));
+                value.getItems().stream().map(e -> {
+                    if(!Objects.equals(TaxonomyDataRestEntity.ReferenceType.valueOf(e.getType().toUpperCase()), TaxonomyDataRestEntity.ReferenceType.REFERENCE)){
+                        return new TaxonomyTreeDataRestEntity(
+                                e.getUrn(),
+                                e.getTitle(),
+                                e.getUrl(),
+                                e.getDescription(),
+                                URIUtil.fromURI(resourceURI).append(e.getUrn()).stringValue(),
+                                e.getVersion(),
+                                TaxonomyDataRestEntity.ReferenceType.CLASSIFICATION,
+                                null
+                        );
+                    }
+                    return null;
+                }).filter(Objects::nonNull).collect(Collectors.toCollection(ArrayList::new)));
 
-        TaxonomyTreeUtil taxonomyTreeUtil = TaxonomyTreeUtil.empty();
+        TaxonomyTreeBuilder taxonomyTreeBuilder = TaxonomyTreeBuilder.empty();
 
         for (TaxonomyTreeDataRestEntity e : taxonomyTreeRootRestEntity.getData()) {
-            taxonomyTreeUtil.insert(e);
+            taxonomyTreeBuilder.insert(e);
         }
 
-        this.body = new JsonApiRestResponseWrapper<>(new TaxonomyTreeRootRestEntity(taxonomyTreeUtil.getRootEntity().getEntities()));
+        this.body = new JsonApiRestResponseWrapper<>(new TaxonomyTreeRootRestEntity(taxonomyTreeBuilder.getTree()));
         return this;
     }
 
@@ -121,9 +133,13 @@ public class TaxonomyResponseBuilder extends ResponseBuilder<TaxonomyResponseBui
                 value.getDescription(),
                 value.getNid(),
                 URIUtil.fromURI(resourceURI).append(value.getNid()).stringValue(),
-                value.getToken(),
                 relationships
         );
+
+
+        if (value.getToken() != null) {
+            taxonomyCollectionDataRestEntity.setMeta(new ApiDataMetadataEntity(value.getToken()));
+        }
 
         this.body = new JsonApiRestResponseWrapper<>(taxonomyCollectionDataRestEntity);
         return this;
@@ -144,7 +160,6 @@ public class TaxonomyResponseBuilder extends ResponseBuilder<TaxonomyResponseBui
                             e.getDescription(),
                             e.getNid(),
                             URIUtil.fromURI(resourceURI).append(e.getNid()).stringValue(),
-                            null,
                             relationships
                     );
                 })

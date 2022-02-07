@@ -1,13 +1,13 @@
 {
   "openapi": "3.0.1",
   "info": {
-    "title": "Apimap.io API",
-    "description": "The catalog is a centralized registry of our APIs. This API is built to comply with the JSON:API standard version 1.1 (https://jsonapi.org/)",
+    "title": "Apimap.io",
+    "description": "Apimap.io is a centralized registry of our APIs. This API is built to comply with the JSON:API standard version 1.1 (https://jsonapi.org/)",
     "license": {
       "name": "Apache 2.0",
       "url": "https://www.apache.org/licenses/LICENSE-2.0"
     },
-    "version": "1.0"
+    "version": "1.1.0"
   },
   "servers": [
     {
@@ -41,10 +41,11 @@
     "/api": {
       "get": {
         "tags": [
+          "api-rest-controller",
           "API"
         ],
         "summary": "Get all APIs registered in the system.",
-        "operationId": "allApis",
+        "operationId": "allApis_1",
         "parameters": [
           {
             "name": "filter[metadata]",
@@ -63,12 +64,24 @@
           "200": {
             "description": "List of all available APIs",
             "content": {
+              "application/zip": {
+                "schema": {
+                  "$ref": "#/components/schemas/DataBuffer"
+                }
+              },
               "application/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/API Collection Item"
-                  }
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/ServerResponse"
+                    },
+                    {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/API Collection Item"
+                      }
+                    }
+                  ]
                 }
               }
             }
@@ -107,748 +120,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/{apiName}": {
-      "get": {
-        "tags": [
-          "API"
-        ],
-        "summary": "Get API information.",
-        "description": "An API consist of a name, connected with multiple versions. Each version is then connected to the metadata and classifications.",
-        "operationId": "getApi",
-        "parameters": [
-          {
-            "name": "apiName",
-            "in": "path",
-            "description": "URL encoded API name",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "API root object",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/API"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "API not found",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          }
-        }
-      },
-      "put": {
-        "tags": [
-          "API"
-        ],
-        "summary": "Update API information.",
-        "description": "This does not include metadata, versions or classifications. An API consist of a name, connected with multiple versions. Each version is then connected to the metadata and classifications.",
-        "operationId": "updateApi",
-        "parameters": [
-          {
-            "name": "apiName",
-            "in": "path",
-            "description": "URL encoded API name",
-            "required": true
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/API Attributes"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "API updated",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/API"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Unable to parse incoming values",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized, valid bearer token missing og faulty",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "No existing API found",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "token": []
-          }
-        ]
-      },
-      "delete": {
-        "tags": [
-          "API"
-        ],
-        "summary": "Delete an API (including all versions, metadata and classifications)",
-        "description": "This will delete all attached version, metadata and classifications. Thereby completely remove the API from the catalog.",
-        "operationId": "deleteApi",
-        "parameters": [
-          {
-            "name": "apiName",
-            "in": "path",
-            "description": "URL encoded API name",
-            "required": true
-          }
-        ],
-        "responses": {
-          "204": {
-            "description": "API and all related information deleted successfully",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/ServerResponse"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized, valid bearer token missing og faulty",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "No existing API found",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "token": []
-          }
-        ]
-      }
-    },
-    "/api/{apiName}/version": {
-      "get": {
-        "tags": [
-          "API"
-        ],
-        "summary": "Get a overview of all API versions.",
-        "operationId": "allApiVersions",
-        "parameters": [
-          {
-            "name": "apiName",
-            "in": "path",
-            "description": "URL encoded API name",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "API updated",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "string"
-                }
-              }
-            }
-          }
-        }
-      },
-      "post": {
-        "tags": [
-          "API"
-        ],
-        "summary": "Create a new API version",
-        "operationId": "createApiVersion",
-        "parameters": [
-          {
-            "name": "apiName",
-            "in": "path",
-            "description": "URL encoded API name",
-            "required": true
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/API Version Attributes"
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": "API Version Created Successfully",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/API Version"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Unable to parse incoming values",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized, valid bearer token missing og faulty",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "No existing API found",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "token": []
-          }
-        ]
-      }
-    },
-    "/api/{apiName}/version/{apiVersion}": {
-      "get": {
-        "tags": [
-          "API"
-        ],
-        "summary": "Get a specific API version",
-        "operationId": "getApiVersion",
-        "parameters": [
-          {
-            "name": "apiName",
-            "in": "path",
-            "description": "URL encoded API name",
-            "required": true
-          },
-          {
-            "name": "apiVersion",
-            "in": "path",
-            "description": "URL encoded API version identifier",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "API Version",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/API Version"
-                }
-              }
-            }
-          }
-        }
-      },
-      "delete": {
-        "tags": [
-          "API"
-        ],
-        "summary": "Delete a specific API version (and connected metadata and classifications)",
-        "operationId": "deleteApiVersion",
-        "parameters": [
-          {
-            "name": "apiName",
-            "in": "path",
-            "description": "URL encoded API name",
-            "required": true
-          },
-          {
-            "name": "apiVersion",
-            "in": "path",
-            "description": "URL encoded API version identifier",
-            "required": true
-          }
-        ],
-        "responses": {
-          "204": {
-            "description": "Delete Successful. All metadata and classifications associated with the version is also deleted.",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/API Version"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized, valid bearer token missing og faulty",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "token": []
-          }
-        ]
-      }
-    },
-    "/api/{apiName}/version/{apiVersion}/classification": {
-      "get": {
-        "tags": [
-          "API"
-        ],
-        "summary": "Get all classifications by apiName and apiVersion",
-        "operationId": "getClassification",
-        "parameters": [
-          {
-            "name": "apiName",
-            "in": "path",
-            "description": "URL encoded API name",
-            "required": true
-          },
-          {
-            "name": "apiVersion",
-            "in": "path",
-            "description": "URL encoded API version identifier",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "API Version Classification Deleted Successfully",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/Classification"
-                  }
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "No existing API or API Version found",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/{apiName}/version/{apiVersion}/metadata": {
-      "get": {
-        "tags": [
-          "API"
-        ],
-        "summary": "Get API version metadata",
-        "operationId": "getMetadata",
-        "parameters": [
-          {
-            "name": "apiName",
-            "in": "path",
-            "description": "URL encoded API name",
-            "required": true
-          },
-          {
-            "name": "apiVersion",
-            "in": "path",
-            "description": "URL encoded API version identifier",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "API Version Metadata Content",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ServerResponse"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "No existing API or API Version found",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          }
-        }
-      },
-      "put": {
-        "tags": [
-          "API"
-        ],
-        "summary": "Updated metadata",
-        "operationId": "updateMetadata",
-        "parameters": [
-          {
-            "name": "apiName",
-            "in": "path",
-            "description": "URL encoded API name",
-            "required": true
-          },
-          {
-            "name": "apiVersion",
-            "in": "path",
-            "description": "URL encoded API version identifier",
-            "required": true
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/Metadata Attributes"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "API Version Metadata Updated Successfully",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/Metadata"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Unable to parse incoming values",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized, valid bearer token missing og faulty",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "No existing API or API Version found",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "token": []
-          }
-        ]
-      },
-      "post": {
-        "tags": [
-          "API"
-        ],
-        "summary": "Create a API version metadata",
-        "operationId": "createMetadata",
-        "parameters": [
-          {
-            "name": "apiName",
-            "in": "path",
-            "description": "URL encoded API name",
-            "required": true
-          },
-          {
-            "name": "apiVersion",
-            "in": "path",
-            "description": "URL encoded API version identifier",
-            "required": true
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/Metadata Attributes"
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": "API Version Metadata Created Successfully",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/Metadata"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Unable to parse incoming values",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized, valid bearer token missing og faulty",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "No existing API or API Version found",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "token": []
-          }
-        ]
-      },
-      "delete": {
-        "tags": [
-          "API"
-        ],
-        "summary": "Delete API version metadata",
-        "operationId": "deleteMetadata",
-        "parameters": [
-          {
-            "name": "apiName",
-            "in": "path",
-            "description": "URL encoded API name",
-            "required": true
-          },
-          {
-            "name": "apiVersion",
-            "in": "path",
-            "description": "URL encoded API version identifier",
-            "required": true
-          }
-        ],
-        "responses": {
-          "204": {
-            "description": "API Version Metadata Deleted Successfully",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/ServerResponse"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized, valid bearer token missing og faulty",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "No existing API or API Version found",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "token": []
-          }
-        ]
-      }
-    },
-    "/classification": {
-      "get": {
-        "tags": [
-          "CLASSIFICATION"
-        ],
-        "summary": "Classification search entrypoint.",
-        "description": "Please not that if no query is specified a blank array will always be returned. This is done since a complete database dump shouldn\u0027t be of any interest.",
-        "operationId": "allClassifications",
-        "parameters": [
-          {
-            "name": "filter[metadata]",
-            "in": "query",
-            "description": "Metadata filter built with the following expression: filter[metadata][\u003cfilter name\u003e]\u003d\u003cfilter value\u003e. If more than one value use , to separate the values.",
-            "example": "filter[metadata][visibility]\u003dPublic"
-          },
-          {
-            "name": "filter[classification]",
-            "in": "query",
-            "description": "Classification filter built with the following expression: filter[classification][\u003ctaxonomy name\u003e]\u003d\u003cclassification urn\u003e. If more than one value use , to separate the values.",
-            "example": "filter[classification][apimap]\u003durn:apimap:89"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Search Completed Successfully",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Classification Tree Item Attributes"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/classification/{classificationURN}": {
-      "get": {
-        "tags": [
-          "CLASSIFICATION"
-        ],
-        "summary": "List classification URN sub-nodes.",
-        "description": "Please not that if no query is specified a blank array will always be returned. This is done since a complete database dump shouldn\u0027t be of any interest.",
-        "operationId": "getClassification_1",
-        "parameters": [
-          {
-            "name": "Classification URN",
-            "in": "path",
-            "description": "Request a specific URN sub-tree.",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Search Completed Successfully",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Classification Tree Item Attributes"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "": {
-      "get": {
-        "tags": [
-          "START"
-        ],
-        "summary": "HATEOAS starting point.",
-        "description": "This endpoint is mostly to enable HATEOAS navigation.",
-        "operationId": "API starting point",
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ServerResponse"
+                  "$ref": "#/components/schemas/Json:api Container Object"
                 }
               }
             }
@@ -976,6 +248,681 @@
         }
       }
     },
+    "/api/{apiName}": {
+      "get": {
+        "tags": [
+          "API"
+        ],
+        "summary": "Get API information.",
+        "description": "An API consist of a name, connected with multiple versions. Each version is then connected to the metadata and classifications.",
+        "operationId": "getApi",
+        "parameters": [
+          {
+            "name": "apiName",
+            "in": "path",
+            "description": "URL encoded API name",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "API root object",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/API"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "API not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Json:api Container Object"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "API"
+        ],
+        "summary": "Update API information.",
+        "description": "This does not include metadata, versions or classifications. An API consist of a name, connected with multiple versions. Each version is then connected to the metadata and classifications.",
+        "operationId": "updateApi",
+        "parameters": [
+          {
+            "name": "apiName",
+            "in": "path",
+            "description": "URL encoded API name",
+            "required": true
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/API Attributes"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "API updated",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/API"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Unable to parse incoming values",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Json:api Container Object"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized, valid bearer token missing og faulty",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Json:api Container Object"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No existing API found",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Json:api Container Object"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "token": []
+          }
+        ]
+      },
+      "delete": {
+        "tags": [
+          "API"
+        ],
+        "summary": "Delete an API (including all versions, metadata and classifications)",
+        "description": "This will delete all attached version, metadata and classifications. Thereby completely remove the API from the catalog.",
+        "operationId": "deleteApi",
+        "parameters": [
+          {
+            "name": "apiName",
+            "in": "path",
+            "description": "URL encoded API name",
+            "required": true
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "API and all related information deleted successfully",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServerResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized, valid bearer token missing og faulty",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Json:api Container Object"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No existing API found",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Json:api Container Object"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "token": []
+          }
+        ]
+      }
+    },
+    "/api/{apiName}/version": {
+      "get": {
+        "tags": [
+          "API"
+        ],
+        "summary": "Get a overview of all API versions.",
+        "operationId": "allApiVersions",
+        "parameters": [
+          {
+            "name": "apiName",
+            "in": "path",
+            "description": "URL encoded API name",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "API updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "API"
+        ],
+        "summary": "Create a new API version",
+        "operationId": "createApiVersion",
+        "parameters": [
+          {
+            "name": "apiName",
+            "in": "path",
+            "description": "URL encoded API name",
+            "required": true
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/API Version Attributes"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "API Version Created Successfully",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/API Version"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Unable to parse incoming values",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Json:api Container Object"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized, valid bearer token missing og faulty",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Json:api Container Object"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No existing API found",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Json:api Container Object"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "token": []
+          }
+        ]
+      }
+    },
+    "/api/{apiName}/version/{apiVersion}": {
+      "get": {
+        "tags": [
+          "API"
+        ],
+        "summary": "Get a specific API version",
+        "operationId": "getApiVersion",
+        "parameters": [
+          {
+            "name": "apiName",
+            "in": "path",
+            "description": "URL encoded API name",
+            "required": true
+          },
+          {
+            "name": "apiVersion",
+            "in": "path",
+            "description": "URL encoded API version identifier",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "API Version",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/API Version"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "API"
+        ],
+        "summary": "Delete a specific API version (and connected metadata and classifications)",
+        "operationId": "deleteApiVersion",
+        "parameters": [
+          {
+            "name": "apiName",
+            "in": "path",
+            "description": "URL encoded API name",
+            "required": true
+          },
+          {
+            "name": "apiVersion",
+            "in": "path",
+            "description": "URL encoded API version identifier",
+            "required": true
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Delete Successful. All metadata and classifications associated with the version is also deleted.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/API Version"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized, valid bearer token missing og faulty",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Json:api Container Object"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "token": []
+          }
+        ]
+      }
+    },
+    "/api/{apiName}/version/{apiVersion}/classification": {
+      "get": {
+        "tags": [
+          "API"
+        ],
+        "summary": "Get all classifications by apiName and apiVersion",
+        "operationId": "getClassification",
+        "parameters": [
+          {
+            "name": "apiName",
+            "in": "path",
+            "description": "URL encoded API name",
+            "required": true
+          },
+          {
+            "name": "apiVersion",
+            "in": "path",
+            "description": "URL encoded API version identifier",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "API Version Classification Deleted Successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Classification"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No existing API or API Version found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Json:api Container Object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/{apiName}/version/{apiVersion}/metadata": {
+      "get": {
+        "tags": [
+          "API"
+        ],
+        "summary": "Get API version metadata",
+        "operationId": "getMetadata",
+        "parameters": [
+          {
+            "name": "apiName",
+            "in": "path",
+            "description": "URL encoded API name",
+            "required": true
+          },
+          {
+            "name": "apiVersion",
+            "in": "path",
+            "description": "URL encoded API version identifier",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "API Version Metadata Content",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServerResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No existing API or API Version found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Json:api Container Object"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "API"
+        ],
+        "summary": "Updated metadata",
+        "operationId": "updateMetadata",
+        "parameters": [
+          {
+            "name": "apiName",
+            "in": "path",
+            "description": "URL encoded API name",
+            "required": true
+          },
+          {
+            "name": "apiVersion",
+            "in": "path",
+            "description": "URL encoded API version identifier",
+            "required": true
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Metadata Attributes"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "API Version Metadata Updated Successfully",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Metadata"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Unable to parse incoming values",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Json:api Container Object"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized, valid bearer token missing og faulty",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Json:api Container Object"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No existing API or API Version found",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Json:api Container Object"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "token": []
+          }
+        ]
+      },
+      "post": {
+        "tags": [
+          "API"
+        ],
+        "summary": "Create a API version metadata",
+        "operationId": "createMetadata",
+        "parameters": [
+          {
+            "name": "apiName",
+            "in": "path",
+            "description": "URL encoded API name",
+            "required": true
+          },
+          {
+            "name": "apiVersion",
+            "in": "path",
+            "description": "URL encoded API version identifier",
+            "required": true
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Metadata Attributes"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "API Version Metadata Created Successfully",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Metadata"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Unable to parse incoming values",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Json:api Container Object"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized, valid bearer token missing og faulty",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Json:api Container Object"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No existing API or API Version found",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Json:api Container Object"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "token": []
+          }
+        ]
+      },
+      "delete": {
+        "tags": [
+          "API"
+        ],
+        "summary": "Delete API version metadata",
+        "operationId": "deleteMetadata",
+        "parameters": [
+          {
+            "name": "apiName",
+            "in": "path",
+            "description": "URL encoded API name",
+            "required": true
+          },
+          {
+            "name": "apiVersion",
+            "in": "path",
+            "description": "URL encoded API version identifier",
+            "required": true
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "API Version Metadata Deleted Successfully",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServerResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized, valid bearer token missing og faulty",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Json:api Container Object"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No existing API or API Version found",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Json:api Container Object"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "token": []
+          }
+        ]
+      }
+    },
+    "": {
+      "get": {
+        "tags": [
+          "START"
+        ],
+        "summary": "HATEOAS starting point.",
+        "description": "This endpoint is mostly to enable HATEOAS navigation.",
+        "operationId": "API starting point",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServerResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/taxonomy": {
       "get": {
         "tags": [
@@ -1031,7 +978,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/Error"
+                  "$ref": "#/components/schemas/Json:api Container Object"
                 }
               }
             }
@@ -1041,7 +988,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/Error"
+                  "$ref": "#/components/schemas/Json:api Container Object"
                 }
               }
             }
@@ -1080,7 +1027,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/Error"
+                  "$ref": "#/components/schemas/Json:api Container Object"
                 }
               }
             }
@@ -1126,7 +1073,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/Error"
+                  "$ref": "#/components/schemas/Json:api Container Object"
                 }
               }
             }
@@ -1225,7 +1172,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/Error"
+                  "$ref": "#/components/schemas/Json:api Container Object"
                 }
               }
             }
@@ -1268,7 +1215,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/Taxonomy Tree Item Attributes"
+                "$ref": "#/components/schemas/Taxonomy Attributes"
               }
             }
           }
@@ -1279,7 +1226,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/Error"
+                  "$ref": "#/components/schemas/Json:api Container Object"
                 }
               }
             }
@@ -1324,7 +1271,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/Error"
+                  "$ref": "#/components/schemas/Json:api Container Object"
                 }
               }
             }
@@ -1336,10 +1283,117 @@
           }
         ]
       }
+    },
+    "/classification": {
+      "get": {
+        "tags": [
+          "CLASSIFICATION"
+        ],
+        "summary": "Classification search entrypoint.",
+        "description": "Please not that if no query is specified a blank array will always be returned. This is done since a complete database dump shouldn\u0027t be of any interest.",
+        "operationId": "allClassifications",
+        "parameters": [
+          {
+            "name": "filter[metadata]",
+            "in": "query",
+            "description": "Metadata filter built with the following expression: filter[metadata][\u003cfilter name\u003e]\u003d\u003cfilter value\u003e. If more than one value use , to separate the values.",
+            "example": "filter[metadata][visibility]\u003dPublic"
+          },
+          {
+            "name": "filter[classification]",
+            "in": "query",
+            "description": "Classification filter built with the following expression: filter[classification][\u003ctaxonomy name\u003e]\u003d\u003cclassification urn\u003e. If more than one value use , to separate the values.",
+            "example": "filter[classification][apimap]\u003durn:apimap:89"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Search Completed Successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Classification Tree Item Attributes"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/classification/{classificationURN}": {
+      "get": {
+        "tags": [
+          "CLASSIFICATION"
+        ],
+        "summary": "List classification URN sub-nodes.",
+        "description": "Please not that if no query is specified a blank array will always be returned. This is done since a complete database dump shouldn\u0027t be of any interest.",
+        "operationId": "getClassification_1",
+        "parameters": [
+          {
+            "name": "Classification URN",
+            "in": "path",
+            "description": "Request a specific URN sub-tree.",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Search Completed Successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Classification Tree Item Attributes"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
     "schemas": {
+      "DataBuffer": {
+        "type": "object"
+      },
+      "Statistics Collection Item": {
+        "required": [
+          "id",
+          "type"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique Object ID",
+            "example": "ID1"
+          },
+          "type": {
+            "type": "string",
+            "description": "Object type definition",
+            "default": "statistics:element"
+          },
+          "attributes": {
+            "$ref": "#/components/schemas/Statistics Collection Item Attributes"
+          },
+          "links": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "readOnly": true
+          }
+        }
+      },
+      "Statistics Collection Item Attributes": {
+        "type": "object",
+        "properties": {
+          "description": {
+            "type": "string"
+          }
+        },
+        "description": "Object attributes. This object must be used when doing a POST or PUT"
+      },
       "API Collection Item": {
         "required": [
           "id",
@@ -1416,6 +1470,9 @@
         },
         "description": "Object attributes. This object must be used when doing a POST or PUT"
       },
+      "ServerResponse": {
+        "type": "object"
+      },
       "API Attributes": {
         "required": [
           "name"
@@ -1472,6 +1529,13 @@
             "items": {
               "$ref": "#/components/schemas/Json:api Container Related Object"
             }
+          },
+          "errors": {
+            "type": "array",
+            "description": "Contains all errors in the request",
+            "items": {
+              "$ref": "#/components/schemas/JsonApiError"
+            }
           }
         },
         "description": "This object is the container object used in all responses from the API."
@@ -1490,25 +1554,19 @@
         },
         "description": "Contains all related entities linked with the content returned inside \u0027data\u0027"
       },
-      "Error": {
-        "required": [
-          "error",
-          "status"
-        ],
+      "JsonApiError": {
         "type": "object",
         "properties": {
           "status": {
             "type": "string",
-            "description": "Server status code",
-            "example": "404"
+            "description": "The HTTP status code applicable to this problem."
           },
-          "error": {
+          "title": {
             "type": "string",
-            "description": "Error description",
-            "example": "Not Found"
+            "description": "A short, human-readable summary of the problem."
           }
         },
-        "description": "Default error object"
+        "description": "Contains all errors in the request"
       },
       "API": {
         "required": [
@@ -1527,12 +1585,6 @@
             "description": "Object type definition",
             "default": "api:element"
           },
-          "relationships": {
-            "type": "object",
-            "additionalProperties": {
-              "$ref": "#/components/schemas/Link"
-            }
-          },
           "attributes": {
             "$ref": "#/components/schemas/API Attributes"
           },
@@ -1540,44 +1592,23 @@
             "type": "object",
             "additionalProperties": {
               "type": "string"
-            }
+            },
+            "readOnly": true
           }
         },
         "description": "Core API entity used to describe an API"
       },
-      "Link": {
-        "type": "object",
-        "properties": {
-          "links": {
-            "type": "object",
-            "additionalProperties": {
-              "type": "string"
-            }
-          },
-          "data": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "additionalProperties": {
-                "type": "string"
-              }
-            }
-          },
-          "self": {
-            "type": "string",
-            "format": "uri",
-            "writeOnly": true
-          }
-        }
-      },
-      "ServerResponse": {
-        "type": "object"
-      },
       "API Version Attributes": {
         "type": "object",
         "properties": {
+          "version": {
+            "type": "string",
+            "description": "URL to the main API code repository",
+            "example": "http//github/helloworld"
+          },
           "created": {
             "type": "string",
+            "description": "Date created",
             "format": "date-time"
           }
         },
@@ -1607,7 +1638,8 @@
             "type": "object",
             "additionalProperties": {
               "type": "string"
-            }
+            },
+            "readOnly": true
           }
         },
         "description": "Core version entity used to describe an API version"
@@ -1638,14 +1670,12 @@
           "attributes": {
             "$ref": "#/components/schemas/Classification Attributes"
           },
-          "nid": {
-            "type": "string"
-          },
           "links": {
             "type": "object",
             "additionalProperties": {
               "type": "string"
-            }
+            },
+            "readOnly": true
           }
         },
         "description": "Connection object between the taxonomy and an API"
@@ -1661,6 +1691,31 @@
           }
         },
         "description": "Object attributes. This object must be used when doing a POST or PUT"
+      },
+      "Link": {
+        "type": "object",
+        "properties": {
+          "links": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "string"
+              }
+            }
+          },
+          "self": {
+            "type": "string",
+            "format": "uri",
+            "writeOnly": true
+          }
+        }
       },
       "Metadata Attributes": {
         "type": "object",
@@ -1725,13 +1780,96 @@
             "type": "object",
             "additionalProperties": {
               "type": "object"
-            }
+            },
+            "readOnly": true
           },
           "attributes": {
             "$ref": "#/components/schemas/Metadata Attributes"
           }
         },
         "description": "Object describing the metadata collection for each API version"
+      },
+      "Taxonomy Collection": {
+        "required": [
+          "id",
+          "type"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique Object ID",
+            "example": "ID1"
+          },
+          "type": {
+            "type": "string",
+            "description": "Object type definition",
+            "default": "taxonomy:element"
+          },
+          "attributes": {
+            "$ref": "#/components/schemas/Taxonomy Collection Attributes"
+          },
+          "links": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "readOnly": true
+          }
+        },
+        "description": "Core taxonomy collection entity used to describe a taxonomy collection"
+      },
+      "Taxonomy Collection Attributes": {
+        "required": [
+          "description",
+          "name",
+          "nid"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Taxonomy name",
+            "example": "My First Taxonomy"
+          },
+          "nid": {
+            "type": "string",
+            "description": "NID identifier (alphanum) 0*30(ldh) (alphanum)",
+            "example": "apimap"
+          },
+          "description": {
+            "type": "string",
+            "description": "Short taxonomy description",
+            "example": "This taxonomy is used to classify My Organization APIs"
+          }
+        },
+        "description": "Object attributes. This object must be used when doing a POST or PUT"
+      },
+      "Taxonomy Attributes": {
+        "type": "object",
+        "properties": {
+          "urn": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "classification",
+              "reference",
+              "unknown"
+            ]
+          }
+        },
+        "description": "Object attributes. This object must be used when doing a POST or PUT"
       },
       "Classification Tree Item Attributes": {
         "required": [
@@ -1763,149 +1901,11 @@
             "type": "object",
             "additionalProperties": {
               "type": "string"
-            }
+            },
+            "readOnly": true
           }
         },
         "description": "Classification tree item used to list the taxonomy relations"
-      },
-      "Statistics Collection Item": {
-        "required": [
-          "id",
-          "type"
-        ],
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "description": "Unique Object ID",
-            "example": "ID1"
-          },
-          "type": {
-            "type": "string",
-            "description": "Object type definition",
-            "default": "statistics:element"
-          },
-          "attributes": {
-            "$ref": "#/components/schemas/Statistics Collection Item Attributes"
-          },
-          "links": {
-            "type": "object",
-            "additionalProperties": {
-              "type": "string"
-            }
-          }
-        }
-      },
-      "Statistics Collection Item Attributes": {
-        "type": "object",
-        "properties": {
-          "description": {
-            "type": "string"
-          }
-        },
-        "description": "Object attributes. This object must be used when doing a POST or PUT"
-      },
-      "Taxonomy Collection": {
-        "required": [
-          "id",
-          "type"
-        ],
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "description": "Unique Object ID",
-            "example": "ID1"
-          },
-          "type": {
-            "type": "string",
-            "description": "Object type definition",
-            "default": "taxonomy:element"
-          },
-          "relationships": {
-            "type": "object",
-            "additionalProperties": {
-              "$ref": "#/components/schemas/Link"
-            }
-          },
-          "attributes": {
-            "$ref": "#/components/schemas/Taxonomy Collection Attributes"
-          },
-          "links": {
-            "type": "object",
-            "additionalProperties": {
-              "type": "string"
-            }
-          }
-        },
-        "description": "Core taxonomy collection entity used to describe a taxonomy collection"
-      },
-      "Taxonomy Collection Attributes": {
-        "type": "object",
-        "properties": {
-          "name": {
-            "type": "string"
-          },
-          "nid": {
-            "type": "string"
-          },
-          "description": {
-            "type": "string"
-          }
-        },
-        "description": "Object attributes. This object must be used when doing a POST or PUT"
-      },
-      "Taxonomy Tree Item Attributes": {
-        "type": "object",
-        "properties": {
-          "urn": {
-            "type": "string"
-          },
-          "url": {
-            "type": "string"
-          },
-          "title": {
-            "type": "string"
-          },
-          "description": {
-            "type": "string"
-          },
-          "entities": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/TaxonomyTreeDataRestEntity"
-            }
-          }
-        },
-        "description": "Object attributes. This object must be used when doing a POST or PUT"
-      },
-      "TaxonomyTreeDataRestEntity": {
-        "required": [
-          "id",
-          "type"
-        ],
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "description": "Unique Object ID",
-            "example": "ID1"
-          },
-          "type": {
-            "type": "string",
-            "description": "Object type definition",
-            "default": "taxonomy:element"
-          },
-          "attributes": {
-            "$ref": "#/components/schemas/Taxonomy Tree Item Attributes"
-          },
-          "links": {
-            "type": "object",
-            "additionalProperties": {
-              "type": "string"
-            }
-          }
-        }
       }
     }
   }

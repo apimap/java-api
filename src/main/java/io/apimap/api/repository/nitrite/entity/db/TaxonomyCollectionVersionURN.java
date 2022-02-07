@@ -24,9 +24,10 @@ import org.dizitart.no2.objects.Id;
 import org.dizitart.no2.objects.Index;
 import org.dizitart.no2.objects.Indices;
 
+import static io.apimap.api.repository.ITaxonomyRepository.DEFAULT_TAXONOMY_TYPE;
+
 @Indices({
-        @Index(value = "urn", type = IndexType.Unique),
-        @Index(value = "url", type = IndexType.Unique)
+        @Index(value = "urn", type = IndexType.Unique)
 })
 public class TaxonomyCollectionVersionURN {
     protected String url;
@@ -35,6 +36,8 @@ public class TaxonomyCollectionVersionURN {
     protected String nid;
     protected String version;
     protected String urn;
+    protected String type;
+
     @Id
     private String id;
 
@@ -46,13 +49,15 @@ public class TaxonomyCollectionVersionURN {
                                         String title,
                                         String description,
                                         String nid,
-                                        String version) {
+                                        String version,
+                                        String type) {
         this.urn = urn;
         this.url = url;
         this.title = title;
         this.description = description;
         this.version = version;
         this.nid = nid;
+        this.type = type == null ? DEFAULT_TAXONOMY_TYPE : type;
         this.id = createId(urn, version);
     }
 
@@ -84,6 +89,10 @@ public class TaxonomyCollectionVersionURN {
         return title;
     }
 
+    public String getType() {
+        return type;
+    }
+
     protected String createId(String urn, String version) {
         return urn + "#" + version;
     }
@@ -91,13 +100,14 @@ public class TaxonomyCollectionVersionURN {
     @Override
     public String toString() {
         return "TaxonomyCollectionVersionURN{" +
-                "id='" + id + '\'' +
-                ", url='" + url + '\'' +
+                "url='" + url + '\'' +
                 ", title='" + title + '\'' +
                 ", description='" + description + '\'' +
                 ", nid='" + nid + '\'' +
                 ", version='" + version + '\'' +
                 ", urn='" + urn + '\'' +
+                ", type='" + type + '\'' +
+                ", id='" + id + '\'' +
                 '}';
     }
 }

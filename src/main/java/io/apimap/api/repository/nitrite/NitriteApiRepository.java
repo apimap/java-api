@@ -80,7 +80,7 @@ public class NitriteApiRepository extends NitriteRepository implements IApiRepos
                     apiVersion,
                     metadata
             );
-        }).collect(Collectors.toList()));
+        }).collect(Collectors.toList()), null);
     }
 
     public ApiCollection all(List<QueryFilter> filters) {
@@ -116,13 +116,13 @@ public class NitriteApiRepository extends NitriteRepository implements IApiRepos
         }
 
         if (apiIds.isEmpty()) {
-            return new ApiCollection(Collections.emptyList());
+            return new ApiCollection(Collections.emptyList(), classificationCollection != null ? classificationCollection.getParents() : null);
         }
 
-        return filteredCollection(apiIds);
+        return filteredCollection(apiIds, classificationCollection != null ? classificationCollection.getParents() : null);
     }
 
-    public ApiCollection filteredCollection(List<String> ids) {
+    public ApiCollection filteredCollection(List<String> ids, List<String> parents) {
         ObjectRepository<Api> repository = database.getRepository(Api.class);
         Object[] id = ids.toArray();
         Cursor<Api> cursor = repository.find(in("id", id));
@@ -139,7 +139,7 @@ public class NitriteApiRepository extends NitriteRepository implements IApiRepos
                     apiVersion,
                     metadata
             );
-        }).collect(Collectors.toList()));
+        }).collect(Collectors.toList()), parents);
     }
 
     public Optional<Api> add(Api entity) {

@@ -28,19 +28,26 @@ import java.util.Optional;
 
 public class ApiCollection {
     private final List<Item> items;
+    private final List<String> parents;
 
-    public ApiCollection(List<Item> items) {
+    public ApiCollection(List<Item> items, List<String> parents) {
         this.items = items;
+        this.parents = parents;
     }
 
     public List<Item> getItems() {
         return items;
     }
 
+    public List<String> getParents() {
+        return parents;
+    }
+
     @Override
     public String toString() {
         return "ApiCollection{" +
                 "items=" + items +
+                ", parents=" + parents +
                 '}';
     }
 

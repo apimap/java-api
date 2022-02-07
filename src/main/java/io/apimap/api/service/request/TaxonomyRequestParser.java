@@ -19,6 +19,8 @@ under the License.
 
 package io.apimap.api.service.request;
 
+import com.fasterxml.jackson.databind.JavaType;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.apimap.api.repository.nitrite.entity.db.TaxonomyCollection;
 import io.apimap.api.repository.nitrite.entity.db.TaxonomyCollectionVersion;
 import io.apimap.api.repository.nitrite.entity.db.TaxonomyCollectionVersionURN;
@@ -26,9 +28,12 @@ import io.apimap.api.rest.TaxonomyCollectionDataRestEntity;
 import io.apimap.api.rest.TaxonomyDataRestEntity;
 import io.apimap.api.rest.TaxonomyTreeDataRestEntity;
 import io.apimap.api.rest.TaxonomyVersionCollectionDataRestEntity;
+import io.apimap.api.rest.jsonapi.JsonApiRestRequestWrapper;
 import io.apimap.api.utils.RequestUtil;
+import org.springframework.core.ParameterizedTypeReference;
 
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class TaxonomyRequestParser extends RequestParser<TaxonomyRequestParser> {
 
@@ -43,17 +48,22 @@ public class TaxonomyRequestParser extends RequestParser<TaxonomyRequestParser> 
                 RestEntity.getTitle(),
                 RestEntity.getDescription(),
                 "",
-                RestEntity.getTaxonomyVersion()
+                RestEntity.getTaxonomyVersion(),
+                RestEntity.getReferenceType().toString()
         );
     }
 
-    public Optional<TaxonomyCollectionVersionURN> taxonomyTree() {
+    public Optional<TaxonomyCollectionVersionURN> dataRestEntity() {
         final String taxonomyVersion = RequestUtil.taxonomyVersionFromRequest(request);
         final String taxonomyNid = RequestUtil.taxonomyNidFromRequest(request);
 
-        final TaxonomyTreeDataRestEntity entity = request.bodyToMono(TaxonomyTreeDataRestEntity.class).block();
+        JavaType type = new ObjectMapper().getTypeFactory().constructParametricType(JsonApiRestRequestWrapper.class, TaxonomyDataRestEntity.class);
+        AtomicReference<TaxonomyDataRestEntity> taxonomyDataRestEntity = new AtomicReference<>();
+        request.bodyToMono(ParameterizedTypeReference.forType(type))
+                .doOnNext(result -> taxonomyDataRestEntity.set((TaxonomyDataRestEntity) ((JsonApiRestRequestWrapper) result).getData()))
+                .subscribe();
 
-        if (entity == null) {
+        if (taxonomyDataRestEntity.get() == null) {
             return Optional.empty();
         }
 
@@ -62,40 +72,79 @@ public class TaxonomyRequestParser extends RequestParser<TaxonomyRequestParser> 
         }
 
         return Optional.of(new TaxonomyCollectionVersionURN(
-                entity.getUrn(),
-                entity.getUrl(),
-                entity.getTitle(),
-                entity.getDescription(),
+                taxonomyDataRestEntity.get().getUrn(),
+                taxonomyDataRestEntity.get().getUrl(),
+                taxonomyDataRestEntity.get().getTitle(),
+                taxonomyDataRestEntity.get().getDescription(),
                 taxonomyNid,
-                taxonomyVersion
+                taxonomyVersion,
+                taxonomyDataRestEntity.get().getReferenceType().getValue()
+        ));
+    }
+
+    public Optional<TaxonomyCollectionVersionURN> taxonomyTree() {
+        final String taxonomyVersion = RequestUtil.taxonomyVersionFromRequest(request);
+        final String taxonomyNid = RequestUtil.taxonomyNidFromRequest(request);
+
+        JavaType type = new ObjectMapper().getTypeFactory().constructParametricType(JsonApiRestRequestWrapper.class, TaxonomyTreeDataRestEntity.class);
+        AtomicReference<TaxonomyTreeDataRestEntity> taxonomyTreeDataRestEntity = new AtomicReference<>();
+        request.bodyToMono(ParameterizedTypeReference.forType(type))
+                .doOnNext(result -> taxonomyTreeDataRestEntity.set((TaxonomyTreeDataRestEntity) ((JsonApiRestRequestWrapper) result).getData()))
+                .subscribe();
+
+        if (taxonomyTreeDataRestEntity.get() == null) {
+            return Optional.empty();
+        }
+
+        if (taxonomyVersion.equals("latest")) {
+            return Optional.empty();
+        }
+
+        return Optional.of(new TaxonomyCollectionVersionURN(
+                taxonomyTreeDataRestEntity.get().getUrn(),
+                taxonomyTreeDataRestEntity.get().getUrl(),
+                taxonomyTreeDataRestEntity.get().getTitle(),
+                taxonomyTreeDataRestEntity.get().getDescription(),
+                taxonomyNid,
+                taxonomyVersion,
+                null
         ));
     }
 
     public Optional<TaxonomyCollectionVersion> taxonomyVersionCollection() {
         final String taxonomyNid = RequestUtil.taxonomyNidFromRequest(request);
-        final TaxonomyVersionCollectionDataRestEntity entity = request.bodyToMono(TaxonomyVersionCollectionDataRestEntity.class).block();
 
-        if (entity == null) {
+        JavaType type = new ObjectMapper().getTypeFactory().constructParametricType(JsonApiRestRequestWrapper.class, TaxonomyVersionCollectionDataRestEntity.class);
+        AtomicReference<TaxonomyVersionCollectionDataRestEntity> taxonomyVersionCollectionDataRestEntity = new AtomicReference<>();
+        request.bodyToMono(ParameterizedTypeReference.forType(type))
+                .doOnNext(result -> taxonomyVersionCollectionDataRestEntity.set((TaxonomyVersionCollectionDataRestEntity) ((JsonApiRestRequestWrapper) result).getData()))
+                .subscribe();
+
+        if (taxonomyVersionCollectionDataRestEntity.get() == null) {
             return Optional.empty();
         }
 
         return Optional.of(new TaxonomyCollectionVersion(
                 taxonomyNid,
-                entity.getVersion()
+                taxonomyVersionCollectionDataRestEntity.get().getVersion()
         ));
     }
 
     public Optional<TaxonomyCollection> taxonomyCollection() {
-        TaxonomyCollectionDataRestEntity taxonomyCollectionDataRestEntity = request.bodyToMono(TaxonomyCollectionDataRestEntity.class).block();
+        JavaType type = new ObjectMapper().getTypeFactory().constructParametricType(JsonApiRestRequestWrapper.class, TaxonomyCollectionDataRestEntity.class);
+        AtomicReference<TaxonomyCollectionDataRestEntity> taxonomyCollectionDataRestEntity = new AtomicReference<>();
+        request.bodyToMono(ParameterizedTypeReference.forType(type))
+                .doOnNext(result -> taxonomyCollectionDataRestEntity.set((TaxonomyCollectionDataRestEntity) ((JsonApiRestRequestWrapper) result).getData()))
+                .subscribe();
 
-        if (taxonomyCollectionDataRestEntity == null) {
+        if (taxonomyCollectionDataRestEntity.get() == null) {
             return Optional.empty();
         }
 
         return Optional.of(new TaxonomyCollection(
-                taxonomyCollectionDataRestEntity.getName(),
-                taxonomyCollectionDataRestEntity.getDescription(),
-                taxonomyCollectionDataRestEntity.getNid()
+                taxonomyCollectionDataRestEntity.get().getName(),
+                taxonomyCollectionDataRestEntity.get().getDescription(),
+                taxonomyCollectionDataRestEntity.get().getNid()
         ));
     }
 }

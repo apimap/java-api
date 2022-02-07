@@ -21,7 +21,6 @@ package io.apimap.api.repository.nitrite;
 
 import io.apimap.api.configuration.NitriteConfiguration;
 import io.apimap.api.repository.IMetadataRepository;
-import io.apimap.api.repository.nitrite.entity.db.Api;
 import io.apimap.api.repository.nitrite.entity.db.Metadata;
 import io.apimap.api.repository.nitrite.entity.query.MetadataQueryFilter;
 import io.apimap.api.repository.nitrite.entity.query.QueryFilter;

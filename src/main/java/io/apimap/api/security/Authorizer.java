@@ -19,6 +19,7 @@ under the License.
 
 package io.apimap.api.security;
 
+import io.apimap.api.configuration.AccessConfiguration;
 import io.apimap.api.repository.nitrite.NitriteApiRepository;
 import io.apimap.api.repository.nitrite.NitriteTaxonomyRepository;
 import io.apimap.api.repository.nitrite.entity.db.Api;
@@ -37,11 +38,14 @@ import java.util.Optional;
 public class Authorizer {
     protected NitriteApiRepository nitriteApiRepository;
     protected NitriteTaxonomyRepository nitriteTaxonomyRepository;
+    protected AccessConfiguration accessConfiguration;
 
     public Authorizer(NitriteApiRepository nitriteApiRepository,
-                      NitriteTaxonomyRepository nitriteTaxonomyRepository) {
+                      NitriteTaxonomyRepository nitriteTaxonomyRepository,
+                      AccessConfiguration accessConfiguration) {
         this.nitriteApiRepository = nitriteApiRepository;
         this.nitriteTaxonomyRepository = nitriteTaxonomyRepository;
+        this.accessConfiguration = accessConfiguration;
     }
 
     /*
@@ -96,6 +100,24 @@ public class Authorizer {
             }
 
             return false;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    /*
+    Is the token valid to get api/* zip resources?
+     */
+    public boolean isValidAccessToken(ServerRequest request) {
+        try {
+            if (request == null)
+                return false;
+
+            final String token = RequestUtil.bearerTokenFromRequest(request);
+            if (token == null || token.isEmpty())
+                return false;
+
+            return accessConfiguration.getToken().equals(token);
         } catch (Exception e) {
             return false;
         }

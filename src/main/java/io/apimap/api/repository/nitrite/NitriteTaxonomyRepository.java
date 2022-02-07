@@ -27,6 +27,7 @@ import io.apimap.api.repository.nitrite.entity.db.TaxonomyCollectionVersionURN;
 import io.apimap.api.repository.nitrite.entity.support.TaxonomyCollectionCollection;
 import io.apimap.api.repository.nitrite.entity.support.TaxonomyCollectionVersionCollection;
 import io.apimap.api.repository.nitrite.entity.support.TaxonomyCollectionVersionURNCollection;
+import io.apimap.api.rest.TaxonomyDataRestEntity;
 import org.dizitart.no2.FindOptions;
 import org.dizitart.no2.SortOrder;
 import org.dizitart.no2.objects.Cursor;
@@ -173,6 +174,13 @@ public class NitriteTaxonomyRepository extends NitriteRepository implements ITax
     public Optional<TaxonomyCollectionVersionURN> addTaxonomyCollectionVersionURN(TaxonomyCollectionVersionURN entity) {
         ObjectRepository<TaxonomyCollectionVersionURN> repository = database.getRepository(TaxonomyCollectionVersionURN.class);
         return Optional.ofNullable(repository.getById(repository.insert(entity).iterator().next()));
+    }
+
+    public Optional<TaxonomyCollectionVersionURN> getTaxonomyCollectionVersionURN(String url, TaxonomyDataRestEntity.ReferenceType type) {
+        ObjectRepository<TaxonomyCollectionVersionURN> repository = database.getRepository(TaxonomyCollectionVersionURN.class);
+        return Optional.ofNullable(repository.find(and(
+                eq("url", url),
+                eq("type", type.getValue()))).firstOrDefault());
     }
 
     public Optional<TaxonomyCollectionVersionURN> getTaxonomyCollectionVersionURN(String urn, String taxonomyVersion) {
