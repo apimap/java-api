@@ -38,6 +38,7 @@ import reactor.core.publisher.Mono;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static java.util.stream.Collectors.groupingBy;
@@ -67,8 +68,9 @@ public class StatisticsService {
         final ArrayList<StatisticsCollection> allStatisticsCollectionList = new ArrayList<>();
         allStatisticsCollectionList.add(new StatisticsCollection("apis", "Number of APIs"));
         allStatisticsCollectionList.add(new StatisticsCollection("taxonomies", "Number of taxonomies"));
-        allStatisticsCollectionList.add(new StatisticsCollection("interface-specification", "Number of APIs"));
-        allStatisticsCollectionList.add(new StatisticsCollection("architecture-layer", "Number of APIs"));
+        allStatisticsCollectionList.add(new StatisticsCollection("interface-specification", "Interface specification"));
+        allStatisticsCollectionList.add(new StatisticsCollection("architecture-layer", "Architecture layer"));
+        allStatisticsCollectionList.add(new StatisticsCollection("apis-history", "Creation date of APIs"));
         final StatisticsCollectionCollection statisticsCollectionCollection = new StatisticsCollectionCollection(allStatisticsCollectionList);
 
         return responseBuilder
@@ -129,31 +131,46 @@ public class StatisticsService {
                 .okResource();
     }
 
-    private List<StatisticsValue> interfaceSpecificationsStatistics() {
-        final List<StatisticsValue> interfaceSpecificationStream = apiRepository.all().getItems()
-                .stream()
-                .map(api -> api.getMetadata().isPresent() ? api.getMetadata().get() : null)
-                .filter(Objects::nonNull)
-                .collect(groupingBy(Metadata::getInterfaceSpecification, Collectors.counting()))
-                .entrySet()
-                .stream()
-                .map(e -> new StatisticsValue(e.getKey(), e.getValue().toString()))
-                .collect(toList());
+    @NotNull
+    public Mono<ServerResponse> getApiCreatedStatistics(ServerRequest request) {
+        StatisticsResponseBuilder responseBuilder = StatisticsResponseBuilder.builder(apimapConfiguration);
 
-        return interfaceSpecificationStream;
+        final StatisticsValueCollection statisticsValueCollection = new StatisticsValueCollection(apiCreatedStatistics());
+
+        return responseBuilder
+                .withResourceURI(request.uri())
+                .withStatisticsValueCollectionBody(statisticsValueCollection)
+                .okResource();
+    }
+
+    private List<StatisticsValue> interfaceSpecificationsStatistics() {
+        return getStatisticsValues(Metadata::getInterfaceSpecification);
     }
 
     private List<StatisticsValue> architectureLayerStatistics() {
-        final List<StatisticsValue> interfaceSpecificationStream = apiRepository.all().getItems()
+        return getStatisticsValues(Metadata::getArchitectureLayer);
+    }
+
+    private List<StatisticsValue> getStatisticsValues( Function<Metadata,String> groupingBy) {
+        return apiRepository.all().getItems()
                 .stream()
                 .map(api -> api.getMetadata().isPresent() ? api.getMetadata().get() : null)
                 .filter(Objects::nonNull)
-                .collect(groupingBy(Metadata::getArchitectureLayer, Collectors.counting()))
+                .collect(groupingBy(groupingBy, Collectors.counting()))
                 .entrySet()
                 .stream()
                 .map(e -> new StatisticsValue(e.getKey(), e.getValue().toString()))
                 .collect(toList());
-
-        return interfaceSpecificationStream;
     }
+
+    private List<StatisticsValue> apiCreatedStatistics() {
+        return apiRepository.all().getItems()
+                .stream()
+                .map(api -> api.getMetadata().isPresent() ? api.getMetadata().get() : null)
+                .filter(Objects::nonNull)
+                .map(metadata -> new StatisticsValue(metadata.getName(), metadata.getCreated().toString()))
+                .collect(toList());
+    }
+
+
 }
