@@ -49,6 +49,7 @@ public class StatisticsRouter {
     public static final String TAXONOMIES_COUNT_STATISTICS_PATH = ROOT_PATH + "/taxonomies";
     public static final String INTERFACE_SPECIFICATION_STATISTICS_PATH = ROOT_PATH + "/interface-specification";
     public static final String ARCHITECTURE_LAYER_STATISTICS_PATH = ROOT_PATH + "/architecture-layer";
+    public static final String API_CREATED_STATISTICS_PATH = ROOT_PATH + "/apis-history";
 
     /*
      /statistics
@@ -131,6 +132,7 @@ public class StatisticsRouter {
                 .andRoute(GET(API_COUNT_STATISTICS_PATH), service::getApiCountStatistics)
                 .andRoute(GET(TAXONOMIES_COUNT_STATISTICS_PATH), service::getTaxonomiesStatistics)
                 .andRoute(GET(INTERFACE_SPECIFICATION_STATISTICS_PATH), service::getInterfaceSpecificationStatistics)
-                .andRoute(GET(ARCHITECTURE_LAYER_STATISTICS_PATH), service::getArchitectureLayerStatistics);
+                .andRoute(GET(ARCHITECTURE_LAYER_STATISTICS_PATH), service::getArchitectureLayerStatistics)
+                .andRoute(GET(API_CREATED_STATISTICS_PATH), service::getApiCreatedStatistics);
     }
 }

@@ -3,6 +3,7 @@ Changelog
 
 | Date        | Description                                                                                                     |
 |-------------|-----------------------------------------------------------------------------------------------------------------|
+| 23.3.2022   | Added metrics exposed in Spring endpoint /actuator. Log usage as INFO messages. Added API endpoint /statistics/apis-history to return information of API history (API name and created data).|
 | 25.02.2022 | Updated REST library version to fix element type bug |
 | 7.2.2022    | Added linking between old / new taxonomy urns. Added token to zip-file content dump. Fixed urn matching problem |
 | 13.12.2021  | Fixed Log4j zero day                                                                                            |
