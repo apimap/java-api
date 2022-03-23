@@ -7,7 +7,7 @@
       "name": "Apache 2.0",
       "url": "https://www.apache.org/licenses/LICENSE-2.0"
     },
-    "version": "1.1.1"
+    "version": "1.2.0"
   },
   "servers": [
     {
@@ -38,96 +38,6 @@
     }
   ],
   "paths": {
-    "/api": {
-      "get": {
-        "tags": [
-          "api-rest-controller",
-          "API"
-        ],
-        "summary": "Get all APIs registered in the system.",
-        "operationId": "allApis_1",
-        "parameters": [
-          {
-            "name": "filter[metadata]",
-            "in": "query",
-            "description": "Metadata filter built with the following expression: filter[metadata][\u003cfilter name\u003e]\u003d\u003cfilter value\u003e. If more than one value use , to separate the values.",
-            "example": "filter[metadata][visibility]\u003dPublic"
-          },
-          {
-            "name": "filter[classification]",
-            "in": "query",
-            "description": "Classification filter built with the following expression: filter[classification][\u003ctaxonomy name\u003e]\u003d\u003cclassification urn\u003e. If more than one value use , to separate the values.",
-            "example": "filter[classification][apimap]\u003durn:apimap:89"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "List of all available APIs",
-            "content": {
-              "application/zip": {
-                "schema": {
-                  "$ref": "#/components/schemas/DataBuffer"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "oneOf": [
-                    {
-                      "$ref": "#/components/schemas/ServerResponse"
-                    },
-                    {
-                      "type": "array",
-                      "items": {
-                        "$ref": "#/components/schemas/API Collection Item"
-                      }
-                    }
-                  ]
-                }
-              }
-            }
-          }
-        }
-      },
-      "post": {
-        "tags": [
-          "API"
-        ],
-        "summary": "Create a new API.",
-        "description": "An API consist of a name, connected with multiple versions. Each version is then connected to the metadata and classifications. IMPORTANT: Note that upon creation this will return a token. This token is linked with the collection and must be used as a Bearer token with all following request.It is not possible to recreate this token, keep it in a safe place.",
-        "operationId": "createApi",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/API Attributes"
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": "API created successfully",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/Json:api Container Object"
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "Conflict, a API with the same name already exists",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/Json:api Container Object"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/statistics": {
       "get": {
         "tags": [
@@ -241,6 +151,83 @@
                   "items": {
                     "type": "string"
                   }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api": {
+      "get": {
+        "tags": [
+          "API"
+        ],
+        "summary": "Get all APIs registered in the system.",
+        "operationId": "allApis",
+        "parameters": [
+          {
+            "name": "filter[metadata]",
+            "in": "query",
+            "description": "Metadata filter built with the following expression: filter[metadata][\u003cfilter name\u003e]\u003d\u003cfilter value\u003e. If more than one value use , to separate the values.",
+            "example": "filter[metadata][visibility]\u003dPublic"
+          },
+          {
+            "name": "filter[classification]",
+            "in": "query",
+            "description": "Classification filter built with the following expression: filter[classification][\u003ctaxonomy name\u003e]\u003d\u003cclassification urn\u003e. If more than one value use , to separate the values.",
+            "example": "filter[classification][apimap]\u003durn:apimap:89"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of all available APIs",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/API Collection Item"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "API"
+        ],
+        "summary": "Create a new API.",
+        "description": "An API consist of a name, connected with multiple versions. Each version is then connected to the metadata and classifications. IMPORTANT: Note that upon creation this will return a token. This token is linked with the collection and must be used as a Bearer token with all following request.It is not possible to recreate this token, keep it in a safe place.",
+        "operationId": "createApi",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/API Attributes"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "API created successfully",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Json:api Container Object"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict, a API with the same name already exists",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Json:api Container Object"
                 }
               }
             }
@@ -1353,9 +1340,6 @@
   },
   "components": {
     "schemas": {
-      "DataBuffer": {
-        "type": "object"
-      },
       "Statistics Collection Item": {
         "required": [
           "id",
@@ -1469,9 +1453,6 @@
           }
         },
         "description": "Object attributes. This object must be used when doing a POST or PUT"
-      },
-      "ServerResponse": {
-        "type": "object"
       },
       "API Attributes": {
         "required": [
@@ -1597,6 +1578,9 @@
           }
         },
         "description": "Core API entity used to describe an API"
+      },
+      "ServerResponse": {
+        "type": "object"
       },
       "API Version Attributes": {
         "type": "object",
