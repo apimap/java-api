@@ -24,8 +24,8 @@ import io.apimap.api.repository.IClassificationRepository;
 import io.apimap.api.repository.nitrite.entity.db.ApiClassification;
 import io.apimap.api.repository.nitrite.entity.db.Metadata;
 import io.apimap.api.repository.nitrite.entity.db.TaxonomyCollectionVersionURN;
-import io.apimap.api.repository.nitrite.entity.query.ClassificationQueryFilter;
-import io.apimap.api.repository.nitrite.entity.query.QueryFilter;
+import io.apimap.api.repository.nitrite.entity.query.ClassificationFilter;
+import io.apimap.api.repository.nitrite.entity.query.Filter;
 import io.apimap.api.repository.nitrite.entity.support.ApiCollection;
 import io.apimap.api.repository.nitrite.entity.support.ClassificationCollection;
 import io.apimap.api.repository.nitrite.entity.support.ClassificationTreeCollection;
@@ -132,12 +132,12 @@ public class NitriteClassificationRepository extends NitriteRepository implement
         repository.remove(eq("apiId", apiId));
     }
 
-    public ClassificationCollection queryFilters(List<QueryFilter> filters) {
+    public ClassificationCollection queryFilters(List<Filter> filters) {
         ArrayList<String> urls = filters
                 .stream()
-                .filter(e -> e instanceof ClassificationQueryFilter)
+                .filter(e -> e.type() == Filter.TYPE.CLASSIFICATION)
                 .map(e -> {
-                    Optional<TaxonomyCollectionVersionURN> data = nitriteTaxonomyRepository.getTaxonomyCollectionVersionURN(((ClassificationQueryFilter) e).getValue(), TAXONOMY_VERSION);
+                    Optional<TaxonomyCollectionVersionURN> data = nitriteTaxonomyRepository.getTaxonomyCollectionVersionURN(((ClassificationFilter) e).getValue(), TAXONOMY_VERSION);
                     return data.map(TaxonomyCollectionVersionURN::getUrl).orElse(null);
                 })
                 .filter(Objects::nonNull)
@@ -182,7 +182,8 @@ public class NitriteClassificationRepository extends NitriteRepository implement
             classification.getItems().forEach(f -> {
                 Optional<TaxonomyCollectionVersionURN> taxonomyCollectionVersionURN = nitriteTaxonomyRepository.getTaxonomyCollectionVersionURN(f.getTaxonomyUrn(), f.getTaxonomyVersion());
 
-                if(taxonomyCollectionVersionURN.get().getType().equals(TaxonomyDataRestEntity.ReferenceType.REFERENCE.getValue())){
+                if(taxonomyCollectionVersionURN.isPresent()
+                    && taxonomyCollectionVersionURN.get().getType().equals(TaxonomyDataRestEntity.ReferenceType.REFERENCE.getValue())){
                     taxonomyCollectionVersionURN = nitriteTaxonomyRepository.getTaxonomyCollectionVersionURN(
                             taxonomyCollectionVersionURN.get().getUrl(),
                             TaxonomyDataRestEntity.ReferenceType.CLASSIFICATION
@@ -190,7 +191,7 @@ public class NitriteClassificationRepository extends NitriteRepository implement
                 }
 
                 if (parentTaxonomyCollectionVersionURN.isPresent()) {
-                    if (taxonomyCollectionVersionURN.get().getUrl().startsWith(parentTaxonomyCollectionVersionURN.get().getUrl())) {
+                    if (taxonomyCollectionVersionURN.isPresent() && taxonomyCollectionVersionURN.get().getUrl().startsWith(parentTaxonomyCollectionVersionURN.get().getUrl())) {
                         if (treeCollection.containsKey(taxonomyCollectionVersionURN.get().getId())) {
                             ClassificationTreeCollection tr = treeCollection.get(taxonomyCollectionVersionURN.get().getId());
                             tr.getItems().add(e.getMetadata().get());
@@ -207,24 +208,46 @@ public class NitriteClassificationRepository extends NitriteRepository implement
                         }
                     }
                 } else {
-                    Optional<TaxonomyCollectionVersionURN> finalTaxonomyCollectionVersionURN = taxonomyCollectionVersionURN;
-                    if(apiCollection.getParents().stream().anyMatch(z -> finalTaxonomyCollectionVersionURN.get().getUrl().startsWith(z))){
-                        if (treeCollection.containsKey(taxonomyCollectionVersionURN.get().getId())) {
-                            ClassificationTreeCollection tr = treeCollection.get(taxonomyCollectionVersionURN.get().getId());
-                            tr.getItems().add(e.getMetadata().get());
-                        } else {
-                            if(taxonomyCollectionVersionURN.get().getId() != null) {
-                                ClassificationTreeCollection collection = new ClassificationTreeCollection();
-                                collection.setTaxonomy(taxonomyCollectionVersionURN.get());
+                    if(taxonomyCollectionVersionURN.isPresent()){
+                        Optional<TaxonomyCollectionVersionURN> finalTaxonomyCollectionVersionURN = taxonomyCollectionVersionURN;
+                        if(apiCollection.getParents() != null
+                                && apiCollection.getParents().stream().anyMatch(z -> finalTaxonomyCollectionVersionURN.get().getUrl().startsWith(z))) {
+                            if (treeCollection.containsKey(taxonomyCollectionVersionURN.get().getId())) {
+                                ClassificationTreeCollection tr = treeCollection.get(taxonomyCollectionVersionURN.get().getId());
+                                tr.getItems().add(e.getMetadata().get());
+                            } else {
+                                if (taxonomyCollectionVersionURN.get().getId() != null) {
+                                    ClassificationTreeCollection collection = new ClassificationTreeCollection();
+                                    collection.setTaxonomy(taxonomyCollectionVersionURN.get());
 
-                                ArrayList<Metadata> items = new ArrayList<>();
-                                if(e.getMetadata().isPresent()) {
-                                    items.add(e.getMetadata().get());
+                                    ArrayList<Metadata> items = new ArrayList<>();
+                                    if (e.getMetadata().isPresent()) {
+                                        items.add(e.getMetadata().get());
+                                    }
+
+                                    collection.setItems(items);
+
+                                    treeCollection.put(taxonomyCollectionVersionURN.get().getId(), collection);
                                 }
+                            }
+                        }else{
+                            if (treeCollection.containsKey(taxonomyCollectionVersionURN.get().getId())) {
+                                ClassificationTreeCollection tr = treeCollection.get(taxonomyCollectionVersionURN.get().getId());
+                                tr.getItems().add(e.getMetadata().get());
+                            } else {
+                                if (taxonomyCollectionVersionURN.get().getId() != null) {
+                                    ClassificationTreeCollection collection = new ClassificationTreeCollection();
+                                    collection.setTaxonomy(taxonomyCollectionVersionURN.get());
 
-                                collection.setItems(items);
+                                    ArrayList<Metadata> items = new ArrayList<>();
+                                    if (e.getMetadata().isPresent()) {
+                                        items.add(e.getMetadata().get());
+                                    }
 
-                                treeCollection.put(taxonomyCollectionVersionURN.get().getId(), collection);
+                                    collection.setItems(items);
+
+                                    treeCollection.put(taxonomyCollectionVersionURN.get().getId(), collection);
+                                }
                             }
                         }
                     }

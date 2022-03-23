@@ -31,6 +31,7 @@ import io.apimap.api.rest.MetadataDataRestEntity;
 import io.apimap.api.rest.jsonapi.JsonApiRelationships;
 import io.apimap.api.rest.jsonapi.JsonApiRestResponseWrapper;
 import io.apimap.api.rest.jsonapi.JsonApiViews;
+import io.apimap.api.utils.Comparator;
 import io.apimap.api.utils.URIUtil;
 import org.springframework.http.MediaType;
 import org.springframework.http.codec.json.Jackson2CodecSupport;
@@ -64,7 +65,8 @@ public class ClassificationResponseBuilder extends ResponseBuilder<Classificatio
 
         JsonApiRestResponseWrapper<ClassificationTreeRootRestEntity> JsonApiRestResponseWrapper = new JsonApiRestResponseWrapper<>(null);
 
-        ArrayList<ClassificationTreeDataRestEntity> entities = value.stream().map(collection -> {
+        ArrayList<ClassificationTreeDataRestEntity> entities = value.stream()
+                .map(collection -> {
 
             ArrayList<String> path = new ArrayList<>(Arrays.asList(collection.getTaxonomy().getUrl().substring(11).split("/")));
 
@@ -97,7 +99,9 @@ public class ClassificationResponseBuilder extends ResponseBuilder<Classificatio
                 classificationTreeDataRestEntity.getRelationships().addDataRef(JsonApiRestResponseWrapper.METADATA_COLLECTION, JsonApiRestResponseWrapper.METADATA_ELEMENT, e.getName() + "#" + e.getApiVersion());
             });
             return classificationTreeDataRestEntity;
-        }).collect(Collectors.toCollection(ArrayList::new));
+        })
+                .sorted(Comparator::compareClassificationTreeDataRestEntity)
+                .collect(Collectors.toCollection(ArrayList::new));
 
         ClassificationTreeRootRestEntity classificationTreeRootRestEntity = new ClassificationTreeRootRestEntity(entities);
         JsonApiRestResponseWrapper.setData(classificationTreeRootRestEntity);

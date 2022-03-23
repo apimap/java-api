@@ -22,7 +22,7 @@ package io.apimap.api.repository.nitrite;
 import io.apimap.api.configuration.NitriteConfiguration;
 import io.apimap.api.repository.IMetadataRepository;
 import io.apimap.api.repository.nitrite.entity.db.Metadata;
-import io.apimap.api.repository.nitrite.entity.query.MetadataQueryFilter;
+import io.apimap.api.repository.nitrite.entity.query.Filter;
 import io.apimap.api.repository.nitrite.entity.query.QueryFilter;
 import io.apimap.api.repository.nitrite.entity.support.MetadataCollection;
 import org.dizitart.no2.objects.Cursor;
@@ -104,16 +104,16 @@ public class NitriteMetadataRepository extends NitriteRepository implements IMet
         );
     }
 
-    public MetadataCollection queryFilters(List<QueryFilter> filters) {
+    public MetadataCollection queryFilters(List<Filter> filters, QueryFilter queryFilter) {
         HashMap<String, ArrayList<ObjectFilter>> tmp = new HashMap<>();
 
         filters
                 .stream()
-                .filter(e -> e instanceof MetadataQueryFilter)
+                .filter(e -> e.type() == Filter.TYPE.METADATA)
                 .forEach(e -> {
                     String key = e.getKey();
                     ArrayList<ObjectFilter> f = tmp.getOrDefault(key, new ArrayList<>());
-                    f.add(e.equalsObjectFilter());
+                    f.add(e.objectFilter());
                     tmp.put(key, f);
                 });
 
@@ -122,6 +122,10 @@ public class NitriteMetadataRepository extends NitriteRepository implements IMet
                 .stream()
                 .map(objectFilterArrayList -> or(objectFilterArrayList.toArray(ObjectFilter[]::new)))
                 .collect(toCollection(ArrayList::new));
+
+        if(queryFilter != null) {
+            objectFilters.add(queryFilter.objectFilter());
+        }
 
         if (!objectFilters.isEmpty()) {
             return filteredCollection(objectFilters);

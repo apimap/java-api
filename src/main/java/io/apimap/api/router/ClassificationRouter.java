@@ -77,6 +77,20 @@ public class ClassificationRouter {
                                             in = ParameterIn.QUERY,
                                             required = false,
                                             example = "filter[classification][apimap]=urn:apimap:89"
+                                    ),
+                                    @Parameter(
+                                            name = "query[field]",
+                                            description = "Metadata parameter to be search. Possible values are: name, description or system identifier",
+                                            in = ParameterIn.QUERY,
+                                            required = false,
+                                            example = "query[field]=name, query[field]=description, query[field]=system identifier"
+                                    ),
+                                    @Parameter(
+                                            name = "query[value]",
+                                            description = "Search string. Will be transformed into regexp-> word(.*)word(.*)",
+                                            in = ParameterIn.QUERY,
+                                            required = false,
+                                            example = "query[value]=Hello World"
                                     )
                             }
                     )),

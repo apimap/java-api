@@ -84,7 +84,7 @@ public class ApiResourceService extends FilteredResourceService {
 
     @NotNull
     public Mono<ServerResponse> allApis(ServerRequest request) {
-        if (!requestQueryFilters(request).isEmpty()) {
+        if (!requestFilters(request).isEmpty()) {
             return allFilteredApis(request);
         }
 
@@ -147,7 +147,7 @@ public class ApiResourceService extends FilteredResourceService {
     protected Mono<ServerResponse> allFilteredApis(ServerRequest request) {
         ApiResponseBuilder responseBuilder = ApiResponseBuilder.builder(apimapConfiguration);
 
-        ApiCollection collection = apiRepository.all(requestQueryFilters(request));
+        ApiCollection collection = apiRepository.all(requestFilters(request), requestQuery(request));
 
         return responseBuilder
                 .withResourceURI(request.uri())

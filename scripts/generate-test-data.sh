@@ -73,6 +73,29 @@ curl --header "Content-Type: application/json" \
     --data '{"data":{"attributes":{"title":"Second Category Second Option Third Option","urn":"urn:apimap:8","url":"taxonomy://Second Category/Second Option/Third Option","description":"Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.", "type": "classification"}}}' \
     "http://localhost:8081/taxonomy/apimap/version/1/urn" 2> /dev/null | jq
 
+  curl --header "Content-Type: application/json" \
+    --header "Authorization: Bearer ${taxonomyToken}" \
+    --request POST \
+    --data '{"data":{"attributes":{"title":"Third Category","urn":"urn:apimap:9","url":"taxonomy://Third Category","description":"Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.", "type": "classification"}}}' \
+    "http://localhost:8081/taxonomy/apimap/version/1/urn" 2> /dev/null | jq
+
+  curl --header "Content-Type: application/json" \
+    --header "Authorization: Bearer ${taxonomyToken}" \
+    --request POST \
+    --data '{"data":{"attributes":{"title":"Fourth Category","urn":"urn:apimap:10","url":"taxonomy://Fourth Category","description":"Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.", "type": "classification"}}}' \
+    "http://localhost:8081/taxonomy/apimap/version/1/urn" 2> /dev/null | jq
+
+  curl --header "Content-Type: application/json" \
+    --header "Authorization: Bearer ${taxonomyToken}" \
+    --request POST \
+    --data '{"data":{"attributes":{"title":"Fifth Category","urn":"urn:apimap:11","url":"taxonomy://Fifth Category","description":"Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.", "type": "classification"}}}' \
+    "http://localhost:8081/taxonomy/apimap/version/1/urn" 2> /dev/null | jq
+
+  curl --header "Content-Type: application/json" \
+    --header "Authorization: Bearer ${taxonomyToken}" \
+    --request POST \
+    --data '{"data":{"attributes":{"title":"Sixth Category","urn":"urn:apimap:12","url":"taxonomy://Sixth Category","description":"Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.", "type": "classification"}}}' \
+    "http://localhost:8081/taxonomy/apimap/version/1/urn" 2> /dev/null | jq
 #
 # Create Test1
 #

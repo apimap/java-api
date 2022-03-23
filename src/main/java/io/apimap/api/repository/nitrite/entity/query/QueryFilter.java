@@ -19,27 +19,76 @@ under the License.
 
 package io.apimap.api.repository.nitrite.entity.query;
 
+import io.apimap.api.rest.MetadataDataRestEntity;
 import org.dizitart.no2.objects.ObjectFilter;
 
-public abstract class QueryFilter {
-    private String value;
+import java.util.Arrays;
+import java.util.stream.Collectors;
 
-    public QueryFilter(String value) {
-        this.value = value;
+import static org.dizitart.no2.objects.filters.ObjectFilters.regex;
+
+public class QueryFilter extends Filter {
+    private String field;
+
+    public QueryFilter(String field, String value) {
+        super(value);
+        setField(field);
     }
 
-    public String getValue() {
-        return value;
+    @Override
+    public String getKey() {
+        return field;
     }
 
-    public abstract String getKey();
+    public void setField(String field) {
+        switch (field) {
+            case MetadataDataRestEntity.NAME_KEY:
+                this.field = MetadataDataRestEntity.NAME_KEY;
+                break;
+            case MetadataDataRestEntity.SYSTEM_IDENTIFIER_KEY:
+                this.field = MetadataDataRestEntity.SYSTEM_IDENTIFIER_KEY;
+                break;
+            case MetadataDataRestEntity.DESCRIPTION_KEY:
+                this.field = MetadataDataRestEntity.DESCRIPTION_KEY;
+                break;
+            default:
+                this.field = null;
+        }
+    }
 
-    public abstract ObjectFilter equalsObjectFilter();
+    public ObjectFilter objectFilter() {
+        String queryString = createQueryString(getValue());
+
+        switch (this.field) {
+            case MetadataDataRestEntity.NAME_KEY:
+                return regex("name", queryString);
+            case MetadataDataRestEntity.SYSTEM_IDENTIFIER_KEY:
+                return regex("systemIdentifier", queryString);
+            case MetadataDataRestEntity.DESCRIPTION_KEY:
+                return regex("description", queryString);
+            default:
+                return null;
+        }
+    }
+
+    @Override
+    public TYPE type() {
+        return TYPE.QUERY;
+    }
+
+    /*
+    Split string by space and add * to enable a more generic find capability
+     */
+    protected String createQueryString(String string){
+        return Arrays.stream(string.split(" "))
+               .collect(Collectors.joining("(.*)"));
+    }
 
     @Override
     public String toString() {
-        return "QueryFilter{" +
-                "value='" + value + '\'' +
+        return "Query{" +
+                "value='" + super.getValue() + '\'' +
+                ", field='" + field + '\'' +
                 '}';
     }
 }

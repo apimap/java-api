@@ -21,6 +21,7 @@ package io.apimap.api.repository;
 
 import io.apimap.api.repository.nitrite.entity.db.Api;
 import io.apimap.api.repository.nitrite.entity.db.ApiVersion;
+import io.apimap.api.repository.nitrite.entity.query.Filter;
 import io.apimap.api.repository.nitrite.entity.query.QueryFilter;
 import io.apimap.api.repository.nitrite.entity.support.ApiCollection;
 import io.apimap.api.repository.nitrite.entity.support.ApiVersionCollection;
@@ -30,7 +31,7 @@ import java.util.Optional;
 
 public interface IApiRepository {
     ApiCollection all();
-    ApiCollection all(List<QueryFilter> filters);
+    ApiCollection all(List<Filter> filters, QueryFilter queryFilter);
     ApiCollection filteredCollection(List<String> ids, List<String> parents);
     Optional<Api> add(Api entity);
     Optional<Api> update(Api entity, String apiName);

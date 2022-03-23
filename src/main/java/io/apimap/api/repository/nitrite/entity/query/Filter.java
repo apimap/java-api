@@ -21,35 +21,35 @@ package io.apimap.api.repository.nitrite.entity.query;
 
 import org.dizitart.no2.objects.ObjectFilter;
 
-import static org.dizitart.no2.objects.filters.ObjectFilters.and;
-import static org.dizitart.no2.objects.filters.ObjectFilters.eq;
-
-public class ClassificationQueryFilter extends QueryFilter {
-    private String nid;
-
-    public ClassificationQueryFilter(String nid, String value) {
-        super(value);
-        this.nid = nid;
+public abstract class Filter {
+    public enum TYPE {
+        CLASSIFICATION,
+        NAME,
+        METADATA,
+        QUERY,
+        UNKNOWN
     }
 
-    public String getKey() {
-        return null;
+    private String value;
+
+    public Filter(String value) {
+        this.value = value;
     }
 
-    public String getNid() {
-        return this.nid;
+    public String getValue() {
+        return value;
     }
 
-    @Override
-    public ObjectFilter equalsObjectFilter() {
-        return and(eq("taxonomyUrn", this.getValue()), eq("taxonomyNid", this.nid));
-    }
+    public abstract String getKey();
+
+    public abstract ObjectFilter objectFilter();
+
+    public abstract TYPE type();
 
     @Override
     public String toString() {
-        return "ClassificationQueryFilter{" +
-                "nid='" + nid + '\'' +
-                ", value='" + getValue() + '\'' +
+        return "Filter{" +
+                "value='" + value + '\'' +
                 '}';
     }
 }

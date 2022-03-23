@@ -22,6 +22,7 @@ package io.apimap.api.service;
 import io.apimap.api.configuration.ApimapConfiguration;
 import io.apimap.api.repository.IApiRepository;
 import io.apimap.api.repository.IClassificationRepository;
+import io.apimap.api.repository.nitrite.entity.query.Filter;
 import io.apimap.api.repository.nitrite.entity.query.QueryFilter;
 import io.apimap.api.repository.nitrite.entity.support.ApiCollection;
 import io.apimap.api.repository.nitrite.entity.support.ClassificationTreeCollection;
@@ -51,9 +52,10 @@ public class ClassificationResourceService extends FilteredResourceService {
 
     @NotNull
     public Mono<ServerResponse> allClassifications(ServerRequest request) {
-        List<QueryFilter> filters = requestQueryFilters(request);
+        List<Filter> filters = requestFilters(request);
+        QueryFilter queryFilter = requestQuery(request);
 
-        if (filters.size() > 0) {
+        if (filters.size() > 0 || queryFilter != null) {
             return allFilteredClassifications(request, null);
         }
 
@@ -68,7 +70,7 @@ public class ClassificationResourceService extends FilteredResourceService {
     public Mono<ServerResponse> getClassification(ServerRequest request) {
         String parentClassificationURN = RequestUtil.classificationFromRequest(request);
 
-        if (!requestQueryFilters(request).isEmpty()) {
+        if (!requestFilters(request).isEmpty()) {
             return allFilteredClassifications(request, parentClassificationURN);
         }
 
@@ -80,7 +82,7 @@ public class ClassificationResourceService extends FilteredResourceService {
     }
 
     protected Mono<ServerResponse> allFilteredClassifications(ServerRequest request, String parentClassificationURN) {
-        ApiCollection apiCollection = apiRepository.all(requestQueryFilters(request));
+        ApiCollection apiCollection = apiRepository.all(requestFilters(request), requestQuery(request));
         List<ClassificationTreeCollection> collection = classificationRepository.classificationTree(apiCollection, parentClassificationURN);
 
         ClassificationResponseBuilder builder = ClassificationResponseBuilder

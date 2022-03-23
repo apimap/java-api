@@ -24,11 +24,11 @@ import org.dizitart.no2.objects.ObjectFilter;
 
 import static org.dizitart.no2.objects.filters.ObjectFilters.eq;
 
-public class MetadataQueryFilter extends QueryFilter {
+public class MetadataFilter extends Filter {
 
     private String key;
 
-    public MetadataQueryFilter(String key, String value) {
+    public MetadataFilter(String key, String value) {
         super(value);
         setKey(key);
     }
@@ -68,7 +68,7 @@ public class MetadataQueryFilter extends QueryFilter {
         }
     }
 
-    public ObjectFilter equalsObjectFilter() {
+    public ObjectFilter objectFilter() {
         switch (this.key) {
             case MetadataDataRestEntity.NAME_KEY:
                 return eq("name", this.getValue());
@@ -89,6 +89,11 @@ public class MetadataQueryFilter extends QueryFilter {
             default:
                 return null;
         }
+    }
+
+    @Override
+    public TYPE type() {
+        return TYPE.METADATA;
     }
 
     @Override

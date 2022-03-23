@@ -19,8 +19,10 @@ under the License.
 
 package io.apimap.api.service;
 
-import io.apimap.api.repository.nitrite.entity.query.ClassificationQueryFilter;
-import io.apimap.api.repository.nitrite.entity.query.MetadataQueryFilter;
+import io.apimap.api.repository.nitrite.entity.query.ClassificationFilter;
+import io.apimap.api.repository.nitrite.entity.query.Filter;
+import io.apimap.api.repository.nitrite.entity.query.MetadataFilter;
+import io.apimap.api.repository.nitrite.entity.query.NameFilter;
 import io.apimap.api.repository.nitrite.entity.query.QueryFilter;
 import org.springframework.web.reactive.function.server.ServerRequest;
 
@@ -31,16 +33,33 @@ import java.util.List;
 public class FilteredResourceService {
     public static final String FILTER_METADATA_KEY = "filter[metadata]";
     public static final String FILTER_CLASSIFICATION_KEY = "filter[classification]";
+    public static final String FILTER_NAME_KEY = "filter[name]";
+    public static final String QUERY_STRING = "query[value]";
+    public static final String QUERY_FIELD = "query[field]";
 
-    protected List<QueryFilter> requestQueryFilters(ServerRequest request) {
-        ArrayList<QueryFilter> returnValue = new ArrayList<>();
+    public static final int MAX_QUERY_VALUE_LENGTH = 100;
+    public static final int MAX_QUERY_FIELD_LENGTH = 20;
+
+    protected QueryFilter requestQuery(ServerRequest request) {
+        if(request.queryParam(QUERY_FIELD).isPresent()
+                && request.queryParam(QUERY_STRING).isPresent()
+                && request.queryParam(QUERY_FIELD).get().length() < MAX_QUERY_VALUE_LENGTH
+                && request.queryParam(QUERY_STRING).get().length() < MAX_QUERY_FIELD_LENGTH){
+            return new QueryFilter(request.queryParam(QUERY_FIELD).get(), request.queryParam(QUERY_STRING).get());
+        }
+
+        return null;
+    }
+
+    protected List<Filter> requestFilters(ServerRequest request) {
+        ArrayList<Filter> returnValue = new ArrayList<>();
 
         request.queryParams().forEach((filterName, filterValue) -> {
             if (filterName.startsWith(FILTER_METADATA_KEY)) {
                 String key = filterName.substring(FILTER_METADATA_KEY.length() + 1, filterName.length() - 1);
                 filterValue.forEach(distinctValue -> {
                     Arrays.stream(distinctValue.split(",")).distinct().forEach(splitDistinctValue -> {
-                        MetadataQueryFilter queryFilter = new MetadataQueryFilter(key, splitDistinctValue);
+                        MetadataFilter queryFilter = new MetadataFilter(key, splitDistinctValue);
                         returnValue.add(queryFilter);
                     });
                 });
@@ -50,7 +69,16 @@ public class FilteredResourceService {
                 String key = filterName.substring(FILTER_CLASSIFICATION_KEY.length() + 1, filterName.length() - 1);
                 filterValue.forEach(distinctValue -> {
                     Arrays.stream(distinctValue.split(",")).distinct().forEach(splitDistinctValue -> {
-                        ClassificationQueryFilter queryFilter = new ClassificationQueryFilter(key, splitDistinctValue);
+                        ClassificationFilter queryFilter = new ClassificationFilter(key, splitDistinctValue);
+                        returnValue.add(queryFilter);
+                    });
+                });
+            }
+
+            if (filterName.startsWith(FILTER_NAME_KEY)) {
+                filterValue.forEach(distinctValue -> {
+                    Arrays.stream(distinctValue.split(",")).distinct().forEach(splitDistinctValue -> {
+                        NameFilter queryFilter = new NameFilter(splitDistinctValue);
                         returnValue.add(queryFilter);
                     });
                 });

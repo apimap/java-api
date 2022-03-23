@@ -7,7 +7,7 @@
       "name": "Apache 2.0",
       "url": "https://www.apache.org/licenses/LICENSE-2.0"
     },
-    "version": "1.2.0"
+    "version": "1.3.0"
   },
   "servers": [
     {
@@ -177,6 +177,12 @@
             "in": "query",
             "description": "Classification filter built with the following expression: filter[classification][\u003ctaxonomy name\u003e]\u003d\u003cclassification urn\u003e. If more than one value use , to separate the values.",
             "example": "filter[classification][apimap]\u003durn:apimap:89"
+          },
+          {
+            "name": "filter[name]",
+            "in": "query",
+            "description": "Collection lookup by API name",
+            "example": "filter[name]\u003dhello%20world"
           }
         ],
         "responses": {
@@ -1291,6 +1297,18 @@
             "in": "query",
             "description": "Classification filter built with the following expression: filter[classification][\u003ctaxonomy name\u003e]\u003d\u003cclassification urn\u003e. If more than one value use , to separate the values.",
             "example": "filter[classification][apimap]\u003durn:apimap:89"
+          },
+          {
+            "name": "query[field]",
+            "in": "query",
+            "description": "Metadata parameter to be search. Possible values are: name, description or system identifier",
+            "example": "query[field]\u003dname, query[field]\u003ddescription, query[field]\u003dsystem identifier"
+          },
+          {
+            "name": "query[value]",
+            "in": "query",
+            "description": "Search string. Will be transformed into regexp-\u003e word(.*)word(.*)",
+            "example": "query[value]\u003dHello World"
           }
         ],
         "responses": {

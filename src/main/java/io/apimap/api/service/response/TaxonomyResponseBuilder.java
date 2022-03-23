@@ -40,7 +40,6 @@ import io.apimap.api.utils.TaxonomyTreeBuilder;
 import io.apimap.api.utils.URIUtil;
 
 import java.util.ArrayList;
-import java.util.Locale;
 import java.util.Objects;
 import java.util.stream.Collectors;
 

@@ -77,7 +77,7 @@ public class ApiResponseBuilder extends ResponseBuilder<ApiResponseBuilder> {
                     JsonApiRelationships relationships = new JsonApiRelationships();
                     relationships.addRelationshipRef(
                             JsonApiRestResponseWrapper.VERSION_COLLECTION,
-                            URIUtil.fromURI(resourceURI).append(e.getApi().getName()).append("version").uriValue());
+                            URIUtil.rootLevelFromURI(resourceURI).append("api").append(e.getApi().getName()).append("version").uriValue());
 
                     return new ApiCollectionDataRestEntity(
                             e.getApi().getName(),
@@ -86,7 +86,7 @@ public class ApiResponseBuilder extends ResponseBuilder<ApiResponseBuilder> {
                             e.getMetadata().isPresent() ? e.getMetadata().get().getReleaseStatus() : null,
                             e.getVersion().isPresent() ? e.getVersion().get().getVersion() : null,
                             e.getMetadata().isPresent() ? e.getMetadata().get().getDocumentation() : null,
-                            URIUtil.fromURI(resourceURI).append(e.getApi().getName()).stringValue(),
+                            URIUtil.rootLevelFromURI(resourceURI).append("api").append(e.getApi().getName()).stringValue(),
                             relationships);
                 })
                 .collect(Collectors.toCollection(ArrayList::new));

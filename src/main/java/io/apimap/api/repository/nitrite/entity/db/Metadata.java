@@ -29,7 +29,10 @@ import java.util.List;
 
 @Indices({
         @Index(value = "apiId", type = IndexType.NonUnique),
-        @Index(value = "apiVersion", type = IndexType.NonUnique)
+        @Index(value = "apiVersion", type = IndexType.NonUnique),
+        @Index(value = "name", type = IndexType.Fulltext),
+        @Index(value = "systemIdentifier", type = IndexType.Fulltext),
+        @Index(value = "description", type = IndexType.Fulltext)
 })
 public class Metadata {
     protected String apiId;

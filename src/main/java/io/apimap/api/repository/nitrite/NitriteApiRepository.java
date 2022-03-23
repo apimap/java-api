@@ -25,6 +25,7 @@ import io.apimap.api.repository.nitrite.entity.db.Api;
 import io.apimap.api.repository.nitrite.entity.db.ApiClassification;
 import io.apimap.api.repository.nitrite.entity.db.ApiVersion;
 import io.apimap.api.repository.nitrite.entity.db.Metadata;
+import io.apimap.api.repository.nitrite.entity.query.Filter;
 import io.apimap.api.repository.nitrite.entity.query.QueryFilter;
 import io.apimap.api.repository.nitrite.entity.support.ApiCollection;
 import io.apimap.api.repository.nitrite.entity.support.ApiVersionCollection;
@@ -40,6 +41,7 @@ import org.springframework.stereotype.Repository;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -83,12 +85,20 @@ public class NitriteApiRepository extends NitriteRepository implements IApiRepos
         }).collect(Collectors.toList()), null);
     }
 
-    public ApiCollection all(List<QueryFilter> filters) {
-        MetadataCollection metadataCollection = nitriteMetadataRepository.queryFilters(filters);
+    public ApiCollection all(List<Filter> filters, QueryFilter queryFilter) {
+        MetadataCollection metadataCollection = nitriteMetadataRepository.queryFilters(filters, queryFilter);
         ClassificationCollection classificationCollection = nitriteClassificationRepository.queryFilters(filters);
 
         // Combine elements
         ArrayList<String> apiIds = new ArrayList<>();
+
+        // Add all APIs by name
+        apiIds = filters
+                .stream()
+                .filter(e -> e.type().equals(Filter.TYPE.NAME))
+                .map(e -> apiId(e.getValue()))
+                .filter(Objects::nonNull)
+                .collect(Collectors.toCollection(ArrayList::new));
 
         if (metadataCollection != null && classificationCollection == null) {
             apiIds.addAll(metadataCollection.getItems().stream().map(Metadata::getApiId).distinct().collect(Collectors.toList()));
@@ -108,11 +118,15 @@ public class NitriteApiRepository extends NitriteRepository implements IApiRepos
         if (metadataCollection != null && classificationCollection != null) {
             List<String> names = metadataCollection.getItems().stream().map(Metadata::getApiId).distinct().collect(Collectors.toList());
 
-            classificationCollection.getItems().forEach(e -> {
-                if (names.contains(e.getApiId())) {
-                    apiIds.add(e.getApiId());
-                }
-            });
+            apiIds.addAll(
+                    classificationCollection
+                            .getItems()
+                            .stream()
+                            .map(ApiClassification::getApiId)
+                            .filter(names::contains)
+                            .distinct()
+                            .collect(Collectors.toList())
+            );
         }
 
         if (apiIds.isEmpty()) {

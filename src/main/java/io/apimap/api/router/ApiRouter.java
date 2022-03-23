@@ -107,6 +107,13 @@ public class ApiRouter {
                                             in = ParameterIn.QUERY,
                                             required = false,
                                             example = "filter[classification][apimap]=urn:apimap:89"
+                                    ),
+                                    @Parameter(
+                                            name = "filter[name]",
+                                            description = "Collection lookup by API name",
+                                            in = ParameterIn.QUERY,
+                                            required = false,
+                                            example = "filter[name]=hello%20world"
                                     )
                             },
                             responses = {
