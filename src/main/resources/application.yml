@@ -23,11 +23,13 @@ server:
     whitelabel:
       enabled: false
 management:
-  endpoint:
-    health:
-      enabled: true
   endpoints:
-    enabled-by-default: false
+    web:
+      exposure:
+        include: "health,metrics,httptrace"
+  trace:
+    http:
+      enabled: true
 nitrite:
   filePath: "/var/apimap"
 apimap:

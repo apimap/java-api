@@ -5,7 +5,10 @@ Changelog
  - Added search functionality to classifications and api endpoints
  - Simple sort order on returned classifications
  - Added more generated test data
-
+ - Added metrics exposed in Spring endpoint /actuator. 
+ - Log usage as INFO messages. 
+ - Added API endpoint /statistics/apis-history to return information of API history (API name and created data).
+ 
 ### 25.02.2022
 - Updated REST library version to fix element type bug
 
