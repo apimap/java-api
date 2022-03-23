@@ -120,6 +120,12 @@ cmake-build-*/
 # IntelliJ
 out/
 
+# Sonar lint
+.idea/sonarlint
+
+# Azure
+.idea/azure
+
 # mpeltonen/sbt-idea plugin
 .idea_modules/
 

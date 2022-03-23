@@ -26,7 +26,10 @@ management:
   endpoints:
     web:
       exposure:
-        include: "health,metrics"
+        include: "health,metrics,httptrace"
+  trace:
+    http:
+      enabled: true
 nitrite:
   filePath: "/var/apimap"
 apimap:
