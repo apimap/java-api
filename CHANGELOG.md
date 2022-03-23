@@ -8,7 +8,8 @@ Changelog
  - Added metrics exposed in Spring endpoint /actuator. 
  - Log usage as INFO messages. 
  - Added API endpoint /statistics/apis-history to return information of API history (API name and created data).
- 
+ - Updated dependencies
+
 ### 25.02.2022
 - Updated REST library version to fix element type bug
 
