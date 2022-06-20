@@ -20,21 +20,24 @@ under the License.
 package io.apimap.api.repository.nitrite;
 
 import io.apimap.api.configuration.NitriteConfiguration;
-import io.apimap.api.repository.IMetadataRepository;
-import io.apimap.api.repository.nitrite.entity.db.Metadata;
-import io.apimap.api.repository.nitrite.entity.query.Filter;
-import io.apimap.api.repository.nitrite.entity.query.QueryFilter;
-import io.apimap.api.repository.nitrite.entity.support.MetadataCollection;
+import io.apimap.api.repository.nitrite.entities.ApiClassification;
+import io.apimap.api.repository.nitrite.entities.Metadata;
+import io.apimap.api.repository.repository.IMetadataRepository;
+import io.apimap.api.service.query.Filter;
+import io.apimap.api.service.query.QueryFilter;
 import org.dizitart.no2.objects.Cursor;
 import org.dizitart.no2.objects.ObjectFilter;
 import org.dizitart.no2.objects.ObjectRepository;
-import org.dizitart.no2.objects.filters.ObjectFilters;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.stereotype.Repository;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Optional;
+import java.util.Objects;
 
 import static java.util.stream.Collectors.toCollection;
 import static org.dizitart.no2.objects.filters.ObjectFilters.and;
@@ -42,69 +45,78 @@ import static org.dizitart.no2.objects.filters.ObjectFilters.eq;
 import static org.dizitart.no2.objects.filters.ObjectFilters.or;
 
 @Repository
-public class NitriteMetadataRepository extends NitriteRepository implements IMetadataRepository {
+@ConditionalOnBean(io.apimap.api.configuration.NitriteConfiguration.class)
+public class NitriteMetadataRepository extends NitriteRepository implements IMetadataRepository<Metadata, ObjectFilter> {
     public NitriteMetadataRepository(NitriteConfiguration nitriteConfiguration) {
         super(nitriteConfiguration, "metadata");
     }
 
-    public void clear() {
-        database.getRepository(Metadata.class).remove(ObjectFilters.ALL);
-    }
+    /* M */
 
-    public MetadataCollection filteredCollection(List<ObjectFilter> filters) {
+    public Flux<Metadata> allByFilters(Mono<List<ObjectFilter>> filters) {
         ObjectRepository<Metadata> repository = database.getRepository(Metadata.class);
-        ObjectFilter objectFilter = and(filters.toArray(ObjectFilter[]::new));
-        Cursor<Metadata> cursor = repository.find(objectFilter);
-        return new MetadataCollection(cursor.toList());
+
+        return filters
+                .filter(Objects::nonNull)
+                .filter(list -> list.size() > 0)
+                .flatMapMany(filterList -> {
+                    ObjectFilter objectFilter = and(filterList.toArray(ObjectFilter[]::new));
+                    Cursor<Metadata> cursor = repository.find(objectFilter);
+                    return Flux.fromIterable(cursor.toList());
+                });
     }
 
-    public MetadataCollection all(String apiId) {
+    public Flux<Metadata> allByApiId(String apiId) {
         ObjectRepository<Metadata> repository = database.getRepository(Metadata.class);
         Cursor<Metadata> cursor = repository.find(eq("apiId", apiId));
-        return new MetadataCollection(cursor.toList());
+        return Flux.fromIterable(cursor);
     }
 
-    @Override
-    public MetadataCollection all() {
+    public Flux<Metadata> all() {
         ObjectRepository<Metadata> repository = database.getRepository(Metadata.class);
         Cursor<Metadata> cursor = repository.find();
-        return new MetadataCollection(cursor.toList());
+        return Flux.fromIterable(cursor);
     }
 
-    public Optional<Metadata> add(Metadata entity) {
+    public Mono<Metadata> add(Metadata entity) {
+        entity.setCreated(new Date());
+
         ObjectRepository<Metadata> repository = database.getRepository(Metadata.class);
-        return Optional.ofNullable(repository.getById(repository.insert(entity).iterator().next()));
+        return Mono.justOrEmpty(repository.getById(repository.insert(entity).iterator().next()));
     }
 
-    public Optional<Metadata> update(Metadata entity) {
+    public Mono<Metadata> update(Metadata entity) {
         ObjectRepository<Metadata> repository = database.getRepository(Metadata.class);
-        return Optional.ofNullable(repository.getById(repository.update(
+        return Mono.justOrEmpty(repository.getById(repository.update(
                 eq("id", entity.getId())
                 , entity
                 , true
         ).iterator().next()));
     }
 
-    public Optional<Metadata> get(String apiId, String version) {
+    public Mono<Metadata> get(String apiId, String version) {
         ObjectRepository<Metadata> repository = database.getRepository(Metadata.class);
-        return Optional.ofNullable(repository.find(
+        return Mono.justOrEmpty(repository.find(
                 and(eq("apiId", apiId), eq("apiVersion", version))
         ).firstOrDefault());
     }
 
-    public void delete(String apiId) {
+    public Mono<Boolean> delete(String apiId) {
         ObjectRepository<Metadata> repository = database.getRepository(Metadata.class);
         repository.remove(eq("apiId", apiId));
+        return Mono.empty();
     }
 
-    public void delete(String apiId, String version) {
+    public Mono<Boolean> delete(String apiId, String version) {
         ObjectRepository<Metadata> repository = database.getRepository(Metadata.class);
-        repository.remove(
+        return Mono.just(repository.remove(
                 and(eq("apiId", apiId), eq("apiVersion", version))
-        );
+        ).getAffectedCount() > 0);
     }
 
-    public MetadataCollection queryFilters(List<Filter> filters, QueryFilter queryFilter) {
+    /* OB */
+
+    public Mono<List<ObjectFilter>> queryFilters(List<Filter> filters, QueryFilter queryFilter) {
         HashMap<String, ArrayList<ObjectFilter>> tmp = new HashMap<>();
 
         filters
@@ -123,14 +135,10 @@ public class NitriteMetadataRepository extends NitriteRepository implements IMet
                 .map(objectFilterArrayList -> or(objectFilterArrayList.toArray(ObjectFilter[]::new)))
                 .collect(toCollection(ArrayList::new));
 
-        if(queryFilter != null) {
+        if (queryFilter != null) {
             objectFilters.add(queryFilter.objectFilter());
         }
 
-        if (!objectFilters.isEmpty()) {
-            return filteredCollection(objectFilters);
-        }
-
-        return null;
+        return Mono.just(objectFilters);
     }
 }

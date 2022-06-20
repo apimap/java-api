@@ -24,14 +24,17 @@ import io.swagger.v3.oas.annotations.info.Info;
 import io.swagger.v3.oas.annotations.info.License;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.boot.context.properties.ConfigurationPropertiesScan;
+import org.springframework.boot.autoconfigure.data.mongo.MongoDataAutoConfiguration;
+import org.springframework.boot.autoconfigure.mongo.MongoAutoConfiguration;
+import org.springframework.boot.autoconfigure.mongo.MongoReactiveAutoConfiguration;
 
 @OpenAPIDefinition(
         info = @Info(
                 title = "Apimap.io",
                 description = "Apimap.io is a centralized registry of our APIs. This API is built to comply with the JSON:API standard version 1.1 (https://jsonapi.org/)",
-                version = "1.3.0",
+                version = "1.4.0",
                 license = @License(name = "Apache 2.0", url = "https://www.apache.org/licenses/LICENSE-2.0")
         ),
         tags = {
@@ -43,7 +46,11 @@ import org.springframework.boot.context.properties.ConfigurationPropertiesScan;
         }
 )
 @SpringBootApplication
-@ConfigurationPropertiesScan
+@EnableAutoConfiguration(exclude = {
+        MongoAutoConfiguration.class,
+        MongoDataAutoConfiguration.class,
+        MongoReactiveAutoConfiguration.class
+})
 public class Application {
     public static void main(String[] args) {
         SpringApplication.run(Application.class, args);

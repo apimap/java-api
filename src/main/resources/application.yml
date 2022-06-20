@@ -1,4 +1,7 @@
 spring:
+  data:
+    mongodb:
+      auto-index-creation: false
   main:
     banner-mode: "off"
   session:
@@ -30,8 +33,13 @@ management:
   trace:
     http:
       enabled: true
+mongodb:
+  enabled: true
+  database-name: "apimap"
+  uri: "mongodb://apimapUser:<password>@localhost:27017/apimap"
 nitrite:
-  filePath: "/var/apimap"
+  enabled: false
+  filePath: "/tmp/apimap"
 apimap:
   metadata:
     copyright: "The Apimap.io project"
@@ -42,3 +50,5 @@ apimap:
   openapi:
     enabled: true
   version: ${project.version}
+
+

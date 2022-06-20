@@ -29,6 +29,7 @@ import java.util.Optional;
 
 public class TaxonomyTreeBuilder {
     protected ArrayList<TaxonomyTreeDataRestEntity> tree;
+
     public TaxonomyTreeBuilder() {
         this.tree = new ArrayList<>();
     }
@@ -46,7 +47,7 @@ public class TaxonomyTreeBuilder {
     }
 
     public boolean insert(TaxonomyTreeDataRestEntity newEntity) {
-        if(newEntity.getReferenceType() == TaxonomyDataRestEntity.ReferenceType.REFERENCE){
+        if (newEntity.getReferenceType() == TaxonomyDataRestEntity.ReferenceType.REFERENCE) {
             return false;
         }
 
@@ -56,11 +57,11 @@ public class TaxonomyTreeBuilder {
         return true;
     }
 
-    protected String createInitialURL(List<String> urlParts){
+    protected String createInitialURL(List<String> urlParts) {
         return "taxonomy://" + urlParts.get(0);
     }
 
-    protected void replaceExistingNodeInformation(TaxonomyTreeDataRestEntity node, TaxonomyTreeDataRestEntity newEntity){
+    protected void replaceExistingNodeInformation(TaxonomyTreeDataRestEntity node, TaxonomyTreeDataRestEntity newEntity) {
         // Replace root if empty
         if (node.getUrl().equalsIgnoreCase(newEntity.getUrl())) {
             node.setDescription(newEntity.getDescription());
@@ -85,13 +86,13 @@ public class TaxonomyTreeBuilder {
                 deficientNode.get().setUrl(node.getUrl());
                 deficientNode.get().setUrn(node.getUrn());
                 deficientNode.get().setReferenceType(node.getReferenceType());
-            }else{
+            } else {
                 recursiveInsert(deficientNode.get().getEntities(), node, url + "/" + paths.get(1), new ArrayList<>(paths.subList(1, paths.size())));
             }
-        }else{
+        } else {
             TaxonomyTreeDataRestEntity newNode;
 
-            if(url.toLowerCase().equals(node.getUrl().toLowerCase())){
+            if (url.equalsIgnoreCase(node.getUrl())) {
                 newNode = new TaxonomyTreeDataRestEntity(
                         node.getUrn(),
                         node.getTitle(),
@@ -102,7 +103,7 @@ public class TaxonomyTreeBuilder {
                         node.getReferenceType(),
                         new ArrayList<>(Arrays.asList())
                 );
-            }else{
+            } else {
                 newNode = new TaxonomyTreeDataRestEntity(
                         null,
                         null,
@@ -125,8 +126,8 @@ public class TaxonomyTreeBuilder {
     }
 
     /*
-    * taxonomy://First/Second/ -> First/Second
-    */
+     * taxonomy://First/Second/ -> First/Second
+     */
     protected List<String> splitURLParts(String url) {
         url = url.toLowerCase();
 

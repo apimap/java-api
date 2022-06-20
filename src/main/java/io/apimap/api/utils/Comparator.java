@@ -23,8 +23,8 @@ import io.apimap.api.rest.ClassificationTreeDataRestEntity;
 
 public class Comparator {
     public static int compareClassificationTreeDataRestEntity(ClassificationTreeDataRestEntity e1, ClassificationTreeDataRestEntity e2) {
-        if(e1.getPath().size() < e2.getPath().size()) return -1;
-        if(e1.getPath().size() > e2.getPath().size()) return 1;
+        if (e1.getPath().size() < e2.getPath().size()) return -1;
+        if (e1.getPath().size() > e2.getPath().size()) return 1;
         return 0;
     }
 }

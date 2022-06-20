@@ -20,236 +20,162 @@ under the License.
 package io.apimap.api.repository.nitrite;
 
 import io.apimap.api.configuration.NitriteConfiguration;
-import io.apimap.api.repository.IApiRepository;
-import io.apimap.api.repository.nitrite.entity.db.Api;
-import io.apimap.api.repository.nitrite.entity.db.ApiClassification;
-import io.apimap.api.repository.nitrite.entity.db.ApiVersion;
-import io.apimap.api.repository.nitrite.entity.db.Metadata;
-import io.apimap.api.repository.nitrite.entity.query.Filter;
-import io.apimap.api.repository.nitrite.entity.query.QueryFilter;
-import io.apimap.api.repository.nitrite.entity.support.ApiCollection;
-import io.apimap.api.repository.nitrite.entity.support.ApiVersionCollection;
-import io.apimap.api.repository.nitrite.entity.support.ClassificationCollection;
-import io.apimap.api.repository.nitrite.entity.support.MetadataCollection;
+import io.apimap.api.repository.entities.IApiVersion;
+import io.apimap.api.repository.nitrite.entities.Api;
+import io.apimap.api.repository.nitrite.entities.ApiVersion;
+import io.apimap.api.repository.repository.IApiRepository;
 import org.dizitart.no2.FindOptions;
 import org.dizitart.no2.SortOrder;
 import org.dizitart.no2.objects.Cursor;
 import org.dizitart.no2.objects.ObjectRepository;
 import org.dizitart.no2.objects.filters.ObjectFilters;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Repository;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
-import java.util.ArrayList;
-import java.util.Collections;
+import java.util.Date;
 import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.stream.Collectors;
 
 import static org.dizitart.no2.objects.filters.ObjectFilters.eq;
 import static org.dizitart.no2.objects.filters.ObjectFilters.in;
 
 @Repository
-public class NitriteApiRepository extends NitriteRepository implements IApiRepository {
-    protected NitriteMetadataRepository nitriteMetadataRepository;
-    protected NitriteClassificationRepository nitriteClassificationRepository;
+@ConditionalOnBean(io.apimap.api.configuration.NitriteConfiguration.class)
+public class NitriteApiRepository extends NitriteRepository implements IApiRepository<Api, ApiVersion> {
+    protected NitriteMetadataRepository metadataRepository;
+    protected NitriteClassificationRepository classificationRepository;
 
     public NitriteApiRepository(NitriteConfiguration nitriteConfiguration,
-                                NitriteMetadataRepository nitriteMetadataRepository,
-                                NitriteClassificationRepository nitriteClassificationRepository) {
+                                NitriteMetadataRepository metadataRepository,
+                                NitriteClassificationRepository classificationRepository) {
         super(nitriteConfiguration, "api");
-        this.nitriteMetadataRepository = nitriteMetadataRepository;
-        this.nitriteClassificationRepository = nitriteClassificationRepository;
+        this.metadataRepository = metadataRepository;
+        this.classificationRepository = classificationRepository;
     }
 
-    /*
-    Api
-     */
-
-    public ApiCollection all() {
+    /* A */
+    @Override
+    public Flux<Api> all() {
         ObjectRepository<Api> repository = database.getRepository(Api.class);
         Cursor<Api> cursor = repository.find();
-
-        return new ApiCollection(cursor.toList().stream().map(api -> {
-
-            Optional<ApiVersion> apiVersion = this.getLatestApiVersion(api.getId());
-            Optional<Metadata> metadata = Optional.empty();
-
-            if (apiVersion.isPresent()) {
-                metadata = this.nitriteMetadataRepository.get(api.getId(), apiVersion.get().getVersion());
-            }
-
-            return new ApiCollection.Item(api,
-                    apiVersion,
-                    metadata
-            );
-        }).collect(Collectors.toList()), null);
+        return Flux.fromIterable(cursor);
     }
 
-    public ApiCollection all(List<Filter> filters, QueryFilter queryFilter) {
-        MetadataCollection metadataCollection = nitriteMetadataRepository.queryFilters(filters, queryFilter);
-        ClassificationCollection classificationCollection = nitriteClassificationRepository.queryFilters(filters);
-
-        // Combine elements
-        ArrayList<String> apiIds = new ArrayList<>();
-
-        // Add all APIs by name
-        apiIds = filters
-                .stream()
-                .filter(e -> e.type().equals(Filter.TYPE.NAME))
-                .map(e -> apiId(e.getValue()))
-                .filter(Objects::nonNull)
-                .collect(Collectors.toCollection(ArrayList::new));
-
-        if (metadataCollection != null && classificationCollection == null) {
-            apiIds.addAll(metadataCollection.getItems().stream().map(Metadata::getApiId).distinct().collect(Collectors.toList()));
-        }
-
-        if (metadataCollection == null && classificationCollection != null) {
-            apiIds.addAll(
-                    classificationCollection
-                            .getItems()
-                            .stream()
-                            .map(ApiClassification::getApiId)
-                            .distinct()
-                            .collect(Collectors.toList())
-            );
-        }
-
-        if (metadataCollection != null && classificationCollection != null) {
-            List<String> names = metadataCollection.getItems().stream().map(Metadata::getApiId).distinct().collect(Collectors.toList());
-
-            apiIds.addAll(
-                    classificationCollection
-                            .getItems()
-                            .stream()
-                            .map(ApiClassification::getApiId)
-                            .filter(names::contains)
-                            .distinct()
-                            .collect(Collectors.toList())
-            );
-        }
-
-        if (apiIds.isEmpty()) {
-            return new ApiCollection(Collections.emptyList(), classificationCollection != null ? classificationCollection.getParents() : null);
-        }
-
-        return filteredCollection(apiIds, classificationCollection != null ? classificationCollection.getParents() : null);
-    }
-
-    public ApiCollection filteredCollection(List<String> ids, List<String> parents) {
+    @Override
+    public Flux<Api> allByApiIds(List<String> apiIds) {
         ObjectRepository<Api> repository = database.getRepository(Api.class);
-        Object[] id = ids.toArray();
+        Object[] id = apiIds.toArray();
         Cursor<Api> cursor = repository.find(in("id", id));
-
-        return new ApiCollection(cursor.toList().stream().map(api -> {
-            Optional<ApiVersion> apiVersion = this.getLatestApiVersion(api.getId());
-            Optional<Metadata> metadata = Optional.empty();
-
-            if (apiVersion.isPresent()) {
-                metadata = this.nitriteMetadataRepository.get(api.getId(), apiVersion.get().getVersion());
-            }
-
-            return new ApiCollection.Item(api,
-                    apiVersion,
-                    metadata
-            );
-        }).collect(Collectors.toList()), parents);
+        return Flux.fromIterable(cursor);
     }
 
-    public Optional<Api> add(Api entity) {
+    @Override
+    public Mono<Api> add(Api entity) {
         ObjectRepository<Api> repository = database.getRepository(Api.class);
         entity.generateToken();
-        return Optional.ofNullable(repository.getById(repository.insert(entity).iterator().next()));
+        entity.setCreated(new Date());
+        return Mono.justOrEmpty(repository.getById(repository.insert(entity).iterator().next()));
     }
 
-    public Optional<Api> update(Api entity, String apiName) {
+    @Override
+    public Mono<Api> update(Api entity, String apiName) {
         ObjectRepository<Api> repository = database.getRepository(Api.class);
 
-        // Override static values
-        Optional<Api> returnvalue = Optional.empty();
-        Optional<Api> existingEntity = get(apiName, true);
+        return get(apiName)
+                .flatMap(api -> {
+                    api.setName(entity.getName());
+                    api.setCodeRepositoryUrl(entity.getCodeRepositoryUrl());
 
-        if (existingEntity.isPresent()) {
-            existingEntity.get().setName(entity.getName());
-            existingEntity.get().setCodeRepositoryUrl(entity.getCodeRepositoryUrl());
-
-            returnvalue = Optional.ofNullable(repository.getById(repository.update(eq("name", apiName), existingEntity.get()).iterator().next()));
-            returnvalue.ifPresent(Api::clearToken);
-        }
-
-        return returnvalue;
+                    Api updateValues = repository.getById(repository.update(eq("name", apiName), api).iterator().next());
+                    updateValues.clearToken();
+                    return Mono.just(updateValues);
+                });
     }
 
-    public Optional<Api> get(String apiName) {
-        return get(apiName, false);
-    }
-
-    public String apiId(String apiName) {
-        Optional<Api> api = get(apiName);
-        return api.map(Api::getId).orElse(null);
-    }
-
-    public Optional<Api> get(String apiName, Boolean returnWithToken) {
+    @Override
+    public Mono<Api> get(String apiName) {
         ObjectRepository<Api> repository = database.getRepository(Api.class);
-        Optional<Api> returnvalue = Optional.ofNullable(repository.find(
-                eq("name", apiName)
-        ).firstOrDefault());
-
-        if (Boolean.FALSE.equals(returnWithToken)) {
-            returnvalue.ifPresent(Api::clearToken);
-        }
-
-        return returnvalue;
+        return Mono.justOrEmpty(
+                repository
+                        .find(eq("name", apiName))
+                        .firstOrDefault()
+        );
     }
 
-    public void delete(String apiName) {
+    @Override
+    public Mono<Api> getById(String apiId) {
         ObjectRepository<Api> repository = database.getRepository(Api.class);
-        repository.remove(eq("name", apiName));
+        return Mono.justOrEmpty(
+                repository
+                        .find(eq("id", apiId))
+                        .firstOrDefault()
+        );
     }
 
-    public Integer numberOfApis() {
+    @Override
+    public Mono<Boolean> delete(String apiName) {
+        ObjectRepository<Api> repository = database.getRepository(Api.class);
+        return Mono.justOrEmpty(repository.remove(eq("name", apiName)).getAffectedCount() > 0);
+    }
+
+    @Override
+    public Mono<Long> numberOfApis() {
         if (database == null) {
-            return 0;
+            Mono.just(0);
         }
         ObjectRepository<Api> repository = database.getRepository(Api.class);
         Cursor<Api> cursor = repository.find();
-        return cursor.totalCount();
+        return Mono.justOrEmpty(Long.valueOf(cursor.totalCount()));
     }
 
-    public Optional<ApiVersion> getLatestApiVersion(String apiId) {
+    /* AV */
+
+    @Override
+    public Mono<ApiVersion> getLatestApiVersion(String apiId) {
         ObjectRepository<ApiVersion> repository = database.getRepository(ApiVersion.class);
-        return Optional.ofNullable(repository.find(
+        return Mono.justOrEmpty(repository.find(
                 ObjectFilters.eq("apiId", apiId),
                 FindOptions.sort("created", SortOrder.Descending)
         ).firstOrDefault());
     }
 
-    /*
-    ApiVersion
-     */
-
-    public void deleteApiVersion(String apiName, String apiVersion) {
+    @Override
+    public Mono<Boolean> deleteApiVersion(String apiName, String apiVersion) {
         ObjectRepository<ApiVersion> repository = database.getRepository(ApiVersion.class);
-        repository.remove(eq("id", ApiVersion.createId(apiName, apiVersion)));
+        return Mono.just(repository.remove(eq("id", IApiVersion.createId(apiName, apiVersion))).getAffectedCount() > 0);
     }
 
-    public Optional<ApiVersion> getApiVersion(String apiId, String apiVersion) {
+    @Override
+    public Mono<ApiVersion> getApiVersion(String apiId, String apiVersion) {
+
+        if ("latest".equals(apiVersion)) {
+            return getLatestApiVersion(apiId);
+        }
+
         ObjectRepository<ApiVersion> repository = database.getRepository(ApiVersion.class);
-        return Optional.ofNullable(repository.find(
-                eq("id", ApiVersion.createId(apiId, apiVersion))
+        return Mono.justOrEmpty(repository.find(
+                eq("id", IApiVersion.createId(apiId, apiVersion))
         ).firstOrDefault());
     }
 
-    public ApiVersionCollection allApiVersions(String apiId) {
+    @Override
+    public Flux<ApiVersion> allApiVersions(String apiId) {
         ObjectRepository<ApiVersion> repository = database.getRepository(ApiVersion.class);
         Cursor<ApiVersion> cursor = repository.find(
                 eq("apiId", apiId)
         );
-        return new ApiVersionCollection(cursor.toList());
+        return Flux.fromIterable(cursor);
     }
 
-    public Optional<ApiVersion> addApiVersion(ApiVersion entity) {
+    @Override
+    public Mono<ApiVersion> addApiVersion(ApiVersion entity) {
+        entity.setCreated(new Date());
+
         ObjectRepository<ApiVersion> repository = database.getRepository(ApiVersion.class);
-        return Optional.ofNullable(repository.getById(repository.insert(entity).iterator().next()));
+        return Mono.justOrEmpty(repository.getById(repository.insert(entity).iterator().next()));
     }
 }

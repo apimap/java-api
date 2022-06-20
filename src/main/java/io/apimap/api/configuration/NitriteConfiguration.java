@@ -21,6 +21,7 @@ package io.apimap.api.configuration;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
 
@@ -29,10 +30,15 @@ import java.nio.file.Paths;
 
 @Configuration
 @ConfigurationProperties(prefix = "nitrite")
+@ConditionalOnProperty(value = "nitrite.enabled", havingValue = "true", matchIfMissing = false)
 public class NitriteConfiguration {
     private static final Logger LOGGER = LoggerFactory.getLogger(NitriteConfiguration.class);
 
     protected String filePath;
+
+    public NitriteConfiguration() {
+        LOGGER.info("Configuring Nitrite database");
+    }
 
     public String getFilePath() {
         return filePath;

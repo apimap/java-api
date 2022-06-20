@@ -117,7 +117,7 @@ public class ApiRouter {
                                     )
                             },
                             responses = {
-                                @ApiResponse(responseCode = "200", description = "List of all available APIs", content = @Content(array = @ArraySchema(schema = @Schema(implementation = ApiCollectionDataRestEntity.class))))
+                                    @ApiResponse(responseCode = "200", description = "List of all available APIs", content = @Content(array = @ArraySchema(schema = @Schema(implementation = ApiCollectionDataRestEntity.class))))
                             })),
             @RouterOperation(
                     path = ROOT_PATH,
@@ -178,7 +178,7 @@ public class ApiRouter {
                             parameters = {
                                     @Parameter(in = ParameterIn.PATH, name = "apiName", description = "URL encoded API name")
                             },
-                            security = { @SecurityRequirement(name = "token") }
+                            security = {@SecurityRequirement(name = "token")}
                     )),
             @RouterOperation(
                     path = ITEM_PATH,
@@ -198,7 +198,7 @@ public class ApiRouter {
                             parameters = {
                                     @Parameter(in = ParameterIn.PATH, name = "apiName", description = "URL encoded API name")
                             },
-                            security = { @SecurityRequirement(name = "token") }
+                            security = {@SecurityRequirement(name = "token")}
                     )),
             @RouterOperation(
                     path = VERSIONED_PATH,
@@ -235,7 +235,7 @@ public class ApiRouter {
                                     @ApiResponse(responseCode = "404", description = "No existing API found", content = @Content(schema = @Schema(implementation = JsonApiRestResponseWrapper.class)))
                             },
                             requestBody = @RequestBody(content = @Content(schema = @Schema(implementation = ApiVersionDataRestEntity.Attributes.class))),
-                            security = { @SecurityRequirement(name = "token") }
+                            security = {@SecurityRequirement(name = "token")}
                     )),
             @RouterOperation(
                     path = VERSIONED_ITEM_PATH,
@@ -271,7 +271,7 @@ public class ApiRouter {
                                     @ApiResponse(responseCode = "204", description = "Delete Successful. All metadata and classifications associated with the version is also deleted.", content = @Content(schema = @Schema(implementation = ApiVersionDataRestEntity.class))),
                                     @ApiResponse(responseCode = "401", description = "Unauthorized, valid bearer token missing og faulty", content = @Content(schema = @Schema(implementation = JsonApiRestResponseWrapper.class)))
                             },
-                            security = { @SecurityRequirement(name = "token") }
+                            security = {@SecurityRequirement(name = "token")}
                     )),
             @RouterOperation(
                     path = METADATA_PATH,
@@ -293,7 +293,7 @@ public class ApiRouter {
                                     @Parameter(in = ParameterIn.PATH, name = "apiName", description = "URL encoded API name"),
                                     @Parameter(in = ParameterIn.PATH, name = "apiVersion", description = "URL encoded API version identifier")
                             },
-                            security = { @SecurityRequirement(name = "token") }
+                            security = {@SecurityRequirement(name = "token")}
                     )),
             @RouterOperation(
                     path = METADATA_PATH,
@@ -315,7 +315,7 @@ public class ApiRouter {
                                     @ApiResponse(responseCode = "401", description = "Unauthorized, valid bearer token missing og faulty", content = @Content(schema = @Schema(implementation = JsonApiRestResponseWrapper.class))),
                                     @ApiResponse(responseCode = "404", description = "No existing API or API Version found", content = @Content(schema = @Schema(implementation = JsonApiRestResponseWrapper.class)))
                             },
-                            security = { @SecurityRequirement(name = "token") }
+                            security = {@SecurityRequirement(name = "token")}
                     )),
             @RouterOperation(
                     path = METADATA_PATH,
@@ -335,7 +335,7 @@ public class ApiRouter {
                                     @ApiResponse(responseCode = "401", description = "Unauthorized, valid bearer token missing og faulty", content = @Content(schema = @Schema(implementation = JsonApiRestResponseWrapper.class))),
                                     @ApiResponse(responseCode = "404", description = "No existing API or API Version found", content = @Content(schema = @Schema(implementation = JsonApiRestResponseWrapper.class)))
                             },
-                            security = { @SecurityRequirement(name = "token") }
+                            security = {@SecurityRequirement(name = "token")}
                     )),
             @RouterOperation(
                     path = METADATA_PATH,
@@ -373,7 +373,7 @@ public class ApiRouter {
                                     @ApiResponse(responseCode = "401", description = "Unauthorized, valid bearer token missing og faulty", content = @Content(schema = @Schema(implementation = JsonApiRestResponseWrapper.class))),
                                     @ApiResponse(responseCode = "404", description = "No existing API or API Version found", content = @Content(schema = @Schema(implementation = JsonApiRestResponseWrapper.class)))
                             },
-                            security = { @SecurityRequirement(name = "token") }
+                            security = {@SecurityRequirement(name = "token")}
                     )),
             @RouterOperation(
                     path = CLASSIFICATION_PATH,
@@ -413,7 +413,7 @@ public class ApiRouter {
                                     @Parameter(in = ParameterIn.PATH, name = "apiVersion", description = "URL encoded API version identifier")
                             },
                             requestBody = @RequestBody(content = @Content(schema = @Schema(implementation = ClassificationRootRestEntity.class))),
-                            security = { @SecurityRequirement(name = "token") }
+                            security = {@SecurityRequirement(name = "token")}
                     )),
             @RouterOperation(
                     path = CLASSIFICATION_PATH,
@@ -435,7 +435,7 @@ public class ApiRouter {
                                     @ApiResponse(responseCode = "401", description = "Unauthorized, valid bearer token missing og faulty", content = @Content(schema = @Schema(implementation = JsonApiRestResponseWrapper.class))),
                                     @ApiResponse(responseCode = "404", description = "No existing API or API Version found", content = @Content(schema = @Schema(implementation = JsonApiRestResponseWrapper.class)))
                             },
-                            security = { @SecurityRequirement(name = "token") }
+                            security = {@SecurityRequirement(name = "token")}
                     )),
     })
     RouterFunction<ServerResponse> apiRoutes(ApiResourceService apiService,

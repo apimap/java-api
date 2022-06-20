@@ -20,15 +20,20 @@ under the License.
 package io.apimap.api.security;
 
 import io.apimap.api.configuration.AccessConfiguration;
-import io.apimap.api.repository.nitrite.NitriteApiRepository;
-import io.apimap.api.repository.nitrite.NitriteTaxonomyRepository;
-import io.apimap.api.repository.nitrite.entity.db.Api;
-import io.apimap.api.repository.nitrite.entity.db.TaxonomyCollection;
+import io.apimap.api.repository.entities.IApi;
+import io.apimap.api.repository.entities.ITaxonomyCollection;
+import io.apimap.api.repository.repository.IApiRepository;
+import io.apimap.api.repository.repository.ITaxonomyRepository;
+import io.apimap.api.service.context.ApiContext;
+import io.apimap.api.service.context.AuthorizationContext;
+import io.apimap.api.service.context.TaxonomyContext;
 import io.apimap.api.utils.RequestUtil;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.server.ServerRequest;
+import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
 
-import java.util.Optional;
+import java.util.concurrent.ExecutionException;
 
 /*
  This is not to add security, it is just a minimal effort to make it a little harder
@@ -36,41 +41,39 @@ import java.util.Optional;
  */
 @Component("Authorizer")
 public class Authorizer {
-    protected NitriteApiRepository nitriteApiRepository;
-    protected NitriteTaxonomyRepository nitriteTaxonomyRepository;
+    protected IApiRepository apiRepository;
+    protected ITaxonomyRepository taxonomyRepository;
     protected AccessConfiguration accessConfiguration;
 
-    public Authorizer(NitriteApiRepository nitriteApiRepository,
-                      NitriteTaxonomyRepository nitriteTaxonomyRepository,
+    public Authorizer(IApiRepository apiRepository,
+                      ITaxonomyRepository taxonomyRepository,
                       AccessConfiguration accessConfiguration) {
-        this.nitriteApiRepository = nitriteApiRepository;
-        this.nitriteTaxonomyRepository = nitriteTaxonomyRepository;
+        this.apiRepository = apiRepository;
+        this.taxonomyRepository = taxonomyRepository;
         this.accessConfiguration = accessConfiguration;
     }
 
     /*
     Is the token valid to put/post/delete taxonomy/* resources
      */
-    public boolean isValidTaxonomyToken(ServerRequest request) {
+    public Boolean isValidTaxonomyToken(ServerRequest request){
+        final AuthorizationContext authorizationContext = RequestUtil.authorizationContextFromRequest(request);
+        if (authorizationContext.isEmpty()) return Boolean.FALSE;
+
+        final TaxonomyContext taxonomyContext = RequestUtil.taxonomyContextFromRequest(request);
+        if (taxonomyContext.getNid() == null) return Boolean.FALSE;
+
         try {
-            if (request == null)
-                return false;
-
-            final String taxonomyNid = RequestUtil.taxonomyNidFromRequest(request);
-            if (taxonomyNid == null)
-                return false;
-
-            final String token = RequestUtil.bearerTokenFromRequest(request);
-            if (token == null || token.isEmpty())
-                return false;
-
-            Optional<TaxonomyCollection> entity = nitriteTaxonomyRepository.getTaxonomyCollection(taxonomyNid, true);
-
-            return entity.map(collection -> {
-                if (collection.getToken() == null) return false;
-                return collection.getToken().equals(token);
-            }).orElse(false);
-        } catch (Exception e) {
+            return (Boolean) taxonomyRepository
+                    .getTaxonomyCollection(taxonomyContext.getNid())
+                    .subscribeOn(Schedulers.boundedElastic())
+                    .filter(collection -> ((ITaxonomyCollection) collection).getToken() != null)
+                    .filter(collection -> ((ITaxonomyCollection) collection).getToken().equals(authorizationContext.getToken()))
+                    .flatMap(collection -> Mono.just(Boolean.TRUE))
+                    .switchIfEmpty(Mono.defer(() -> Mono.just(Boolean.FALSE)))
+                    .toFuture()
+                    .get(); // Fix: Spring 5.8.x
+        } catch (Exception ignored) {
             return false;
         }
     }
@@ -78,29 +81,24 @@ public class Authorizer {
     /*
     Is the token valid to put/post/delete api/* resources?
      */
-    public boolean isValidApiAccessToken(ServerRequest request) {
+    public boolean isValidApiAccessToken(ServerRequest request){
+        final AuthorizationContext authorizationContext = RequestUtil.authorizationContextFromRequest(request);
+        if (authorizationContext.isEmpty()) return Boolean.FALSE;
+
+        final ApiContext apiContext = RequestUtil.apiContextFromRequest(request);
+        if (apiContext.getApiName() == null) return Boolean.FALSE;
+
         try {
-            if (request == null)
-                return false;
-
-            final String apiName = RequestUtil.apiNameFromRequest(request);
-            if (apiName == null)
-                return false;
-
-            final String token = RequestUtil.bearerTokenFromRequest(request);
-            if (token == null || token.isEmpty())
-                return false;
-
-            Optional<Api> entity = nitriteApiRepository.get(apiName, true);
-
-            if(entity.isPresent()
-                && entity.get().getToken() != null
-                && entity.get().getToken().equals(token)){
-                return true;
-            }
-
-            return false;
-        } catch (Exception e) {
+            return (Boolean) apiRepository
+                    .get(apiContext.getApiName())
+                    .subscribeOn(Schedulers.boundedElastic())
+                    .filter(api -> ((IApi) api).getToken() != null)
+                    .filter(api -> ((IApi) api).getToken().equals(authorizationContext.getToken()))
+                    .flatMap(api -> Mono.just(Boolean.TRUE))
+                    .switchIfEmpty(Mono.defer(() -> Mono.just(Boolean.FALSE)))
+                    .toFuture()
+                    .get(); // Fix: Spring 5.8.x
+        } catch (Exception ignored) {
             return false;
         }
     }
@@ -109,17 +107,9 @@ public class Authorizer {
     Is the token valid to get api/* zip resources?
      */
     public boolean isValidAccessToken(ServerRequest request) {
-        try {
-            if (request == null)
-                return false;
+        final AuthorizationContext authorizationContext = RequestUtil.authorizationContextFromRequest(request);
+        if (authorizationContext.isEmpty()) return Boolean.FALSE;
 
-            final String token = RequestUtil.bearerTokenFromRequest(request);
-            if (token == null || token.isEmpty())
-                return false;
-
-            return accessConfiguration.getToken().equals(token);
-        } catch (Exception e) {
-            return false;
-        }
+        return accessConfiguration.getToken().equals(authorizationContext.getToken());
     }
 }

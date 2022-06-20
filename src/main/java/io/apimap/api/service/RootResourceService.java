@@ -21,7 +21,7 @@ package io.apimap.api.service;
 
 import io.apimap.api.configuration.ApimapConfiguration;
 import io.apimap.api.rest.jsonapi.JsonApiRestResponseWrapper;
-import io.apimap.api.service.response.EmptyResponseBuilder;
+import io.apimap.api.service.response.ResponseBuilder;
 import io.apimap.api.utils.URIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Service;
@@ -32,16 +32,18 @@ import reactor.core.publisher.Mono;
 @Service
 public class RootResourceService {
 
-    protected ApimapConfiguration apimapConfiguration;
+    final protected ApimapConfiguration apimapConfiguration;
 
-    public RootResourceService(ApimapConfiguration apimapConfiguration) {
+    public RootResourceService(final ApimapConfiguration apimapConfiguration) {
         this.apimapConfiguration = apimapConfiguration;
     }
 
     @NotNull
-    public Mono<ServerResponse> rootResource(ServerRequest request) {
-        return EmptyResponseBuilder
-                .builder(apimapConfiguration)
+    public Mono<ServerResponse> rootResource(final ServerRequest request) {
+        final long startTime = System.currentTimeMillis();
+
+        return ResponseBuilder
+                .builder(startTime, apimapConfiguration)
                 .withResourceURI(request.uri())
                 .withoutBody()
                 .addRelatedRef(JsonApiRestResponseWrapper.API_COLLECTION, URIUtil.apiCollectionFromURI(request.uri()).uriValue())

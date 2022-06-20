@@ -19,28 +19,32 @@ under the License.
 
 package io.apimap.api.utils;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 
 public class URIUtil {
     protected java.net.URI uri;
 
+    public URIUtil() {
+    }
+
     public URIUtil(java.net.URI uri) {
         this.uri = uri;
     }
 
     public static URIUtil rootLevelFromURI(java.net.URI uri) {
-        java.net.URI rootURI = null;
+        java.net.URI rootURI;
 
         try {
             if (uri.getPort() <= 0) {
                 rootURI = new java.net.URI(uri.getScheme() + "://" + uri.getHost() + "/");
             } else {
-
                 rootURI = new java.net.URI(uri.getScheme() + "://" + uri.getHost() + ":" + uri.getPort() + "/");
             }
         } catch (Exception e) {
-            return null;
+            return new URIUtil();
         }
 
         return new URIUtil(rootURI);
@@ -50,36 +54,28 @@ public class URIUtil {
         return new URIUtil(uri);
     }
 
+    @NotNull
     public static URIUtil taxonomyCollectionFromURI(java.net.URI uri) {
-        if(URIUtil.rootLevelFromURI(uri) == null){
-            return null;
-        }else{
-            return URIUtil.rootLevelFromURI(uri).append("taxonomy");
-        }
+        URIUtil.rootLevelFromURI(uri);
+        return URIUtil.rootLevelFromURI(uri).append("taxonomy");
     }
 
+    @NotNull
     public static URIUtil classificationCollectionFromURI(java.net.URI uri) {
-        if(URIUtil.rootLevelFromURI(uri) == null){
-            return null;
-        }else {
-            return URIUtil.rootLevelFromURI(uri).append("classification");
-        }
+        URIUtil.rootLevelFromURI(uri);
+        return URIUtil.rootLevelFromURI(uri).append("classification");
     }
 
+    @NotNull
     public static URIUtil apiCollectionFromURI(java.net.URI uri) {
-        if(URIUtil.rootLevelFromURI(uri) == null){
-            return null;
-        }else {
-            return URIUtil.rootLevelFromURI(uri).append("api");
-        }
+        URIUtil.rootLevelFromURI(uri);
+        return URIUtil.rootLevelFromURI(uri).append("api");
     }
 
+    @NotNull
     public static URIUtil statisticsFromURI(java.net.URI uri) {
-        if(URIUtil.rootLevelFromURI(uri) == null){
-            return null;
-        }else {
-            return URIUtil.rootLevelFromURI(uri).append("statistics");
-        }
+        URIUtil.rootLevelFromURI(uri);
+        return URIUtil.rootLevelFromURI(uri).append("statistics");
     }
 
     public URIUtil append(String path) {

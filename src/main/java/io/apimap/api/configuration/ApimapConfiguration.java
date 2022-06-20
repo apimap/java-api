@@ -29,24 +29,11 @@ import java.util.HashMap;
 @Configuration
 @ConfigurationProperties(prefix = "apimap")
 public class ApimapConfiguration {
+    private static final Logger LOGGER = LoggerFactory.getLogger(ApimapConfiguration.class);
     protected HashMap<String, String> metadata = new HashMap<>();
     protected Enabled hostIdentifier;
     protected Enabled openapi;
     protected String version;
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(ApimapConfiguration.class);
-
-    private static class Enabled{
-        boolean enabled;
-
-        public boolean isEnabled() {
-            return enabled;
-        }
-
-        public void setEnabled(boolean enabled) {
-            this.enabled = enabled;
-        }
-    }
 
     public String getVersion() {
         return version;
@@ -65,13 +52,13 @@ public class ApimapConfiguration {
         this.hostIdentifier = hostIdentifier;
     }
 
-    public boolean enabledOpenapi(){
-        if(openapi == null) return false;
+    public boolean enabledOpenapi() {
+        if (openapi == null) return false;
         return openapi.isEnabled();
     }
 
-    public boolean enabledHostIdentifier(){
-        if(hostIdentifier == null) return false;
+    public boolean enabledHostIdentifier() {
+        if (hostIdentifier == null) return false;
         return hostIdentifier.isEnabled();
     }
 
@@ -81,5 +68,17 @@ public class ApimapConfiguration {
 
     public void setMetadata(HashMap<String, String> metadata) {
         this.metadata = metadata;
+    }
+
+    private static class Enabled {
+        boolean enabled;
+
+        public boolean isEnabled() {
+            return enabled;
+        }
+
+        public void setEnabled(boolean enabled) {
+            this.enabled = enabled;
+        }
     }
 }

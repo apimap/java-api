@@ -20,241 +20,140 @@ under the License.
 package io.apimap.api.repository.nitrite;
 
 import io.apimap.api.configuration.NitriteConfiguration;
-import io.apimap.api.repository.IClassificationRepository;
-import io.apimap.api.repository.nitrite.entity.db.ApiClassification;
-import io.apimap.api.repository.nitrite.entity.db.Metadata;
-import io.apimap.api.repository.nitrite.entity.db.TaxonomyCollectionVersionURN;
-import io.apimap.api.repository.nitrite.entity.query.ClassificationFilter;
-import io.apimap.api.repository.nitrite.entity.query.Filter;
-import io.apimap.api.repository.nitrite.entity.support.ApiCollection;
-import io.apimap.api.repository.nitrite.entity.support.ClassificationCollection;
-import io.apimap.api.repository.nitrite.entity.support.ClassificationTreeCollection;
-import io.apimap.api.repository.nitrite.entity.support.TaxonomyCollectionVersionURNCollection;
+import io.apimap.api.repository.nitrite.entities.ApiClassification;
+import io.apimap.api.repository.nitrite.entities.TaxonomyCollectionVersionURN;
+import io.apimap.api.repository.repository.IClassificationRepository;
 import io.apimap.api.rest.TaxonomyDataRestEntity;
+import io.apimap.api.service.query.Filter;
+import io.apimap.api.service.query.QueryFilter;
 import org.dizitart.no2.objects.Cursor;
 import org.dizitart.no2.objects.ObjectFilter;
 import org.dizitart.no2.objects.ObjectRepository;
-import org.dizitart.no2.objects.filters.ObjectFilters;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.stereotype.Repository;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
-import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.Date;
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
 
-import static java.util.stream.Collectors.toCollection;
 import static org.dizitart.no2.objects.filters.ObjectFilters.and;
 import static org.dizitart.no2.objects.filters.ObjectFilters.eq;
 import static org.dizitart.no2.objects.filters.ObjectFilters.or;
 
 @Repository
-public class NitriteClassificationRepository extends NitriteRepository implements IClassificationRepository {
+@ConditionalOnBean(io.apimap.api.configuration.NitriteConfiguration.class)
+public class NitriteClassificationRepository extends NitriteRepository implements IClassificationRepository<ApiClassification, ObjectFilter> {
 
     public static final String TAXONOMY_VERSION = "1";
 
-    protected NitriteTaxonomyRepository nitriteTaxonomyRepository;
+    protected NitriteTaxonomyRepository taxonomyRepository;
 
     public NitriteClassificationRepository(NitriteConfiguration nitriteConfiguration,
-                                           NitriteTaxonomyRepository nitriteTaxonomyRepository) {
+                                           NitriteTaxonomyRepository taxonomyRepository) {
         super(nitriteConfiguration, "classification");
-        this.nitriteTaxonomyRepository = nitriteTaxonomyRepository;
+        this.taxonomyRepository = taxonomyRepository;
     }
 
-    public void clear() {
-        database.getRepository(ApiClassification.class).remove(ObjectFilters.ALL);
-    }
+    /* C */
 
-    public ClassificationCollection filteredCollection(List<ObjectFilter> filters) {
-        ObjectRepository<ApiClassification> repository = database.getRepository(ApiClassification.class);
-        ObjectFilter combinedFilter = or(filters.toArray(ObjectFilter[]::new));
-        Cursor<ApiClassification> cursor = repository.find(combinedFilter);
-        return new ClassificationCollection(cursor.toList(), null, TAXONOMY_VERSION);
-    }
-
-    public ClassificationCollection all() {
+    @Override
+    public Flux<ApiClassification> all() {
         ObjectRepository<ApiClassification> repository = database.getRepository(ApiClassification.class);
         Cursor<ApiClassification> cursor = repository.find();
-        return new ClassificationCollection(cursor.toList(), null, TAXONOMY_VERSION);
+        return Flux.fromIterable(cursor.toList());
     }
 
-    public ClassificationCollection all(String apiId) {
+    @Override
+    public Flux<ApiClassification> allByURN(String taxonomyUrn) {
+        ObjectRepository<ApiClassification> repository = database.getRepository(ApiClassification.class);
+        Cursor<ApiClassification> cursor = repository.find(eq("taxonomyUrn", taxonomyUrn));
+        return Flux.fromIterable(cursor.toList());
+    }
+
+    @Override
+    public Flux<ApiClassification> allByFilters(Mono<List<ObjectFilter>> filters) {
+        ObjectRepository<ApiClassification> repository = database.getRepository(ApiClassification.class);
+
+        return filters
+                .filter(Objects::nonNull)
+                .filter(list -> list.size() > 0)
+                .flatMapMany(filterList -> {
+                    ObjectFilter objectFilter = or(filterList.toArray(ObjectFilter[]::new));
+                    Cursor<ApiClassification> cursor = repository.find(objectFilter);
+                    return Flux.fromIterable(cursor.toList());
+                });
+    }
+
+    @Override
+    public Flux<ApiClassification> all(String apiId) {
         ObjectRepository<ApiClassification> repository = database.getRepository(ApiClassification.class);
         Cursor<ApiClassification> cursor = repository.find(eq("apiId", apiId));
-        return new ClassificationCollection(cursor.toList(), null, TAXONOMY_VERSION);
+        return Flux.fromIterable(cursor.toList());
     }
 
-    public ClassificationCollection all(String apiId, String apiVersion) {
+    @Override
+    public Flux<ApiClassification> all(String apiId, String apiVersion) {
         ObjectRepository<ApiClassification> repository = database.getRepository(ApiClassification.class);
         Cursor<ApiClassification> cursor = repository.find(
                 and(eq("apiId", apiId), eq("apiVersion", apiVersion))
         );
-        return new ClassificationCollection(cursor.toList(), null, TAXONOMY_VERSION);
+        return Flux.fromIterable(cursor.toList());
     }
 
-    public Optional<ApiClassification> update(ApiClassification entity, String apiId) {
+    @Override
+    public Mono<ApiClassification> update(ApiClassification entity, String apiId) {
         ObjectRepository<ApiClassification> repository = database.getRepository(ApiClassification.class);
-        return Optional.ofNullable(repository.getById(repository.update(eq("apiId", apiId), entity).iterator().next()));
+        return Mono.justOrEmpty(repository.getById(repository.update(eq("apiId", apiId), entity).iterator().next()));
     }
 
-    public Optional<ApiClassification> add(ApiClassification entity) {
+    @Override
+    public Mono<ApiClassification> add(ApiClassification entity) {
+        entity.setCreated(new Date());
+
         ObjectRepository<ApiClassification> repository = database.getRepository(ApiClassification.class);
-        return Optional.ofNullable(repository.getById(repository.insert(entity).iterator().next()));
+        return Mono.justOrEmpty(repository.getById(repository.insert(entity).iterator().next()));
     }
 
-    public ClassificationCollection add(String apiId, List<ApiClassification> entities) {
+    @Override
+    public Mono<ApiClassification> get(String apiId, String api, String taxonomyUrn) {
         ObjectRepository<ApiClassification> repository = database.getRepository(ApiClassification.class);
-        repository.insert(entities.toArray(new ApiClassification[entities.size()]));
-        return get(apiId);
-    }
-
-    public Optional<ApiClassification> get(String uri, String api) {
-        ObjectRepository<ApiClassification> repository = database.getRepository(ApiClassification.class);
-        return Optional.ofNullable(repository.find(eq("id", api + "#" + uri)
+        return Mono.justOrEmpty(repository.find(
+                and(eq("apiId", apiId),
+                        eq("taxonomyUrn", taxonomyUrn)
+                )
         ).firstOrDefault());
     }
 
-    public ClassificationCollection get(String apiId) {
+    @Override
+    public Mono<Boolean> delete(String apiId, String apiVersion) {
         ObjectRepository<ApiClassification> repository = database.getRepository(ApiClassification.class);
-        Cursor<ApiClassification> cursor = repository.find(eq("apiId", apiId));
-        return new ClassificationCollection(cursor.toList(), null, TAXONOMY_VERSION);
-    }
-
-    public void delete(String apiId, String apiVersion) {
-        ObjectRepository<ApiClassification> repository = database.getRepository(ApiClassification.class);
-        repository.remove(
+        return Mono.just(repository.remove(
                 and(eq("apiId", apiId), eq("apiVersion", apiVersion))
-        );
+        ).getAffectedCount() > 0);
     }
 
-    public void delete(String apiId) {
+    @Override
+    public Mono<Boolean> delete(String apiId) {
         ObjectRepository<ApiClassification> repository = database.getRepository(ApiClassification.class);
-        repository.remove(eq("apiId", apiId));
+        return Mono.just(repository.remove(eq("apiId", apiId)).getAffectedCount() > 0);
     }
 
-    public ClassificationCollection queryFilters(List<Filter> filters) {
-        ArrayList<String> urls = filters
-                .stream()
-                .filter(e -> e.type() == Filter.TYPE.CLASSIFICATION)
-                .map(e -> {
-                    Optional<TaxonomyCollectionVersionURN> data = nitriteTaxonomyRepository.getTaxonomyCollectionVersionURN(((ClassificationFilter) e).getValue(), TAXONOMY_VERSION);
-                    return data.map(TaxonomyCollectionVersionURN::getUrl).orElse(null);
-                })
-                .filter(Objects::nonNull)
-                .collect(toCollection(ArrayList::new));
+    /* OB */
 
-        ArrayList<ObjectFilter> urns = new ArrayList<>();
-
-        for (String url : urls) {
-            TaxonomyCollectionVersionURNCollection f = nitriteTaxonomyRepository.allTaxonomyCollectionVersionURNsBellowUrl(TAXONOMY_VERSION, url);
-            if (f != null) {
-                for (TaxonomyCollectionVersionURN item : f.getItems()) {
-                    if (item.getUrn() != null) {
-                        urns.add(eq("taxonomyUrn", item.getUrn()));
-                    }
-                }
-            }
-        }
-
-        if (!urns.isEmpty()) {
-            ClassificationCollection collection = filteredCollection(urns);
-            collection.setParents(urls);
-            return collection;
-        }
-
-        return null;
-    }
-
-    public List<ClassificationTreeCollection> classificationTree(ApiCollection apiCollection, String parentClassificationURN) {
-        HashMap<String, ClassificationTreeCollection> treeCollection = new HashMap<>();
-
-        final Optional<TaxonomyCollectionVersionURN> parentTaxonomyCollectionVersionURN;
-
-        if (parentClassificationURN != null) {
-            parentTaxonomyCollectionVersionURN = nitriteTaxonomyRepository.getTaxonomyCollectionVersionURN(parentClassificationURN, TAXONOMY_VERSION);
-        } else {
-            parentTaxonomyCollectionVersionURN = Optional.empty();
-        }
-
-        apiCollection.getItems().forEach(e -> {
-            ClassificationCollection classification = get(e.getApi().getId());
-
-            classification.getItems().forEach(f -> {
-                Optional<TaxonomyCollectionVersionURN> taxonomyCollectionVersionURN = nitriteTaxonomyRepository.getTaxonomyCollectionVersionURN(f.getTaxonomyUrn(), f.getTaxonomyVersion());
-
-                if(taxonomyCollectionVersionURN.isPresent()
-                    && taxonomyCollectionVersionURN.get().getType().equals(TaxonomyDataRestEntity.ReferenceType.REFERENCE.getValue())){
-                    taxonomyCollectionVersionURN = nitriteTaxonomyRepository.getTaxonomyCollectionVersionURN(
-                            taxonomyCollectionVersionURN.get().getUrl(),
-                            TaxonomyDataRestEntity.ReferenceType.CLASSIFICATION
-                    );
-                }
-
-                if (parentTaxonomyCollectionVersionURN.isPresent()) {
-                    if (taxonomyCollectionVersionURN.isPresent() && taxonomyCollectionVersionURN.get().getUrl().startsWith(parentTaxonomyCollectionVersionURN.get().getUrl())) {
-                        if (treeCollection.containsKey(taxonomyCollectionVersionURN.get().getId())) {
-                            ClassificationTreeCollection tr = treeCollection.get(taxonomyCollectionVersionURN.get().getId());
-                            tr.getItems().add(e.getMetadata().get());
-                        } else {
-                            ClassificationTreeCollection collection = new ClassificationTreeCollection();
-                            collection.setTaxonomy(taxonomyCollectionVersionURN.get());
-
-                            ArrayList<Metadata> items = new ArrayList<>();
-                            items.add(e.getMetadata().get());
-
-                            collection.setItems(items);
-
-                            treeCollection.put(taxonomyCollectionVersionURN.get().getId(), collection);
-                        }
-                    }
-                } else {
-                    if(taxonomyCollectionVersionURN.isPresent()){
-                        Optional<TaxonomyCollectionVersionURN> finalTaxonomyCollectionVersionURN = taxonomyCollectionVersionURN;
-                        if(apiCollection.getParents() != null
-                                && apiCollection.getParents().stream().anyMatch(z -> finalTaxonomyCollectionVersionURN.get().getUrl().startsWith(z))) {
-                            if (treeCollection.containsKey(taxonomyCollectionVersionURN.get().getId())) {
-                                ClassificationTreeCollection tr = treeCollection.get(taxonomyCollectionVersionURN.get().getId());
-                                tr.getItems().add(e.getMetadata().get());
-                            } else {
-                                if (taxonomyCollectionVersionURN.get().getId() != null) {
-                                    ClassificationTreeCollection collection = new ClassificationTreeCollection();
-                                    collection.setTaxonomy(taxonomyCollectionVersionURN.get());
-
-                                    ArrayList<Metadata> items = new ArrayList<>();
-                                    if (e.getMetadata().isPresent()) {
-                                        items.add(e.getMetadata().get());
-                                    }
-
-                                    collection.setItems(items);
-
-                                    treeCollection.put(taxonomyCollectionVersionURN.get().getId(), collection);
-                                }
-                            }
-                        }else{
-                            if (treeCollection.containsKey(taxonomyCollectionVersionURN.get().getId())) {
-                                ClassificationTreeCollection tr = treeCollection.get(taxonomyCollectionVersionURN.get().getId());
-                                tr.getItems().add(e.getMetadata().get());
-                            } else {
-                                if (taxonomyCollectionVersionURN.get().getId() != null) {
-                                    ClassificationTreeCollection collection = new ClassificationTreeCollection();
-                                    collection.setTaxonomy(taxonomyCollectionVersionURN.get());
-
-                                    ArrayList<Metadata> items = new ArrayList<>();
-                                    if (e.getMetadata().isPresent()) {
-                                        items.add(e.getMetadata().get());
-                                    }
-
-                                    collection.setItems(items);
-
-                                    treeCollection.put(taxonomyCollectionVersionURN.get().getId(), collection);
-                                }
-                            }
-                        }
-                    }
-                }
-            });
-        });
-
-        return new ArrayList<>(treeCollection.values());
+    @Override
+    public Mono<List<ObjectFilter>> queryFilters(List<Filter> filters) {
+        return Flux.fromStream(filters
+                        .stream()
+                        .filter(filter -> filter.type() == Filter.TYPE.CLASSIFICATION)
+                        .map(filter -> taxonomyRepository
+                                .getTaxonomyCollectionVersionURN(filter.getValue(), TAXONOMY_VERSION, TaxonomyDataRestEntity.ReferenceType.UNKNOWN)
+                                .map(TaxonomyCollectionVersionURN::getUrl)))
+                .flatMap(url -> url)
+                .flatMap(url -> taxonomyRepository
+                        .allTaxonomyCollectionVersionURNsBellowUrl(url)
+                        .flatMap(version -> Mono.just(eq("taxonomyUrn", version.getUrn()))))
+                .collectList();
     }
 }

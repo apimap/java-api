@@ -19,147 +19,148 @@ under the License.
 
 package io.apimap.api.service;
 
+import com.fasterxml.jackson.databind.JavaType;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.apimap.api.configuration.ApimapConfiguration;
-import io.apimap.api.repository.IApiRepository;
-import io.apimap.api.repository.IMetadataRepository;
-import io.apimap.api.repository.nitrite.entity.db.Metadata;
+import io.apimap.api.repository.entities.IApi;
+import io.apimap.api.repository.entities.IMetadata;
+import io.apimap.api.repository.entities.IRESTEntityMapper;
+import io.apimap.api.repository.repository.IApiRepository;
+import io.apimap.api.repository.repository.IMetadataRepository;
+import io.apimap.api.rest.MetadataDataRestEntity;
+import io.apimap.api.rest.jsonapi.JsonApiRestRequestWrapper;
 import io.apimap.api.rest.jsonapi.JsonApiRestResponseWrapper;
-import io.apimap.api.service.request.MetadataRequestParser;
-import io.apimap.api.service.response.MetadataResponseBuilder;
+import io.apimap.api.service.context.ApiContext;
+import io.apimap.api.service.response.ResponseBuilder;
 import io.apimap.api.utils.RequestUtil;
 import io.apimap.api.utils.URIUtil;
 import org.jetbrains.annotations.NotNull;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.server.ServerRequest;
 import org.springframework.web.reactive.function.server.ServerResponse;
 import reactor.core.publisher.Mono;
 
-import java.util.Optional;
+import java.net.URI;
+import java.util.Objects;
 
 @Service
 public class ApiMetadataService {
 
-    protected IMetadataRepository metadataRepository;
-    protected IApiRepository apiRepository;
-    protected ApimapConfiguration apimapConfiguration;
+    final protected IRESTEntityMapper entityMapper;
+    final protected IMetadataRepository metadataRepository;
+    final protected IApiRepository apiRepository;
+    final protected ApimapConfiguration apimapConfiguration;
 
-    public ApiMetadataService(IMetadataRepository metadataRepository,
-                              IApiRepository apiRepository,
-                              ApimapConfiguration apimapConfiguration) {
+    public ApiMetadataService(final IRESTEntityMapper entityMapper,
+                              final IMetadataRepository metadataRepository,
+                              final IApiRepository apiRepository,
+                              final ApimapConfiguration apimapConfiguration) {
         this.metadataRepository = metadataRepository;
         this.apiRepository = apiRepository;
         this.apimapConfiguration = apimapConfiguration;
+        this.entityMapper = entityMapper;
     }
 
     @NotNull
     @PreAuthorize("@Authorizer.isValidApiAccessToken(#request)")
-    public Mono<ServerResponse> deleteMetadata(ServerRequest request) {
-        final MetadataResponseBuilder responseBuilder = MetadataResponseBuilder.builder(apimapConfiguration);
-        final String apiName = RequestUtil.apiNameFromRequest(request);
-        final String apiVersion = RequestUtil.apiVersionFromRequest(request);
-        final String apiId = apiRepository.apiId(apiName);
+    public Mono<ServerResponse> deleteMetadata(final ServerRequest request) {
+        final long startTime = System.currentTimeMillis();
 
-        if(apiRepository.get(apiName).isEmpty() || apiRepository.getApiVersion(apiId, apiVersion).isEmpty()){
-            return responseBuilder.notFound();
-        }
+        final ApiContext context = RequestUtil.apiContextFromRequest(request);
 
-        metadataRepository.delete(apiId, apiVersion);
-
-        return responseBuilder.noContent();
+        return apiRepository
+                .get(context.getApiName())
+                .flatMap(api -> metadataRepository.delete(((IApi) api).getId(), context.getApiVersion()))
+                .filter(value -> (Boolean) value)
+                .flatMap(result -> ResponseBuilder
+                        .builder(startTime, apimapConfiguration)
+                        .noContent())
+                .switchIfEmpty(Mono.defer(() -> ServerResponse.notFound().build()));
     }
 
     @NotNull
     @PreAuthorize("@Authorizer.isValidApiAccessToken(#request)")
-    public Mono<ServerResponse> updateMetadata(ServerRequest request) {
-        final MetadataResponseBuilder responseBuilder = MetadataResponseBuilder.builder(apimapConfiguration);
-        final String apiName = RequestUtil.apiNameFromRequest(request);
-        final String apiVersion = RequestUtil.apiVersionFromRequest(request);
-        final String apiId = apiRepository.apiId(apiName);
+    public Mono<ServerResponse> updateMetadata(final ServerRequest request) {
+        final long startTime = System.currentTimeMillis();
 
-        if(apiRepository.get(apiName).isEmpty() || apiRepository.getApiVersion(apiId, apiVersion).isEmpty()){
-            return responseBuilder.notFound();
-        }
+        final ApiContext context = RequestUtil.apiContextFromRequest(request);
+        final JavaType type = new ObjectMapper().getTypeFactory().constructParametricType(JsonApiRestRequestWrapper.class, MetadataDataRestEntity.class);
+        final URI uri = request.uri();
 
-        final Optional<Metadata> dbEntity = MetadataRequestParser
-                .parser()
-                .withApiRepository(apiRepository)
-                .withRequest(request)
-                .metadatDbEntity();
-
-        if (dbEntity.isEmpty()) {
-            return responseBuilder.badRequest();
-        }
-
-        final Optional<Metadata> updatedEntity = metadataRepository.update(dbEntity.get());
-
-        if (updatedEntity.isEmpty()) {
-            return responseBuilder.notFound();
-        }
-
-        return responseBuilder
-                .withResourceURI(request.uri())
-                .withMetadataBody(updatedEntity.get())
-                .okResource();
+        return request
+                .bodyToMono(ParameterizedTypeReference.forType(type))
+                .filter(Objects::nonNull)
+                .flatMap(metadata -> entityMapper.decodeMetadata(context, (JsonApiRestRequestWrapper<MetadataDataRestEntity>) metadata))
+                .flatMap(metadata -> apiRepository
+                        .get(context.getApiName())
+                        .flatMap(api -> {
+                            metadata.setApiId(((IApi) api).getId());
+                            return Mono.justOrEmpty(metadata);
+                        })
+                )
+                .flatMap(metadata -> metadataRepository.update((IMetadata) metadata))
+                .flatMap(metadata -> entityMapper.encodeMetadata(uri, (IMetadata) metadata))
+                .flatMap(version -> ResponseBuilder
+                        .builder(startTime, apimapConfiguration)
+                        .withResourceURI(uri)
+                        .withBody((JsonApiRestResponseWrapper<MetadataDataRestEntity>) version)
+                        .okResource()
+                )
+                .switchIfEmpty(Mono.defer(() -> ServerResponse.notFound().build()));
     }
 
     @NotNull
-    public Mono<ServerResponse> getMetadata(ServerRequest request) {
-        final MetadataResponseBuilder responseBuilder = MetadataResponseBuilder.builder(apimapConfiguration);
-        final String apiName = RequestUtil.apiNameFromRequest(request);
-        final String apiVersion = RequestUtil.apiVersionFromRequest(request);
-        final String apiId = apiRepository.apiId(apiName);
+    public Mono<ServerResponse> getMetadata(final ServerRequest request) {
+        final long startTime = System.currentTimeMillis();
 
-        if(apiRepository.get(apiName).isEmpty() || apiRepository.getApiVersion(apiId, apiVersion).isEmpty()){
-            return responseBuilder.notFound();
-        }
+        final URI uri = request.uri();
+        final ApiContext context = RequestUtil.apiContextFromRequest(request);
 
-        final Optional<Metadata> entity = metadataRepository.get(apiId, apiVersion);
-
-        if (entity.isEmpty()) {
-            return responseBuilder.notFound();
-        }
-
-        return responseBuilder
-                .withResourceURI(request.uri())
-                .withMetadataBody(entity.get())
-                .addRelatedRef(JsonApiRestResponseWrapper.VERSION_COLLECTION, URIUtil.rootLevelFromURI(request.uri()).append("api").append(apiName).append("version").uriValue())
-                .addRelatedRef(JsonApiRestResponseWrapper.API_ELEMENT, URIUtil.rootLevelFromURI(request.uri()).append("api").append(apiName).uriValue())
-                .addRelatedRef(JsonApiRestResponseWrapper.API_COLLECTION, URIUtil.rootLevelFromURI(request.uri()).append("api").uriValue())
-                .okResource();
+        return apiRepository
+                .get(context.getApiName())
+                .flatMap(api -> metadataRepository.get(((IApi) api).getId(), context.getApiVersion()))
+                .flatMap(metadata -> entityMapper.encodeMetadata(uri, (IMetadata) metadata))
+                .flatMap(metadata -> ResponseBuilder
+                        .builder(startTime, apimapConfiguration)
+                        .withResourceURI(uri)
+                        .withBody((JsonApiRestResponseWrapper<?>) metadata)
+                        .addRelatedRef(JsonApiRestResponseWrapper.VERSION_COLLECTION, URIUtil.rootLevelFromURI(uri).append("api").append(context.getApiName()).append("version").uriValue())
+                        .addRelatedRef(JsonApiRestResponseWrapper.API_ELEMENT, URIUtil.rootLevelFromURI(uri).append("api").append(context.getApiName()).uriValue())
+                        .addRelatedRef(JsonApiRestResponseWrapper.API_COLLECTION, URIUtil.rootLevelFromURI(uri).append("api").uriValue())
+                        .okResource()
+                )
+                .switchIfEmpty(Mono.defer(() -> ServerResponse.notFound().build()));
     }
 
     @NotNull
     @PreAuthorize("@Authorizer.isValidApiAccessToken(#request)")
-    public Mono<ServerResponse> createMetadata(ServerRequest request) {
-        final MetadataResponseBuilder responseBuilder = MetadataResponseBuilder.builder(apimapConfiguration);
-        final String apiName = RequestUtil.apiNameFromRequest(request);
-        final String apiVersion = RequestUtil.apiVersionFromRequest(request);
-        final String apiId = apiRepository.apiId(apiName);
+    public Mono<ServerResponse> createMetadata(final ServerRequest request) {
+        final long startTime = System.currentTimeMillis();
 
-        if(apiRepository.get(apiName).isEmpty() || apiRepository.getApiVersion(apiId, apiVersion).isEmpty()){
-            return responseBuilder.notFound();
-        }
+        final ApiContext context = RequestUtil.apiContextFromRequest(request);
+        final JavaType type = new ObjectMapper().getTypeFactory().constructParametricType(JsonApiRestRequestWrapper.class, MetadataDataRestEntity.class);
+        final URI uri = request.uri();
 
-        final Optional<Metadata> dbEntity = MetadataRequestParser
-                .parser()
-                .withApiRepository(apiRepository)
-                .withRequest(request)
-                .metadatDbEntity();
-
-        if (dbEntity.isEmpty()) {
-            return responseBuilder.badRequest();
-        }
-
-        final Optional<Metadata> insertedEntity = metadataRepository.add(dbEntity.get());
-
-        if (insertedEntity.isEmpty()) {
-            return responseBuilder.notFound();
-        }
-
-        return responseBuilder
-                .withResourceURI(request.uri())
-                .withMetadataBody(insertedEntity.get())
-                .created(false);
+        return request
+                .bodyToMono(ParameterizedTypeReference.forType(type))
+                .flatMap(metadata -> entityMapper.decodeMetadata(context, (JsonApiRestRequestWrapper<MetadataDataRestEntity>) metadata))
+                .flatMap(metadata -> apiRepository
+                        .get(context.getApiName())
+                        .flatMap(api -> {
+                            metadata.setApiId(((IApi) api).getId());
+                            return Mono.justOrEmpty(metadata);
+                        })
+                )
+                .flatMap(metadata -> metadataRepository.add((IMetadata) metadata))
+                .flatMap(metadata -> entityMapper.encodeMetadata(uri, (IMetadata) metadata))
+                .flatMap(version -> ResponseBuilder
+                        .builder(startTime, apimapConfiguration)
+                        .withResourceURI(uri)
+                        .withBody((JsonApiRestResponseWrapper<MetadataDataRestEntity>) version)
+                        .created(true)
+                )
+                .switchIfEmpty(Mono.defer(() -> ServerResponse.notFound().build()));
     }
 }

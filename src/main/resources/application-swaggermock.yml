@@ -5,12 +5,6 @@ springdoc:
     enabled: true
     operationsSorter: alpha
     tagsSorter: alpha
-spring:
-  datasource:
-    url: ""
-    username: ""
-    password: ""
-    driver-class-name: ""
 logging:
   level:
     root: INFO
@@ -24,6 +18,3 @@ management:
     web:
       exposure:
         include: "health,metrics"
-apicatalog:
-  nitrite:
-    filePath: "/989"

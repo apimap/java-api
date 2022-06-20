@@ -122,7 +122,7 @@ public class TaxonomyRouter {
                             parameters = {
                                     @Parameter(in = ParameterIn.PATH, name = "taxonomyNid", description = "URL encoded taxonomy NID"),
                             },
-                            security = { @SecurityRequirement(name = "token") }
+                            security = {@SecurityRequirement(name = "token")}
                     )),
             @RouterOperation(
                     path = COLLECTION_PATH,
@@ -157,7 +157,7 @@ public class TaxonomyRouter {
                                     @ApiResponse(responseCode = "201", description = "Taxonomy Collection Version Create", content = @Content(schema = @Schema(implementation = TaxonomyCollectionDataRestEntity.class))),
                                     @ApiResponse(responseCode = "401", description = "Unauthorized, valid bearer token missing og faulty", content = @Content(schema = @Schema(implementation = JsonApiRestResponseWrapper.class)))
                             },
-                            security = { @SecurityRequirement(name = "token") },
+                            security = {@SecurityRequirement(name = "token")},
                             requestBody = @RequestBody(content = @Content(schema = @Schema(implementation = TaxonomyCollectionDataRestEntity.Attributes.class)))
                     )),
             @RouterOperation(
@@ -188,7 +188,7 @@ public class TaxonomyRouter {
                             responses = {
                                     @ApiResponse(responseCode = "401", description = "Unauthorized, valid bearer token missing og faulty", content = @Content(schema = @Schema(implementation = JsonApiRestResponseWrapper.class)))
                             },
-                            security = { @SecurityRequirement(name = "token") }
+                            security = {@SecurityRequirement(name = "token")}
                     )),
             @RouterOperation(
                     path = URN_PATH,
@@ -202,7 +202,7 @@ public class TaxonomyRouter {
                             responses = {
                                     @ApiResponse(responseCode = "401", description = "Unauthorized, valid bearer token missing og faulty", content = @Content(schema = @Schema(implementation = JsonApiRestResponseWrapper.class)))
                             },
-                            security = { @SecurityRequirement(name = "token") },
+                            security = {@SecurityRequirement(name = "token")},
                             requestBody = @RequestBody(content = @Content(schema = @Schema(implementation = TaxonomyDataRestEntity.Attributes.class)))
                     )),
             @RouterOperation(
@@ -237,7 +237,7 @@ public class TaxonomyRouter {
                             responses = {
                                     @ApiResponse(responseCode = "401", description = "Unauthorized, valid bearer token missing og faulty", content = @Content(schema = @Schema(implementation = JsonApiRestResponseWrapper.class)))
                             },
-                            security = { @SecurityRequirement(name = "token") }
+                            security = {@SecurityRequirement(name = "token")}
                     ))
     })
     RouterFunction<ServerResponse> taxonomyRoutes(TaxonomyResourceService service) {

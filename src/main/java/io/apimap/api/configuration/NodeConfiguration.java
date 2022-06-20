@@ -27,7 +27,6 @@ import java.util.UUID;
 
 @Configuration
 public class NodeConfiguration {
-
     public static final String ID = UUID.randomUUID().toString();
     private static final Logger LOGGER = LoggerFactory.getLogger(NodeConfiguration.class);
 
@@ -35,7 +34,7 @@ public class NodeConfiguration {
         LOGGER.info("Node ID {}", ID);
     }
 
-    public String getId(){
+    public String getId() {
         return ID;
     }
 }

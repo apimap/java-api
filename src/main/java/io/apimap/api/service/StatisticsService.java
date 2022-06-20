@@ -20,155 +20,175 @@ under the License.
 package io.apimap.api.service;
 
 import io.apimap.api.configuration.ApimapConfiguration;
-import io.apimap.api.repository.IApiRepository;
-import io.apimap.api.repository.IMetadataRepository;
-import io.apimap.api.repository.ITaxonomyRepository;
-import io.apimap.api.repository.nitrite.entity.db.Metadata;
-import io.apimap.api.repository.nitrite.entity.support.StatisticsCollection;
-import io.apimap.api.repository.nitrite.entity.support.StatisticsCollectionCollection;
-import io.apimap.api.repository.nitrite.entity.support.StatisticsValue;
-import io.apimap.api.repository.nitrite.entity.support.StatisticsValueCollection;
-import io.apimap.api.service.response.StatisticsResponseBuilder;
+import io.apimap.api.repository.entities.IApi;
+import io.apimap.api.repository.entities.IMetadata;
+import io.apimap.api.repository.entities.IRESTEntityMapper;
+import io.apimap.api.repository.generic.StatisticsCollection;
+import io.apimap.api.repository.generic.StatisticsValue;
+import io.apimap.api.repository.repository.IApiRepository;
+import io.apimap.api.repository.repository.IMetadataRepository;
+import io.apimap.api.repository.repository.ITaxonomyRepository;
+import io.apimap.api.rest.StatisticsCollectionCollectionRootRestEntity;
+import io.apimap.api.rest.StatisticsCollectionRootRestEntity;
+import io.apimap.api.rest.jsonapi.JsonApiRestResponseWrapper;
+import io.apimap.api.service.response.ResponseBuilder;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.server.ServerRequest;
 import org.springframework.web.reactive.function.server.ServerResponse;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.GroupedFlux;
 import reactor.core.publisher.Mono;
 
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
-import java.util.function.Function;
-import java.util.stream.Collectors;
-
-import static java.util.stream.Collectors.groupingBy;
-import static java.util.stream.Collectors.toList;
 
 @Service
 public class StatisticsService {
-    protected IApiRepository apiRepository;
-    protected ITaxonomyRepository taxonomyRepository;
-    protected IMetadataRepository metadataRepository;
-    protected ApimapConfiguration apimapConfiguration;
+    final protected IApiRepository apiRepository;
+    final protected ITaxonomyRepository taxonomyRepository;
+    final protected IMetadataRepository metadataRepository;
+    final protected ApimapConfiguration apimapConfiguration;
+    final protected IRESTEntityMapper entityMapper;
 
-    public StatisticsService(IApiRepository apiRepository,
-                             ITaxonomyRepository taxonomyRepository,
-                             IMetadataRepository metadataRepository,
-                             ApimapConfiguration apimapConfiguration) {
+    public StatisticsService(final IApiRepository apiRepository,
+                             final ITaxonomyRepository taxonomyRepository,
+                             final IMetadataRepository metadataRepository,
+                             final ApimapConfiguration apimapConfiguration,
+                             final IRESTEntityMapper entityMapper) {
         this.apiRepository = apiRepository;
         this.taxonomyRepository = taxonomyRepository;
         this.metadataRepository = metadataRepository;
         this.apimapConfiguration = apimapConfiguration;
+        this.entityMapper = entityMapper;
     }
 
     @NotNull
-    public Mono<ServerResponse> allStatistics(ServerRequest request) {
-        StatisticsResponseBuilder responseBuilder = StatisticsResponseBuilder.builder(apimapConfiguration);
+    public Mono<ServerResponse> allStatistics(final ServerRequest request) {
+        final long startTime = System.currentTimeMillis();
 
-        final ArrayList<StatisticsCollection> allStatisticsCollectionList = new ArrayList<>();
-        allStatisticsCollectionList.add(new StatisticsCollection("apis", "Number of APIs"));
-        allStatisticsCollectionList.add(new StatisticsCollection("taxonomies", "Number of taxonomies"));
-        allStatisticsCollectionList.add(new StatisticsCollection("interface-specification", "Interface specification"));
-        allStatisticsCollectionList.add(new StatisticsCollection("architecture-layer", "Architecture layer"));
-        allStatisticsCollectionList.add(new StatisticsCollection("apis-history", "Creation date of APIs"));
-        final StatisticsCollectionCollection statisticsCollectionCollection = new StatisticsCollectionCollection(allStatisticsCollectionList);
+        final URI uri = request.uri();
 
-        return responseBuilder
-                .withResourceURI(request.uri())
-                .withStatisticsCollectionCollectionBody(statisticsCollectionCollection)
-                .okCollection();
+        final ArrayList<StatisticsCollection> collections = new ArrayList<>();
+        collections.add(new StatisticsCollection("apis", "Number of APIs"));
+        collections.add(new StatisticsCollection("taxonomies", "Number of taxonomies"));
+        collections.add(new StatisticsCollection("interface-specification", "Interface specification"));
+        collections.add(new StatisticsCollection("architecture-layer", "Architecture layer"));
+        collections.add(new StatisticsCollection("apis-history", "Creation date of APIs"));
+
+        return Flux
+                .fromIterable(collections)
+                .collectList()
+                .flatMap(collection -> entityMapper.encodeStatisticsCollection(uri, collection))
+                .flatMap(collection -> ResponseBuilder
+                        .builder(startTime, apimapConfiguration)
+                        .withResourceURI(uri)
+                        .withBody((JsonApiRestResponseWrapper<StatisticsCollectionCollectionRootRestEntity>) collection)
+                        .okCollection())
+                .switchIfEmpty(Mono.defer(() -> ServerResponse.notFound().build()));
     }
 
     @NotNull
-    public Mono<ServerResponse> getApiCountStatistics(ServerRequest request) {
-        StatisticsResponseBuilder responseBuilder = StatisticsResponseBuilder.builder(apimapConfiguration);
+    public Mono<ServerResponse> getApiCountStatistics(final ServerRequest request) {
+        final long startTime = System.currentTimeMillis();
 
-        final ArrayList<StatisticsValue> apiCountStatisticsList = new ArrayList<>();
-        apiCountStatisticsList.add(new StatisticsValue("global", this.apiRepository.numberOfApis().toString()));
-        final StatisticsValueCollection statisticsValueCollection = new StatisticsValueCollection(apiCountStatisticsList);
+        final URI uri = request.uri();
 
-        return responseBuilder
-                .withResourceURI(request.uri())
-                .withStatisticsValueCollectionBody(statisticsValueCollection)
-                .okResource();
+        return apiRepository
+                .numberOfApis()
+                .flatMapMany(value -> Mono.just(new StatisticsValue("global", value.toString())))
+                .collectList()
+                .flatMap(collection -> entityMapper.encodeStatistics(uri, (List<StatisticsValue>) collection))
+                .flatMap(collection -> ResponseBuilder
+                        .builder(startTime, apimapConfiguration)
+                        .withResourceURI(uri)
+                        .withBody((JsonApiRestResponseWrapper<StatisticsCollectionRootRestEntity>) collection)
+                        .okCollection())
+                .switchIfEmpty(Mono.defer(() -> ServerResponse.notFound().build()));
     }
 
     @NotNull
-    public Mono<ServerResponse> getTaxonomiesStatistics(ServerRequest request) {
-        StatisticsResponseBuilder responseBuilder = StatisticsResponseBuilder.builder(apimapConfiguration);
+    public Mono<ServerResponse> getTaxonomiesStatistics(final ServerRequest request) {
+        final long startTime = System.currentTimeMillis();
 
-        final ArrayList<StatisticsValue> numberOfTaxonomiesStatistic = new ArrayList<>();
-        numberOfTaxonomiesStatistic.add(new StatisticsValue("global", this.taxonomyRepository.numberOfTaxonomies().toString()));
-        final StatisticsValueCollection statisticsValueCollection = new StatisticsValueCollection(numberOfTaxonomiesStatistic);
+        final URI uri = request.uri();
 
-        return responseBuilder
-                .withResourceURI(request.uri())
-                .withStatisticsValueCollectionBody(statisticsValueCollection)
-                .okResource();
+        return taxonomyRepository
+                .numberOfTaxonomies()
+                .flatMapMany(value -> Mono.just(new StatisticsValue("global", value.toString())))
+                .collectList()
+                .flatMap(collection -> entityMapper.encodeStatistics(uri, (List<StatisticsValue>) collection))
+                .flatMap(collection -> ResponseBuilder
+                        .builder(startTime, apimapConfiguration)
+                        .withResourceURI(uri)
+                        .withBody((JsonApiRestResponseWrapper<StatisticsCollectionRootRestEntity>) collection)
+                        .okCollection())
+                .switchIfEmpty(Mono.defer(() -> ServerResponse.notFound().build()));
     }
 
     @NotNull
-    public Mono<ServerResponse> getInterfaceSpecificationStatistics(ServerRequest request) {
-        StatisticsResponseBuilder responseBuilder = StatisticsResponseBuilder.builder(apimapConfiguration);
+    public Mono<ServerResponse> getInterfaceSpecificationStatistics(final ServerRequest request) {
+        final long startTime = System.currentTimeMillis();
 
-        final StatisticsValueCollection statisticsValueCollection = new StatisticsValueCollection(interfaceSpecificationsStatistics());
+        final URI uri = request.uri();
 
-        return responseBuilder
-                .withResourceURI(request.uri())
-                .withStatisticsValueCollectionBody(statisticsValueCollection)
-                .okResource();
+        return metadataRepository
+                .all()
+                .groupBy(metadata -> ((IMetadata) metadata).getInterfaceSpecification())
+                .flatMap(group -> ((GroupedFlux) group)
+                        .count()
+                        .flatMapMany(value -> Mono.just(new StatisticsValue(((GroupedFlux) group).key().toString(), String.valueOf(value))))
+                )
+                .collectList()
+                .flatMap(collection -> entityMapper.encodeStatistics(uri, (List<StatisticsValue>) collection))
+                .flatMap(collection -> ResponseBuilder
+                        .builder(startTime, apimapConfiguration)
+                        .withResourceURI(uri)
+                        .withBody((JsonApiRestResponseWrapper<StatisticsCollectionRootRestEntity>) collection)
+                        .okCollection())
+                .switchIfEmpty(Mono.defer(() -> ServerResponse.notFound().build()));
     }
 
     @NotNull
-    public Mono<ServerResponse> getArchitectureLayerStatistics(ServerRequest request) {
-        StatisticsResponseBuilder responseBuilder = StatisticsResponseBuilder.builder(apimapConfiguration);
+    public Mono<ServerResponse> getArchitectureLayerStatistics(final ServerRequest request) {
+        final long startTime = System.currentTimeMillis();
 
-        final StatisticsValueCollection statisticsValueCollection = new StatisticsValueCollection(architectureLayerStatistics());
+        final URI uri = request.uri();
 
-        return responseBuilder
-                .withResourceURI(request.uri())
-                .withStatisticsValueCollectionBody(statisticsValueCollection)
-                .okResource();
+        return metadataRepository
+                .all()
+                .groupBy(metadata -> ((IMetadata) metadata).getArchitectureLayer())
+                .flatMap(group -> ((GroupedFlux) group)
+                        .count()
+                        .flatMapMany(value -> Mono.just(new StatisticsValue(((GroupedFlux) group).key().toString(), String.valueOf(value))))
+                )
+                .collectList()
+                .flatMap(collection -> entityMapper.encodeStatistics(uri, (List<StatisticsValue>) collection))
+                .flatMap(collection -> ResponseBuilder
+                        .builder(startTime, apimapConfiguration)
+                        .withResourceURI(uri)
+                        .withBody((JsonApiRestResponseWrapper<StatisticsCollectionRootRestEntity>) collection)
+                        .okCollection())
+                .switchIfEmpty(Mono.defer(() -> ServerResponse.notFound().build()));
     }
 
     @NotNull
-    public Mono<ServerResponse> getApiCreatedStatistics(ServerRequest request) {
-        StatisticsResponseBuilder responseBuilder = StatisticsResponseBuilder.builder(apimapConfiguration);
+    public Mono<ServerResponse> getApiCreatedStatistics(final ServerRequest request) {
+        final long startTime = System.currentTimeMillis();
 
-        final StatisticsValueCollection statisticsValueCollection = new StatisticsValueCollection(apiCreatedStatistics());
+        final URI uri = request.uri();
 
-        return responseBuilder
-                .withResourceURI(request.uri())
-                .withStatisticsValueCollectionBody(statisticsValueCollection)
-                .okResource();
-    }
-
-    private List<StatisticsValue> interfaceSpecificationsStatistics() {
-        return getStatisticsValues(Metadata::getInterfaceSpecification);
-    }
-
-    private List<StatisticsValue> architectureLayerStatistics() {
-        return getStatisticsValues(Metadata::getArchitectureLayer);
-    }
-
-    private List<StatisticsValue> getStatisticsValues( Function<Metadata,String> groupingBy) {
-        return apiRepository.all().getItems()
-                .stream()
-                .map(api -> api.getMetadata().isPresent() ? api.getMetadata().get() : null)
-                .filter(Objects::nonNull)
-                .collect(groupingBy(groupingBy, Collectors.counting()))
-                .entrySet()
-                .stream()
-                .map(e -> new StatisticsValue(e.getKey(), e.getValue().toString()))
-                .collect(toList());
-    }
-
-    private List<StatisticsValue> apiCreatedStatistics() {
-        return apiRepository.all().getItems()
-                .stream()
-                .map(api -> api.getMetadata().isPresent() ? api.getMetadata().get() : null)
-                .filter(Objects::nonNull)
-                .map(metadata -> new StatisticsValue(metadata.getName(), metadata.getCreated().toString()))
-                .collect(toList());
+        return apiRepository
+                .all()
+                .flatMap(api -> Mono.just(new StatisticsValue(((IApi) api).getName(), ((IApi) api).getCreated().toString())))
+                .collectList()
+                .flatMap(collection -> entityMapper.encodeStatistics(uri, (List<StatisticsValue>) collection))
+                .flatMap(collection -> ResponseBuilder
+                        .builder(startTime, apimapConfiguration)
+                        .withResourceURI(uri)
+                        .withBody((JsonApiRestResponseWrapper<StatisticsCollectionRootRestEntity>) collection)
+                        .okCollection())
+                .switchIfEmpty(Mono.defer(() -> ServerResponse.notFound().build()));
     }
 }

@@ -70,7 +70,7 @@ public class StatisticsRouter {
                             summary = "System statistics overview.",
                             tags = {"STATISTICS"},
                             responses = {
-                                @ApiResponse(responseCode = "200", description = "Statistic collection", content = @Content(array = @ArraySchema(schema = @Schema(implementation = StatisticsCollectionDataRestEntity.class)))),
+                                    @ApiResponse(responseCode = "200", description = "Statistic collection", content = @Content(array = @ArraySchema(schema = @Schema(implementation = StatisticsCollectionDataRestEntity.class)))),
                             }
                     )),
             @RouterOperation(

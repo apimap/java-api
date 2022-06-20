@@ -19,30 +19,33 @@ under the License.
 
 package io.apimap.api.service;
 
+import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import io.apimap.api.configuration.ApimapConfiguration;
-import io.apimap.api.repository.IApiRepository;
-import io.apimap.api.repository.IClassificationRepository;
-import io.apimap.api.repository.IMetadataRepository;
-import io.apimap.api.repository.ITaxonomyRepository;
-import io.apimap.api.repository.nitrite.entity.db.Api;
-import io.apimap.api.repository.nitrite.entity.db.ApiVersion;
-import io.apimap.api.repository.nitrite.entity.support.ApiCollection;
-import io.apimap.api.repository.nitrite.entity.support.ApiVersionCollection;
-import io.apimap.api.repository.nitrite.entity.support.ClassificationCollection;
-import io.apimap.api.repository.nitrite.entity.support.MetadataCollection;
-import io.apimap.api.rest.ApiDataMetadataEntity;
+import io.apimap.api.repository.entities.IApi;
+import io.apimap.api.repository.entities.IApiVersion;
+import io.apimap.api.repository.entities.IMetadata;
+import io.apimap.api.repository.entities.IRESTEntityMapper;
+import io.apimap.api.repository.repository.IApiRepository;
+import io.apimap.api.repository.repository.IClassificationRepository;
+import io.apimap.api.repository.repository.IMetadataRepository;
+import io.apimap.api.repository.repository.ITaxonomyRepository;
+import io.apimap.api.rest.ApiCollectionRootRestEntity;
 import io.apimap.api.rest.ApiDataRestEntity;
+import io.apimap.api.rest.ApiVersionCollectionRootRestEntity;
+import io.apimap.api.rest.ApiVersionDataRestEntity;
+import io.apimap.api.rest.jsonapi.JsonApiRestRequestWrapper;
 import io.apimap.api.rest.jsonapi.JsonApiRestResponseWrapper;
-import io.apimap.api.service.request.ApiRequestParser;
-import io.apimap.api.service.response.ApiResponseBuilder;
+import io.apimap.api.service.context.ApiContext;
+import io.apimap.api.service.response.ResponseBuilder;
 import io.apimap.api.utils.RequestUtil;
 import io.apimap.api.utils.URIUtil;
 import io.netty.buffer.UnpooledByteBufAllocator;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.core.io.buffer.DataBuffer;
 import org.springframework.core.io.buffer.NettyDataBufferFactory;
 import org.springframework.http.HttpStatus;
@@ -52,209 +55,232 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.server.ServerRequest;
 import org.springframework.web.reactive.function.server.ServerResponse;
 import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
+import reactor.util.function.Tuple2;
+import reactor.util.function.Tuples;
 
-import java.util.Optional;
+import java.io.IOException;
+import java.net.URI;
+import java.util.List;
+import java.util.Objects;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
-import static org.springframework.web.reactive.function.server.ServerResponse.notFound;
-
 @Service
-public class ApiResourceService extends FilteredResourceService {
+public class ApiResourceService {
     private static final Logger LOGGER = LoggerFactory.getLogger(ApiResourceService.class);
 
-    protected IApiRepository apiRepository;
-    protected IMetadataRepository metadataRepository;
-    protected ITaxonomyRepository taxonomyRepository;
-    protected IClassificationRepository classificationRepository;
+    final protected IRESTEntityMapper entityMapper;
+    final protected IApiRepository apiRepository;
+    final protected IMetadataRepository metadataRepository;
+    final protected ITaxonomyRepository taxonomyRepository;
+    final protected IClassificationRepository classificationRepository;
 
-    protected ApimapConfiguration apimapConfiguration;
+    final protected ApimapConfiguration apimapConfiguration;
 
-    public ApiResourceService(IApiRepository apiRepository,
-                              IMetadataRepository metadataRepository,
-                              ITaxonomyRepository taxonomyRepository,
-                              IClassificationRepository classificationRepository,
-                              ApimapConfiguration apimapConfiguration) {
+    public ApiResourceService(final IApiRepository apiRepository,
+                              final IMetadataRepository metadataRepository,
+                              final ITaxonomyRepository taxonomyRepository,
+                              final IClassificationRepository classificationRepository,
+                              final ApimapConfiguration apimapConfiguration,
+                              final IRESTEntityMapper entityMapper) {
         this.apiRepository = apiRepository;
         this.taxonomyRepository = taxonomyRepository;
         this.metadataRepository = metadataRepository;
         this.classificationRepository = classificationRepository;
         this.apimapConfiguration = apimapConfiguration;
+        this.entityMapper = entityMapper;
     }
 
     @NotNull
-    public Mono<ServerResponse> allApis(ServerRequest request) {
-        if (!requestFilters(request).isEmpty()) {
-            return allFilteredApis(request);
-        }
+    public Mono<ServerResponse> allApis(final ServerRequest request) {
+        final long startTime = System.currentTimeMillis();
 
-        return allUnfilteredApis(request);
+        final ApiContext context = RequestUtil.apiContextFromRequest(request);
+        final URI uri = request.uri();
+
+        return metadataRepository
+                .allByFilters(metadataRepository.queryFilters(context.getFilters(), context.getQuery()))
+                .flatMap(metadata -> apiRepository.getById(((IMetadata) metadata).getApiId())
+                        .flatMap(api -> Mono.just(Tuples.of(api, metadata)))
+                        .flatMap(result -> apiRepository.getApiVersion(((IApi) ((Tuple2) result).getT1()).getId(), ((IMetadata) ((Tuple2) result).getT2()).getApiVersion())
+                                .flatMap(apiVersion -> Mono.just(Tuples.of(((Tuple2<?, ?>) result).getT1(), ((Tuple2<?, ?>) result).getT2(), apiVersion)))
+                        )
+                )
+                .collectList()
+                .flatMap(result -> entityMapper.encodeApis(uri, (List) result))
+                .flatMap(collection -> ResponseBuilder
+                        .builder(startTime, apimapConfiguration)
+                        .withResourceURI(uri)
+                        .withBody((JsonApiRestResponseWrapper<ApiCollectionRootRestEntity>) collection)
+                        .okCollection()
+                )
+                .switchIfEmpty(Mono.defer(() -> ServerResponse.noContent().build()));
     }
 
-    protected Mono<ServerResponse> allUnfilteredApis(ServerRequest request) {
-        ApiResponseBuilder responseBuilder = ApiResponseBuilder.builder(apimapConfiguration);
-
-        ApiCollection collection = apiRepository.all();
-
-        return responseBuilder
-                .withResourceURI(request.uri())
-                .withApiCollectionBody(collection)
-                .okCollection();
-    }
-
+    @NotNull
     @PreAuthorize("@Authorizer.isValidAccessToken(#request)")
-    public Mono<ServerResponse> allApisZip(ServerRequest request) {
-        try {
-            NettyDataBufferFactory nettyDataBufferFactory = new NettyDataBufferFactory(new UnpooledByteBufAllocator(false));
-            DataBuffer dataBuffer = nettyDataBufferFactory.allocateBuffer();
-            ZipOutputStream zipOutputStream = new ZipOutputStream(dataBuffer.asOutputStream());
+    public Mono<ServerResponse> allApisZip(final ServerRequest request) {
+        NettyDataBufferFactory nettyDataBufferFactory = new NettyDataBufferFactory(new UnpooledByteBufAllocator(false));
+        DataBuffer dataBuffer = nettyDataBufferFactory.allocateBuffer();
+        ZipOutputStream zipOutputStream = new ZipOutputStream(dataBuffer.asOutputStream());
+        ReentrantLock lock = new ReentrantLock();
 
-            ObjectMapper mapper = new ObjectMapper();
-            mapper.configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
+        ObjectMapper mapper = new ObjectMapper();
+        mapper.configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
 
-            ZipEntry apis = new ZipEntry("apis.json");
-            zipOutputStream.putNextEntry(apis);
+        return Mono.when(
+                        apiRepository
+                                .all()
+                                .collectList()
+                                .publishOn(Schedulers.boundedElastic())
+                                .doOnNext(collection -> {
+                                    try {
+                                        lock.lock();
+                                        zipOutputStream.putNextEntry(new ZipEntry("apis.json"));
+                                        zipOutputStream.write(mapper.writeValueAsBytes(collection));
+                                        zipOutputStream.closeEntry();
+                                        lock.unlock();
+                                    } catch (IOException ignored) {
+                                    }
+                                }),
+                        classificationRepository
+                                .all()
+                                .collectList()
+                                .publishOn(Schedulers.boundedElastic())
+                                .doOnNext(collection -> {
+                                    try {
+                                        lock.lock();
+                                        zipOutputStream.putNextEntry(new ZipEntry("classifications.json"));
+                                        zipOutputStream.write(mapper.writeValueAsBytes(collection));
+                                        zipOutputStream.closeEntry();
+                                        lock.unlock();
+                                    } catch (IOException ignored) {
+                                    }
+                                }),
+                        metadataRepository
+                                .all()
+                                .collectList()
+                                .publishOn(Schedulers.boundedElastic())
+                                .doOnNext(collection -> {
+                                    try {
+                                        lock.lock();
+                                        zipOutputStream.putNextEntry(new ZipEntry("metadata.json"));
+                                        zipOutputStream.write(mapper.writeValueAsBytes(collection));
+                                        zipOutputStream.closeEntry();
+                                        lock.unlock();
+                                    } catch (IOException ignored) {
+                                    }
+                                })
+                )
+                .thenReturn(Boolean.TRUE)
+                .publishOn(Schedulers.boundedElastic())
+                .flatMap(status -> {
+                    lock.lock();
+                    try {
+                        zipOutputStream.close();
+                    } catch (IOException ignored) {
+                    }
+                    lock.unlock();
 
-            ApiCollection apiCollection = apiRepository.all();
-            zipOutputStream.write(mapper.writeValueAsBytes(apiCollection));
-
-            ZipEntry classifications = new ZipEntry("classifications.json");
-            zipOutputStream.putNextEntry(classifications);
-            ClassificationCollection classificationCollection = classificationRepository.all();
-            zipOutputStream.write(mapper.writeValueAsBytes(classificationCollection));
-
-            ZipEntry metadata = new ZipEntry("metadata.json");
-            zipOutputStream.putNextEntry(metadata);
-            MetadataCollection metadataCollection = metadataRepository.all();
-            zipOutputStream.write(mapper.writeValueAsBytes(metadataCollection));
-
-            zipOutputStream.closeEntry();
-            zipOutputStream.close();
-
-            return ServerResponse.status(HttpStatus.OK)
-                    .header("Access-Control-Allow-Origin", "*")
-                    .header("Access-Control-Request-Method", "GET")
-                    .contentType(new MediaType("application", "zip"))
-                    .body(Mono.just(dataBuffer), DataBuffer.class);
-        }catch (Exception e){
-            LOGGER.debug(e.getMessage());
-
-            ApiResponseBuilder responseBuilder = ApiResponseBuilder.builder(apimapConfiguration);
-            return responseBuilder.badRequest();
-        }
-    }
-
-    protected Mono<ServerResponse> allFilteredApis(ServerRequest request) {
-        ApiResponseBuilder responseBuilder = ApiResponseBuilder.builder(apimapConfiguration);
-
-        ApiCollection collection = apiRepository.all(requestFilters(request), requestQuery(request));
-
-        return responseBuilder
-                .withResourceURI(request.uri())
-                .withApiCollectionBody(collection)
-                .okCollection();
-    }
-
-    @NotNull
-    public Mono<ServerResponse> createApi(ServerRequest request) {
-        ApiResponseBuilder responseBuilder = ApiResponseBuilder.builder(apimapConfiguration);
-        ApiRequestParser requestParser = ApiRequestParser
-                .parser()
-                .withRequest(request)
-                .parse(ApiDataRestEntity.class);
-
-        final Optional<Api> entity = requestParser
-                .apiDbEntity();
-
-        if (entity.isEmpty() || entity.get().getName() == null) {
-            return responseBuilder.badRequest();
-        }
-
-        if (apiRepository.get(entity.get().getName()).isPresent()) {
-            return responseBuilder.conflict();
-        }
-
-        final Optional<Api> insertedEntity = apiRepository.add(entity.get());
-
-        if (insertedEntity.isEmpty()) {
-            return responseBuilder.badRequest();
-        }
-
-        final Optional<ApiDataMetadataEntity> apiMetadata = requestParser.apiMetadata();
-
-        Mono<ServerResponse> response = responseBuilder
-                .withResourceURI(URIUtil.apiCollectionFromURI(request.uri()).append(insertedEntity.get().getName()).uriValue())
-                .withApiBody(insertedEntity.get())
-                .addRelatedRef(JsonApiRestResponseWrapper.API_COLLECTION, URIUtil.apiCollectionFromURI(request.uri()).uriValue())
-                .addRelatedRef(JsonApiRestResponseWrapper.CLASSIFICATION_COLLECTION, URIUtil.classificationCollectionFromURI(request.uri()).uriValue())
-                .addRelatedRef(JsonApiRestResponseWrapper.TAXONOMY_COLLECTION, URIUtil.taxonomyCollectionFromURI(request.uri()).uriValue())
-                .created(true);
-
-        return response;
+                    return ServerResponse.status(HttpStatus.OK)
+                            .header("Access-Control-Allow-Origin", "*")
+                            .header("Access-Control-Request-Method", "GET")
+                            .contentType(new MediaType("application", "zip"))
+                            .body(Mono.just(dataBuffer), DataBuffer.class);
+                });
     }
 
     @NotNull
-    @PreAuthorize("@Authorizer.isValidApiAccessToken(#request)")
-    public Mono<ServerResponse> updateApi(ServerRequest request) {
-        ApiResponseBuilder responseBuilder = ApiResponseBuilder.builder(apimapConfiguration);
+    public Mono<ServerResponse> createApi(final ServerRequest request) {
+        final long startTime = System.currentTimeMillis();
 
-        final String apiName = RequestUtil.apiNameFromRequest(request);
+        final URI uri = request.uri();
+        final JavaType type = new ObjectMapper().getTypeFactory().constructParametricType(JsonApiRestRequestWrapper.class, ApiDataRestEntity.class);
 
-        final Optional<Api> entity = ApiRequestParser
-                .parser()
-                .withRequest(request)
-                .parse(ApiDataRestEntity.class)
-                .apiDbEntity();
-
-        if (entity.isEmpty()) {
-            return responseBuilder.badRequest();
-        }
-
-        final Optional<Api> updatedEntity = apiRepository.update(entity.get(), apiName);
-
-        if (updatedEntity.isEmpty()) {
-            return responseBuilder.notFound();
-        }
-
-        return responseBuilder
-                .withResourceURI(URIUtil.apiCollectionFromURI(request.uri()).append(updatedEntity.get().getName()).uriValue())
-                .withApiBody(updatedEntity.get())
-                .addRelatedRef(JsonApiRestResponseWrapper.API_COLLECTION, URIUtil.apiCollectionFromURI(request.uri()).uriValue())
-                .addRelatedRef(JsonApiRestResponseWrapper.CLASSIFICATION_COLLECTION, URIUtil.classificationCollectionFromURI(request.uri()).uriValue())
-                .addRelatedRef(JsonApiRestResponseWrapper.TAXONOMY_COLLECTION, URIUtil.taxonomyCollectionFromURI(request.uri()).uriValue())
-                .okResource();
-    }
-
-    @NotNull
-    public Mono<ServerResponse> getApi(ServerRequest request) {
-        ApiResponseBuilder responseBuilder = ApiResponseBuilder.builder(apimapConfiguration);
-
-        final Optional<Api> entity = apiRepository.get(RequestUtil.apiNameFromRequest(request));
-
-        if (entity.isEmpty()) {
-            return notFound().build();
-        }
-
-        return responseBuilder
-                .withResourceURI(URIUtil.apiCollectionFromURI(request.uri()).append(entity.get().getName()).uriValue())
-                .withApiBody(entity.get())
-                .addRelatedRef(JsonApiRestResponseWrapper.VERSION_COLLECTION, URIUtil.apiCollectionFromURI(request.uri()).append(entity.get().getName()).append("version").uriValue())
-                .okResource();
+        return request
+                .bodyToMono(ParameterizedTypeReference.forType(type))
+                .filter(Objects::nonNull)
+                .flatMap(api -> entityMapper.decodeApi((JsonApiRestRequestWrapper<ApiDataRestEntity>) api))
+                .flatMap(api -> apiRepository.add(api))
+                .flatMap(api -> entityMapper.encodeApi(uri, (IApi) api))
+                .flatMap(api -> ResponseBuilder
+                        .builder(startTime, apimapConfiguration)
+                        .withResourceURI(URIUtil.apiCollectionFromURI(uri).append(((JsonApiRestResponseWrapper<ApiDataRestEntity>) api).getData().getName()).uriValue())
+                        .withBody((JsonApiRestResponseWrapper<ApiDataRestEntity>) api)
+                        .addRelatedRef(JsonApiRestResponseWrapper.API_COLLECTION, URIUtil.apiCollectionFromURI(uri).uriValue())
+                        .addRelatedRef(JsonApiRestResponseWrapper.CLASSIFICATION_COLLECTION, URIUtil.classificationCollectionFromURI(uri).uriValue())
+                        .addRelatedRef(JsonApiRestResponseWrapper.TAXONOMY_COLLECTION, URIUtil.taxonomyCollectionFromURI(uri).uriValue())
+                        .created(true)
+                )
+                .switchIfEmpty(Mono.defer(() -> ServerResponse.badRequest().build()));
     }
 
     @NotNull
     @PreAuthorize("@Authorizer.isValidApiAccessToken(#request)")
-    public Mono<ServerResponse> deleteApi(ServerRequest request) {
-        ApiResponseBuilder responseBuilder = ApiResponseBuilder.builder(apimapConfiguration);
+    public Mono<ServerResponse> updateApi(final ServerRequest request) {
+        final long startTime = System.currentTimeMillis();
 
-        final String apiName = RequestUtil.apiNameFromRequest(request);
+        final URI uri = request.uri();
+        final JavaType type = new ObjectMapper().getTypeFactory().constructParametricType(JsonApiRestRequestWrapper.class, ApiDataRestEntity.class);
+        final ApiContext context = RequestUtil.apiContextFromRequest(request);
 
-        //Clear all connected information
-        apiRepository.delete(apiName);
-        classificationRepository.delete(apiName);
-        metadataRepository.delete(apiName);
+        return request
+                .bodyToMono(ParameterizedTypeReference.forType(type))
+                .filter(Objects::nonNull)
+                .flatMap(api -> entityMapper.decodeApi((JsonApiRestRequestWrapper<ApiDataRestEntity>) api))
+                .flatMap(api -> apiRepository.update(api, context.getApiName()))
+                .flatMap(api -> entityMapper.encodeApi(uri, (IApi) api))
+                .flatMap(api -> ResponseBuilder
+                        .builder(startTime, apimapConfiguration)
+                        .withResourceURI(URIUtil.apiCollectionFromURI(request.uri()).append(((JsonApiRestResponseWrapper<ApiDataRestEntity>) api).getData().getName()).uriValue())
+                        .withBody((JsonApiRestResponseWrapper<ApiDataRestEntity>) api)
+                        .addRelatedRef(JsonApiRestResponseWrapper.API_COLLECTION, URIUtil.apiCollectionFromURI(request.uri()).uriValue())
+                        .addRelatedRef(JsonApiRestResponseWrapper.CLASSIFICATION_COLLECTION, URIUtil.classificationCollectionFromURI(request.uri()).uriValue())
+                        .addRelatedRef(JsonApiRestResponseWrapper.TAXONOMY_COLLECTION, URIUtil.taxonomyCollectionFromURI(request.uri()).uriValue())
+                        .okResource()
+                )
+                .switchIfEmpty(Mono.defer(() -> ServerResponse.badRequest().build()));
+    }
 
-        return responseBuilder.noContent();
+    @NotNull
+    public Mono<ServerResponse> getApi(final ServerRequest request) {
+        final long startTime = System.currentTimeMillis();
+
+        final URI uri = request.uri();
+        final ApiContext context = RequestUtil.apiContextFromRequest(request);
+
+        return apiRepository
+                .get(context.getApiName())
+                .flatMap(api -> entityMapper.encodeApi(uri, (IApi) api))
+                .flatMap(api -> ResponseBuilder
+                        .builder(startTime, apimapConfiguration)
+                        .withResourceURI(URIUtil.apiCollectionFromURI(uri).append(((JsonApiRestResponseWrapper<ApiDataRestEntity>) api).getData().getName()).uriValue())
+                        .addRelatedRef(JsonApiRestResponseWrapper.VERSION_COLLECTION, URIUtil.apiCollectionFromURI(uri).append(((JsonApiRestResponseWrapper<ApiDataRestEntity>) api).getData().getName()).append("version").uriValue())
+                        .withBody((JsonApiRestResponseWrapper<?>) api)
+                        .okResource()
+                )
+                .switchIfEmpty(Mono.defer(() -> ServerResponse.notFound().build()));
+    }
+
+    @NotNull
+    @PreAuthorize("@Authorizer.isValidApiAccessToken(#request)")
+    public Mono<ServerResponse> deleteApi(final ServerRequest request) {
+        final long startTime = System.currentTimeMillis();
+
+        final ApiContext context = RequestUtil.apiContextFromRequest(request);
+
+        return apiRepository
+                .get(context.getApiName())
+                .flatMap(api -> classificationRepository.delete(((IApi) api).getId())
+                        .zipWith(metadataRepository.delete(((IApi) api).getId()), (previous, current) -> (Boolean) previous && ((Boolean) current).booleanValue())
+                        .zipWith(apiRepository.delete(((IApi) api).getName()), (previous, current) -> (Boolean) previous && ((Boolean) current).booleanValue()))
+                .filter(value -> (Boolean) value)
+                .flatMap(result -> ResponseBuilder
+                        .builder(startTime, apimapConfiguration)
+                        .noContent())
+                .switchIfEmpty(Mono.defer(() -> ServerResponse.notFound().build()));
     }
 
     /*
@@ -262,90 +288,91 @@ public class ApiResourceService extends FilteredResourceService {
      */
 
     @NotNull
-    public Mono<ServerResponse> getApiVersion(ServerRequest request) {
-        ApiResponseBuilder responseBuilder = ApiResponseBuilder.builder(apimapConfiguration);
+    public Mono<ServerResponse> getApiVersion(final ServerRequest request) {
+        final long startTime = System.currentTimeMillis();
 
-        final String apiName = RequestUtil.apiNameFromRequest(request);
-        final String apiVersion = RequestUtil.apiVersionFromRequest(request);
-        final String apiId = apiRepository.apiId(apiName);
+        final URI uri = request.uri();
+        final ApiContext context = RequestUtil.apiContextFromRequest(request);
 
-        final Optional<ApiVersion> versionContent = apiRepository.getApiVersion(apiId, apiVersion);
-
-        if (versionContent.isEmpty()) {
-            return responseBuilder.notFound();
-        }
-
-        return responseBuilder
-                .withResourceURI(request.uri())
-                .withApiVersionBody(versionContent.get())
-                .addRelatedRef(JsonApiRestResponseWrapper.METADATA_COLLECTION, URIUtil.apiCollectionFromURI(request.uri()).append(apiName).append("version").append(apiVersion).append("metadata").uriValue())
-                .addRelatedRef(JsonApiRestResponseWrapper.CLASSIFICATION_COLLECTION, URIUtil.apiCollectionFromURI(request.uri()).append(apiName).append("version").append(apiVersion).append("classification").uriValue())
-                .okResource();
+        return apiRepository
+                .get(context.getApiName())
+                .flatMap(api -> apiRepository.getApiVersion(((IApi) api).getId(), context.getApiVersion()))
+                .flatMap(version -> entityMapper.encodeApiVersion(uri, (IApiVersion) version))
+                .flatMap(version -> ResponseBuilder
+                        .builder(startTime, apimapConfiguration)
+                        .withResourceURI(uri)
+                        .withBody((JsonApiRestResponseWrapper<?>) version)
+                        .addRelatedRef(JsonApiRestResponseWrapper.METADATA_COLLECTION, URIUtil.apiCollectionFromURI(uri).append(context.getApiName()).append("version").append(context.getApiVersion()).append("metadata").uriValue())
+                        .addRelatedRef(JsonApiRestResponseWrapper.CLASSIFICATION_COLLECTION, URIUtil.apiCollectionFromURI(uri).append(context.getApiName()).append("version").append(context.getApiVersion()).append("classification").uriValue())
+                        .okResource()
+                )
+                .switchIfEmpty(Mono.defer(() -> ServerResponse.notFound().build()));
     }
 
     @NotNull
-    public Mono<ServerResponse> allApiVersions(ServerRequest request) {
-        ApiResponseBuilder responseBuilder = ApiResponseBuilder.builder(apimapConfiguration);
+    public Mono<ServerResponse> allApiVersions(final ServerRequest request) {
+        final long startTime = System.currentTimeMillis();
 
-        final String apiName = RequestUtil.apiNameFromRequest(request);
-        final String apiId = apiRepository.apiId(apiName);
+        final ApiContext context = RequestUtil.apiContextFromRequest(request);
+        final URI uri = request.uri();
 
-        final ApiVersionCollection collection = apiRepository.allApiVersions(apiId);
-
-        return responseBuilder
-                .withResourceURI(request.uri())
-                .withApiVersionCollectionBody(collection)
-                .addRelatedRef(JsonApiRestResponseWrapper.API_ELEMENT, URIUtil.apiCollectionFromURI(request.uri()).append(apiName).uriValue())
-                .okCollection();
-    }
-
-    @NotNull
-    @PreAuthorize("@Authorizer.isValidApiAccessToken(#request)")
-    public Mono<ServerResponse> createApiVersion(ServerRequest request) {
-        ApiResponseBuilder responseBuilder = ApiResponseBuilder.builder(apimapConfiguration);
-
-        final String apiName = RequestUtil.apiNameFromRequest(request);
-
-        if(apiRepository.get(apiName).isEmpty()){
-            return responseBuilder.notFound();
-        }
-
-        final Optional<ApiVersion> entity = ApiRequestParser
-                .parser()
-                .withRequest(request)
-                .withApiRepository(apiRepository)
-                .apiVersionDbEntity();
-
-        if (entity.isEmpty() || entity.get().getVersion() == null) {
-            return responseBuilder.badRequest();
-        }
-
-        final Optional<ApiVersion> insertedEntity = apiRepository.addApiVersion(entity.get());
-
-        if (insertedEntity.isEmpty()) {
-            return responseBuilder.badRequest();
-        }
-
-        return responseBuilder
-                .withResourceURI(request.uri())
-                .withApiVersionBody(insertedEntity.get())
-                .addRelatedRef(JsonApiRestResponseWrapper.API_ELEMENT, URIUtil.apiCollectionFromURI(request.uri()).append(apiName).uriValue())
-                .created(false);
+        return apiRepository
+                .get(context.getApiName())
+                .flatMapMany(api -> apiRepository.allApiVersions(((IApi) api).getId()))
+                .collectList()
+                .flatMap(collection -> entityMapper.encodeApiVersions(uri, (List<IApiVersion>) collection))
+                .flatMap(collection -> ResponseBuilder
+                        .builder(startTime, apimapConfiguration)
+                        .withResourceURI(uri)
+                        .withBody((JsonApiRestResponseWrapper<ApiVersionCollectionRootRestEntity>) collection)
+                        .addRelatedRef(JsonApiRestResponseWrapper.API_ELEMENT, URIUtil.apiCollectionFromURI(uri).append(context.getApiName()).uriValue())
+                        .okCollection()
+                )
+                .switchIfEmpty(Mono.defer(() -> ServerResponse.noContent().build()));
     }
 
     @NotNull
     @PreAuthorize("@Authorizer.isValidApiAccessToken(#request)")
-    public Mono<ServerResponse> deleteApiVersion(ServerRequest request) {
-        ApiResponseBuilder responseBuilder = ApiResponseBuilder.builder(apimapConfiguration);
+    public Mono<ServerResponse> createApiVersion(final ServerRequest request) {
+        final long startTime = System.currentTimeMillis();
 
-        final String apiName = RequestUtil.apiNameFromRequest(request);
-        final String apiVersion = RequestUtil.apiVersionFromRequest(request);
+        final URI uri = request.uri();
+        final JavaType type = new ObjectMapper().getTypeFactory().constructParametricType(JsonApiRestRequestWrapper.class, ApiVersionDataRestEntity.class);
+        final ApiContext context = RequestUtil.apiContextFromRequest(request);
 
-        //Clear all connected information
-        apiRepository.deleteApiVersion(apiName, apiVersion);
-        classificationRepository.delete(apiName, apiVersion);
-        metadataRepository.delete(apiName, apiVersion);
+        return request
+                .bodyToMono(ParameterizedTypeReference.forType(type))
+                .filter(Objects::nonNull)
+                .zipWith(apiRepository.get(context.getApiName()), (version, api) -> entityMapper.decodeApiVersion((IApi) api, (JsonApiRestRequestWrapper<ApiVersionDataRestEntity>) version))
+                .flatMap(tuple -> tuple)
+                .flatMap(version -> apiRepository.addApiVersion((IApiVersion) version))
+                .flatMap(version -> entityMapper.encodeApiVersion(uri, (IApiVersion) version))
+                .flatMap(version -> ResponseBuilder
+                        .builder(startTime, apimapConfiguration)
+                        .withResourceURI(uri)
+                        .withBody((JsonApiRestResponseWrapper<ApiVersionDataRestEntity>) version)
+                        .addRelatedRef(JsonApiRestResponseWrapper.API_ELEMENT, URIUtil.apiCollectionFromURI(request.uri()).append(context.getApiName()).uriValue())
+                        .created(true)
+                )
+                .switchIfEmpty(Mono.defer(() -> ServerResponse.badRequest().build()));
+    }
 
-        return responseBuilder.noContent();
+    @NotNull
+    @PreAuthorize("@Authorizer.isValidApiAccessToken(#request)")
+    public Mono<ServerResponse> deleteApiVersion(final ServerRequest request) {
+        final long startTime = System.currentTimeMillis();
+
+        final ApiContext context = RequestUtil.apiContextFromRequest(request);
+
+        return apiRepository
+                .get(context.getApiName())
+                .flatMap(api -> classificationRepository.delete(((IApi) api).getId(), context.getApiVersion())
+                        .zipWith(metadataRepository.delete(((IApi) api).getId(), context.getApiVersion()), (previous, current) -> (Boolean) previous && ((Boolean) current).booleanValue())
+                        .zipWith(apiRepository.deleteApiVersion(((IApi) api).getId(), context.getApiVersion()), (previous, current) -> (Boolean) previous && ((Boolean) current).booleanValue()))
+                .filter(value -> (Boolean) value)
+                .flatMap(result -> ResponseBuilder
+                        .builder(startTime, apimapConfiguration)
+                        .noContent())
+                .switchIfEmpty(Mono.defer(() -> ServerResponse.notFound().build()));
     }
 }

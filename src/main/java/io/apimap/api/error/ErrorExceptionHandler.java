@@ -53,11 +53,14 @@ public class ErrorExceptionHandler extends AbstractErrorWebExceptionHandler {
     }
 
     private Mono<ServerResponse> renderErrorResponse(ServerRequest request) {
-        Map<String, Object> errorPropertiesMap = getErrorAttributes(request, ErrorAttributeOptions.defaults());
+        Map<String, Object> errorPropertiesMap = getErrorAttributes(request, ErrorAttributeOptions.of(
+                ErrorAttributeOptions.Include.MESSAGE,
+                ErrorAttributeOptions.Include.EXCEPTION
+        ));
 
-        JsonApiRestResponseWrapper wrapper = new JsonApiRestResponseWrapper();
+        JsonApiRestResponseWrapper<JsonApiError> wrapper = new JsonApiRestResponseWrapper<JsonApiError>();
         wrapper.addErorr(new JsonApiError(
-                errorPropertiesMap.get("status").toString(),
+                errorPropertiesMap.get("message").toString(),
                 errorPropertiesMap.get("error").toString()
         ));
 

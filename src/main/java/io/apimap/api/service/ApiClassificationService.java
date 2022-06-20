@@ -19,126 +19,129 @@ under the License.
 
 package io.apimap.api.service;
 
+import com.fasterxml.jackson.databind.JavaType;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.apimap.api.configuration.ApimapConfiguration;
-import io.apimap.api.repository.IApiRepository;
-import io.apimap.api.repository.IClassificationRepository;
-import io.apimap.api.repository.nitrite.entity.db.ApiClassification;
-import io.apimap.api.repository.nitrite.entity.support.ClassificationCollection;
-import io.apimap.api.service.request.ClassificationRequestParser;
-import io.apimap.api.service.response.ApiResponseBuilder;
-import io.apimap.api.service.response.ClassificationResponseBuilder;
+import io.apimap.api.repository.entities.IApi;
+import io.apimap.api.repository.entities.IApiClassification;
+import io.apimap.api.repository.entities.IRESTEntityMapper;
+import io.apimap.api.repository.repository.IApiRepository;
+import io.apimap.api.repository.repository.IClassificationRepository;
+import io.apimap.api.rest.ClassificationRootRestEntity;
+import io.apimap.api.rest.jsonapi.JsonApiRestRequestWrapper;
+import io.apimap.api.rest.jsonapi.JsonApiRestResponseWrapper;
+import io.apimap.api.service.context.ApiContext;
+import io.apimap.api.service.response.ResponseBuilder;
 import io.apimap.api.utils.RequestUtil;
 import org.jetbrains.annotations.NotNull;
+import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.server.ServerRequest;
 import org.springframework.web.reactive.function.server.ServerResponse;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import java.util.Collections;
+import java.net.URI;
 import java.util.List;
-import java.util.Optional;
 
 @Service
 public class ApiClassificationService {
 
-    protected IClassificationRepository classificationRepository;
-    protected IApiRepository apiRepository;
+    final protected IClassificationRepository classificationRepository;
+    final protected IApiRepository apiRepository;
+    final protected IRESTEntityMapper entityMapper;
+    final protected ApimapConfiguration apimapConfiguration;
 
-    protected ApimapConfiguration apimapConfiguration;
-
-    public ApiClassificationService(IClassificationRepository classificationRepository,
-                                    IApiRepository apiRepository,
-                                    ApimapConfiguration apimapConfiguration) {
+    public ApiClassificationService(final IRESTEntityMapper entityMapper,
+                                    final IClassificationRepository classificationRepository,
+                                    final IApiRepository apiRepository,
+                                    final ApimapConfiguration apimapConfiguration) {
         this.classificationRepository = classificationRepository;
         this.apiRepository = apiRepository;
         this.apimapConfiguration = apimapConfiguration;
+        this.entityMapper = entityMapper;
     }
 
     @NotNull
     @PreAuthorize("@Authorizer.isValidApiAccessToken(#request)")
-    public Mono<ServerResponse> deleteClassification(ServerRequest request) {
-        final ApiResponseBuilder responseBuilder = ApiResponseBuilder.builder(apimapConfiguration);
-        final String apiName = RequestUtil.apiNameFromRequest(request);
-        final String apiVersion = RequestUtil.apiVersionFromRequest(request);
-        final String apiId = apiRepository.apiId(apiName);
+    public Mono<ServerResponse> deleteClassification(final ServerRequest request) {
+        final long startTime = System.currentTimeMillis();
 
-        if(apiRepository.get(apiName).isEmpty() || apiRepository.getApiVersion(apiId, apiVersion).isEmpty()){
-            return responseBuilder.notFound();
-        }
+        final ApiContext context = RequestUtil.apiContextFromRequest(request);
 
-        classificationRepository.delete(apiId, apiVersion);
-
-        return responseBuilder.noContent();
+        return apiRepository
+                .get(context.getApiName())
+                .flatMap(api -> classificationRepository.delete(((IApi) api).getId(), context.getApiVersion()))
+                .filter(value -> (Boolean) value)
+                .flatMap(result -> ResponseBuilder
+                        .builder(startTime, apimapConfiguration)
+                        .noContent())
+                .switchIfEmpty(Mono.defer(() -> ServerResponse.notFound().build()));
     }
 
     @NotNull
     @PreAuthorize("@Authorizer.isValidApiAccessToken(#request)")
-    public Mono<ServerResponse> updateClassification(ServerRequest request) {
-        final String apiName = RequestUtil.apiNameFromRequest(request);
-        final String apiVersion = RequestUtil.apiVersionFromRequest(request);
-        final String apiId = apiRepository.apiId(apiName);
+    public Mono<ServerResponse> updateClassification(final ServerRequest request) {
+        final ApiContext context = RequestUtil.apiContextFromRequest(request);
 
-        if(apiRepository.get(apiName).isEmpty() || apiRepository.getApiVersion(apiId, apiVersion).isEmpty()){
-            return ApiResponseBuilder.builder(apimapConfiguration).notFound();
-        }
-
-        classificationRepository.delete(apiId, apiVersion);
-
-        return createClassification(request);
+        return apiRepository
+                .get(context.getApiName())
+                .flatMap(api -> classificationRepository.delete(((IApi) api).getId(), context.getApiVersion()))
+                .flatMap(success -> createClassification(request))
+                .switchIfEmpty(Mono.defer(() -> ServerResponse.status(HttpStatus.INTERNAL_SERVER_ERROR).build()));
     }
 
     @NotNull
-    public Mono<ServerResponse> getClassification(ServerRequest request) {
-        final ClassificationResponseBuilder responseBuilder = ClassificationResponseBuilder.builder(apimapConfiguration);
-        final String apiName = RequestUtil.apiNameFromRequest(request);
-        final String apiVersion = RequestUtil.apiVersionFromRequest(request);
-        final String apiId = apiRepository.apiId(apiName);
+    public Mono<ServerResponse> getClassification(final ServerRequest request) {
+        final long startTime = System.currentTimeMillis();
 
-        if(apiRepository.get(apiName).isEmpty() || apiRepository.getApiVersion(apiId, apiVersion).isEmpty()){
-            return responseBuilder.notFound();
-        }
+        final ApiContext context = RequestUtil.apiContextFromRequest(request);
+        final URI uri = request.uri();
 
-        return responseBuilder
-                .withResourceURI(request.uri())
-                .withClassificationCollectionBody(classificationRepository.all(apiId, apiVersion))
-                .okResource();
+        return apiRepository
+                .get(context.getApiName())
+                .flatMapMany(api -> classificationRepository.all(((IApi) api).getId(), context.getApiVersion())
+                )
+                .collectList()
+                .flatMap(collection -> entityMapper.encodeApiClassifications(uri, (List<IApiClassification>) collection))
+                .flatMap(classification -> ResponseBuilder
+                        .builder(startTime, apimapConfiguration)
+                        .withResourceURI(uri)
+                        .withBody((JsonApiRestResponseWrapper<?>) classification)
+                        .okCollection()
+                )
+                .switchIfEmpty(Mono.defer(() -> ServerResponse.notFound().build()));
     }
 
     @NotNull
     @PreAuthorize("@Authorizer.isValidApiAccessToken(#request)")
-    public Mono<ServerResponse> createClassification(ServerRequest request) {
-        final ClassificationResponseBuilder responseBuilder = ClassificationResponseBuilder.builder(apimapConfiguration);
-        final String apiName = RequestUtil.apiNameFromRequest(request);
-        final String apiVersion = RequestUtil.apiVersionFromRequest(request);
-        final String apiId = apiRepository.apiId(apiName);
+    public Mono<ServerResponse> createClassification(final ServerRequest request) {
+        final long startTime = System.currentTimeMillis();
 
-        if(apiRepository.get(apiName).isEmpty() || apiRepository.getApiVersion(apiId, apiVersion).isEmpty()){
-            return responseBuilder.notFound();
-        }
+        final ApiContext context = RequestUtil.apiContextFromRequest(request);
+        final JavaType type = new ObjectMapper().getTypeFactory().constructParametricType(JsonApiRestRequestWrapper.class, ClassificationRootRestEntity.class);
+        final URI uri = request.uri();
 
-        final Optional<List<ApiClassification>> entities = ClassificationRequestParser
-                .parser()
-                .withRequest(request)
-                .withApiId(apiId)
-                .classificationArray();
-
-        if (entities.isEmpty()) {
-            return responseBuilder.badRequest();
-        }
-
-        if(entities.get().isEmpty()) {
-            return responseBuilder
-                    .withResourceURI(request.uri())
-                    .withClassificationCollectionBody(new ClassificationCollection(Collections.emptyList(), null, "1.0"))
-                    .created(false);
-        }
-
-        final ClassificationCollection insertedEntities = classificationRepository.add(apiId, entities.get());
-
-        return responseBuilder
-                .withResourceURI(request.uri())
-                .withClassificationCollectionBody(insertedEntities)
-                .created(false);
+        return request
+                .bodyToMono(ParameterizedTypeReference.forType(type))
+                .zipWith(apiRepository.get(context.getApiName()), (classifications, api) -> Flux.fromStream(((JsonApiRestRequestWrapper<ClassificationRootRestEntity>) classifications)
+                                .getData()
+                                .getData()
+                                .stream())
+                        .flatMap(classification -> entityMapper.decodeClassification(context.withApiId(((IApi) api).getId()), classification))
+                        .flatMap(classification -> classificationRepository.add(classification))
+                        .collectList()
+                )
+                .flatMap(collection -> collection)
+                .flatMap(collection -> entityMapper.encodeApiClassifications(uri, (List<IApiClassification>) collection))
+                .flatMap(classification -> ResponseBuilder
+                        .builder(startTime, apimapConfiguration)
+                        .withResourceURI(uri)
+                        .withBody((JsonApiRestResponseWrapper<?>) classification)
+                        .created(false)
+                )
+                .switchIfEmpty(Mono.defer(() -> ServerResponse.notFound().build()));
     }
 }

@@ -35,7 +35,7 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.HashMap;
 
-public class ResponseBuilder<T> {
+public class ResponseBuilder {
 
     protected long responseMetricsStartTime;
 
@@ -52,8 +52,18 @@ public class ResponseBuilder<T> {
         this.apimapConfiguration = apimapConfiguration;
     }
 
-    public static ResponseBuilder builder(ApimapConfiguration apimapConfiguration) {
-        return new ResponseBuilder<>(System.currentTimeMillis(), apimapConfiguration);
+    public static ResponseBuilder builder(long startTime, ApimapConfiguration apimapConfiguration) {
+        return new ResponseBuilder(startTime, apimapConfiguration);
+    }
+
+    public ResponseBuilder withBody(JsonApiRestResponseWrapper<?> content) {
+        this.body = content;
+        return this;
+    }
+
+    public ResponseBuilder withoutBody() {
+        this.body = new JsonApiRestResponseWrapper<Object>(new HashMap<>());
+        return this;
     }
 
     public Mono<ServerResponse> badRequest() {
@@ -164,9 +174,12 @@ public class ResponseBuilder<T> {
 
     public Mono<ServerResponse> created(Boolean includeToken) {
         JsonApiRestResponseWrapper body = bodyWithMetadata(this.body);
-        body.setSelf(resourceURI);
-        this.relatedReferences.forEach(rel -> body.addRelatedRef((String) rel.get("rel"), (URI) rel.get("href")));
-        body.appendDuration(responseMetricsStartTime, System.currentTimeMillis());
+
+        if (body != null) {
+            body.setSelf(resourceURI);
+            this.relatedReferences.forEach(rel -> body.addRelatedRef((String) rel.get("rel"), (URI) rel.get("href")));
+            body.appendDuration(responseMetricsStartTime, System.currentTimeMillis());
+        }
 
         Class hintClass = (Boolean.TRUE.equals(includeToken)) ? JsonApiViews.Extended.class : JsonApiViews.Default.class;
 
@@ -175,42 +188,45 @@ public class ResponseBuilder<T> {
                 .header("Access-Control-Request-Method", "GET,POST,DELETE")
                 .contentType(MediaType.APPLICATION_JSON)
                 .hint(Jackson2CodecSupport.JSON_VIEW_HINT, hintClass)
-                .body(Mono.just(body), JsonApiRestResponseWrapper.class);
+                .body(Mono.justOrEmpty(body), JsonApiRestResponseWrapper.class);
     }
 
-    public T withStartTime(long time) {
+    public ResponseBuilder withStartTime(long time) {
         this.responseMetricsStartTime = time;
-        return (T) this;
+        return this;
     }
 
-    public T withEmptyBody() {
-        this.body = new JsonApiRestResponseWrapper<T>();
-        return (T) this;
+    public ResponseBuilder withEmptyBody() {
+        this.body = new JsonApiRestResponseWrapper<>();
+        return this;
     }
 
-
-    public T withResourceURI(URI uri) {
+    public ResponseBuilder withResourceURI(URI uri) {
         this.resourceURI = uri;
-        return (T) this;
+        return this;
     }
 
-    public T addRelatedRef(String rel, java.net.URI uri) {
+    public ResponseBuilder addRelatedRef(String rel, java.net.URI uri) {
         HashMap<String, Object> item = new HashMap<String, Object>();
         item.put("href", uri);
         item.put("rel", rel);
         relatedReferences.add(item);
-        return (T) this;
+        return this;
     }
 
-    protected JsonApiRestResponseWrapper bodyWithMetadata(JsonApiRestResponseWrapper<T> body) {
+    protected JsonApiRestResponseWrapper bodyWithMetadata(JsonApiRestResponseWrapper<?> body) {
+        if (body == null) {
+            return body;
+        }
+
         apimapConfiguration.getMetadata().forEach((key, value) -> body.addMetadata(key.toLowerCase(), value));
 
-        if(apimapConfiguration.enabledOpenapi()) {
+        if (apimapConfiguration.enabledOpenapi()) {
             String openApiUrl = URIUtil.rootLevelFromURI(resourceURI).append("documentation").append("openapi3").stringValue();
             body.addMetadata("openapi", openApiUrl);
         }
 
-        if(apimapConfiguration.enabledHostIdentifier()) {
+        if (apimapConfiguration.enabledHostIdentifier()) {
             body.addMetadata("host identifier", NodeConfiguration.ID);
         }
 

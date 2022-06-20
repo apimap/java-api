@@ -1,14 +1,18 @@
 Changelog
 ===
 
+### 20.06.2022
+- Added MongoDB support
+- Code rewritten to be reactive
+
 ### 23.03.2022
- - Added search functionality to classifications and api endpoints
- - Simple sort order on returned classifications
- - Added more generated test data
- - Added metrics exposed in Spring endpoint /actuator. 
- - Log usage as INFO messages. 
- - Added API endpoint /statistics/apis-history to return information of API history (API name and created data).
- - Updated dependencies
+- Added search functionality to classifications and api endpoints
+- Simple sort order on returned classifications
+- Added more generated test data
+- Added metrics exposed in Spring endpoint /actuator. 
+- Log usage as INFO messages. 
+- Added API endpoint /statistics/apis-history to return information of API history (API name and created data).
+- Updated dependencies
 
 ### 25.02.2022
 - Updated REST library version to fix element type bug
