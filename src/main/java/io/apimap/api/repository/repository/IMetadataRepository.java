@@ -20,7 +20,6 @@ under the License.
 package io.apimap.api.repository.repository;
 
 import io.apimap.api.repository.entities.IMetadata;
-import io.apimap.api.repository.entities.ITaxonomyCollection;
 import io.apimap.api.service.query.Filter;
 import io.apimap.api.service.query.QueryFilter;
 import reactor.core.publisher.Flux;

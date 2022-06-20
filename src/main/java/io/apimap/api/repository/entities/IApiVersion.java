@@ -19,12 +19,7 @@ under the License.
 
 package io.apimap.api.repository.entities;
 
-import io.apimap.api.rest.MetadataDataRestEntity;
-import io.apimap.api.service.query.Filter;
-import io.apimap.api.service.query.MetadataFilter;
-
 import java.util.Date;
-import java.util.List;
 
 public interface IApiVersion {
 

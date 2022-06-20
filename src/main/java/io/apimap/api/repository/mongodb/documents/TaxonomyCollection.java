@@ -21,7 +21,6 @@ package io.apimap.api.repository.mongodb.documents;
 
 import io.apimap.api.repository.entities.ITaxonomyCollection;
 import org.springframework.data.annotation.Id;
-import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.util.Date;

@@ -25,7 +25,6 @@ import io.apimap.api.repository.entities.IApiVersion;
 import io.apimap.api.repository.entities.IMetadata;
 import io.apimap.api.repository.entities.ITaxonomyCollectionVersionURN;
 import io.apimap.api.repository.generic.ClassificationCollection;
-import io.apimap.api.repository.nitrite.entities.TaxonomyCollection;
 import io.apimap.api.repository.repository.IApiRepository;
 import io.apimap.api.repository.repository.IClassificationRepository;
 import io.apimap.api.repository.repository.IMetadataRepository;

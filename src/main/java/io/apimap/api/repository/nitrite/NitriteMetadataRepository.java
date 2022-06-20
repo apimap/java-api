@@ -20,7 +20,6 @@ under the License.
 package io.apimap.api.repository.nitrite;
 
 import io.apimap.api.configuration.NitriteConfiguration;
-import io.apimap.api.repository.nitrite.entities.ApiClassification;
 import io.apimap.api.repository.nitrite.entities.Metadata;
 import io.apimap.api.repository.repository.IMetadataRepository;
 import io.apimap.api.service.query.Filter;

@@ -25,7 +25,6 @@ import io.apimap.api.repository.nitrite.entities.TaxonomyCollectionVersionURN;
 import io.apimap.api.repository.repository.IClassificationRepository;
 import io.apimap.api.rest.TaxonomyDataRestEntity;
 import io.apimap.api.service.query.Filter;
-import io.apimap.api.service.query.QueryFilter;
 import org.dizitart.no2.objects.Cursor;
 import org.dizitart.no2.objects.ObjectFilter;
 import org.dizitart.no2.objects.ObjectRepository;

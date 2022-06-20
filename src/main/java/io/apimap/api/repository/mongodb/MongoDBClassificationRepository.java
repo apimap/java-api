@@ -25,7 +25,6 @@ import io.apimap.api.repository.mongodb.documents.TaxonomyCollectionVersionURN;
 import io.apimap.api.repository.repository.IClassificationRepository;
 import io.apimap.api.rest.TaxonomyDataRestEntity;
 import io.apimap.api.service.query.Filter;
-import io.apimap.api.service.query.QueryFilter;
 import org.bson.Document;
 import org.bson.conversions.Bson;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;

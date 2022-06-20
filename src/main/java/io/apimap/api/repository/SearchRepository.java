@@ -1,12 +1,9 @@
 package io.apimap.api.repository;
 
-import io.apimap.api.configuration.ApimapConfiguration;
 import io.apimap.api.repository.entities.IApi;
 import io.apimap.api.repository.entities.IApiClassification;
 import io.apimap.api.repository.entities.IApiVersion;
 import io.apimap.api.repository.entities.IMetadata;
-import io.apimap.api.repository.entities.IRESTEntityMapper;
-import io.apimap.api.repository.mongodb.documents.ApiClassification;
 import io.apimap.api.repository.repository.IApiRepository;
 import io.apimap.api.repository.repository.IClassificationRepository;
 import io.apimap.api.repository.repository.IMetadataRepository;
@@ -15,7 +12,6 @@ import io.apimap.api.service.query.ClassificationFilter;
 import io.apimap.api.service.query.Filter;
 import io.apimap.api.service.query.MetadataFilter;
 import io.apimap.api.service.query.QueryFilter;
-import io.apimap.api.utils.ClassificationTreeBuilder;
 import org.springframework.stereotype.Repository;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -24,9 +20,6 @@ import reactor.util.function.Tuple3;
 import reactor.util.function.Tuples;
 
 import java.util.List;
-import java.util.Map;
-
-import static java.util.stream.Collectors.groupingBy;
 
 @Repository
 public class SearchRepository {
