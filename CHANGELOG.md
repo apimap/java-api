@@ -1,6 +1,9 @@
 Changelog
 ===
 
+### 21.06.2022
+- Moving to openjdk 18-slim-bullseye docker image
+
 ### 20.06.2022
 - Added MongoDB support
 - Code rewritten to be reactive

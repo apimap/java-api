@@ -1,6 +1,6 @@
-FROM openjdk:18-alpine
+FROM openjdk:18-slim-bullseye
 MAINTAINER apimap.io
-RUN addgroup -S spring && adduser -S spring -G spring
+RUN adduser --uid 467 --system --group spring
 RUN mkdir /var/apimap && chown spring:spring /var/apimap
 USER spring:spring
 COPY build/dependency/BOOT-INF/lib /app/lib
