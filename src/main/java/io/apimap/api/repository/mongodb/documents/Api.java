@@ -58,6 +58,14 @@ public class Api implements IApi {
         this.created = new Date();
     }
 
+    public Api(String name, String codeRepositoryUrl, String token, Date created, String id) {
+        this.name = name;
+        this.codeRepositoryUrl = codeRepositoryUrl;
+        this.token = token;
+        this.created = created;
+        this.id = id;
+    }
+
     public String getName() {
         return name;
     }

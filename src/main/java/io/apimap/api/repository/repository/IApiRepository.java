@@ -21,15 +21,19 @@ package io.apimap.api.repository.repository;
 
 import io.apimap.api.repository.entities.IApi;
 import io.apimap.api.repository.entities.IApiVersion;
+import io.apimap.api.service.query.Filter;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.util.List;
 
 public interface IApiRepository<TIApi extends IApi,
-                                TIApiVersion extends IApiVersion> {
+                                TIApiVersion extends IApiVersion,
+                                OB> {
     /* A */
     Flux<TIApi> all();
+
+    Flux<TIApi> allByFilters(Mono<List<OB>> filters);
 
     Flux<TIApi> allByApiIds(List<String> apiIds);
 
@@ -55,4 +59,8 @@ public interface IApiRepository<TIApi extends IApi,
     Flux<TIApiVersion> allApiVersions(String apiId);
 
     Mono<TIApiVersion> addApiVersion(TIApiVersion entity);
+
+    /* OB */
+    Mono<List<OB>> queryFilters(List<Filter> filters);
+
 }

@@ -61,10 +61,6 @@ public interface IRESTEntityMapper {
         if (object.getName() == null || object.getName().isEmpty()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Required field 'name' missing");
         }
-
-        if (object.getCodeRepository() == null || object.getCodeRepository().isEmpty()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Required field 'code repository' missing");
-        }
     }
 
     default Mono<JsonApiRestResponseWrapper<StatisticsCollectionRootRestEntity>> encodeStatistics(URI uri, List<StatisticsValue> statistics) {

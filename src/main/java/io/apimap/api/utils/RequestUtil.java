@@ -92,9 +92,7 @@ public class RequestUtil {
                 filterValue.forEach(distinctValue -> {
                     Arrays.stream(distinctValue.split(",")).distinct().forEach(splitDistinctValue -> {
                         NameFilter queryFilter = new NameFilter(splitDistinctValue);
-                        if (queryFilter.getKey() != null) {
-                            returnValue.add(queryFilter);
-                        }
+                        returnValue.add(queryFilter);
                     });
                 });
             }

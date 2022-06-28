@@ -34,7 +34,7 @@ Based on Spring Boot, all the usual targets exist. The easiest way to build the 
 Building the Docker Image is a two-step process based on the [official Spring Boot documentation](https://docs.spring.io/spring-cloud-dataflow-admin-cloudfoundry/docs/1.2.x/reference/html/_deploying_docker_applications.html
 ). Fist we have to unpack the jar file, then build the image itself.
 
-> **Step 1:** mkdir -p build/dependency && (cd build/dependency; cp ../libs/api-1.4.1.jar .; jar -xf api-1.4.1.jar)
+> **Step 1:** mkdir -p build/dependency && (cd build/dependency; cp ../libs/api-1.4.2.jar .; jar -xf api-1.4.2.jar)
 
 > **Step 2:** docker build -t apimap/api .
 

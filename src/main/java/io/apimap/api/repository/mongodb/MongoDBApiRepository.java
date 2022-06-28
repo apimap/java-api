@@ -21,8 +21,14 @@ package io.apimap.api.repository.mongodb;
 
 import io.apimap.api.repository.mongodb.documents.Api;
 import io.apimap.api.repository.mongodb.documents.ApiVersion;
+import io.apimap.api.repository.mongodb.documents.Metadata;
 import io.apimap.api.repository.repository.IApiRepository;
+import io.apimap.api.service.query.Filter;
+import io.apimap.api.service.query.QueryFilter;
+import org.bson.Document;
+import org.bson.conversions.Bson;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
+import org.springframework.data.annotation.Id;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.mongodb.core.ReactiveMongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
@@ -34,13 +40,15 @@ import org.springframework.web.server.ResponseStatusException;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import java.util.Date;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
+
+import static com.mongodb.client.model.Filters.and;
+import static com.mongodb.client.model.Filters.or;
+import static java.util.stream.Collectors.toCollection;
 
 @Repository
 @ConditionalOnBean(io.apimap.api.configuration.MongoConfiguration.class)
-public class MongoDBApiRepository extends MongoDBRepository implements IApiRepository<Api, ApiVersion> {
+public class MongoDBApiRepository extends MongoDBRepository implements IApiRepository<Api, ApiVersion, Bson> {
 
     final protected MongoDBMetadataRepository metadataRepository;
 
@@ -57,6 +65,27 @@ public class MongoDBApiRepository extends MongoDBRepository implements IApiRepos
         return template
                 .findAll(Api.class)
                 .doOnNext(Api::clearToken);
+    }
+
+    @Override
+    public Flux<Api> allByFilters(Mono<List<Bson>> filters) {
+        return template
+                .getCollection("api")
+                .flatMapMany(collection -> filters
+                        .filter(Objects::nonNull)
+                        .filter(list -> list.size() > 0)
+                        .flatMapMany(filterList -> {
+                            return collection.find(and(filterList), Document.class);
+                        })
+                        .switchIfEmpty(collection.find(Document.class))
+                )
+                .flatMap(e -> Mono.just(new Api(
+                        e.get("name", String.class),
+                        e.get("codeRepositoryUrl", String.class),
+                        null,
+                        e.get("created", Date.class),
+                        e.get("_id", String.class)
+                )));
     }
 
     @Override
@@ -170,5 +199,32 @@ public class MongoDBApiRepository extends MongoDBRepository implements IApiRepos
                     throw new ResponseStatusException(HttpStatus.CONFLICT, "The API Version '" + entity.getVersion() + "' already exists");
                 })
                 .switchIfEmpty(Mono.defer(() -> template.insert(entity)));
+    }
+
+    /* OB */
+
+    @Override
+    public Mono<List<Bson>> queryFilters(List<Filter> filters) {
+        HashMap<String, ArrayList<Bson>> tmp = new HashMap<>();
+
+        filters
+                .stream()
+                .filter(e -> e.type() == Filter.TYPE.NAME)
+                .forEach(e -> {
+                    String key = e.getKey();
+                    ArrayList<Bson> f = tmp.getOrDefault(key, new ArrayList<>());
+                    if (key != null) {
+                        f.add(e.mongoObjectFilter());
+                        tmp.put(key, f);
+                    }
+                });
+
+        ArrayList<Bson> objectFilters = tmp
+                .values()
+                .stream()
+                .map(objectFilterArrayList -> or(objectFilterArrayList.toArray(Bson[]::new)))
+                .collect(toCollection(ArrayList::new));
+
+        return Mono.just(objectFilters);
     }
 }

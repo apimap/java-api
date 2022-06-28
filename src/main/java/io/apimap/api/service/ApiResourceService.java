@@ -100,14 +100,12 @@ public class ApiResourceService {
         final ApiContext context = RequestUtil.apiContextFromRequest(request);
         final URI uri = request.uri();
 
-        return metadataRepository
-                .allByFilters(metadataRepository.queryFilters(context.getFilters(), context.getQuery()))
-                .flatMap(metadata -> apiRepository.getById(((IMetadata) metadata).getApiId())
-                        .flatMap(api -> Mono.just(Tuples.of(api, metadata)))
-                        .flatMap(result -> apiRepository.getApiVersion(((IApi) ((Tuple2) result).getT1()).getId(), ((IMetadata) ((Tuple2) result).getT2()).getApiVersion())
-                                .flatMap(apiVersion -> Mono.just(Tuples.of(((Tuple2<?, ?>) result).getT1(), ((Tuple2<?, ?>) result).getT2(), apiVersion)))
-                        )
-                )
+        return apiRepository
+                .allByFilters(apiRepository. queryFilters(context.getFilters()))
+                .flatMap(api -> apiRepository.getLatestApiVersion(((IApi) api).getId())
+                                .flatMap(apiVersion -> Mono.just(Tuples.of(api, apiVersion)))
+                                .flatMap(tuple -> metadataRepository.get(((IApi) ((Tuple2) tuple).getT1()).getId(), ((IApiVersion) ((Tuple2) tuple).getT2()).getVersion())
+                                    .flatMap(metadata -> Mono.just(Tuples.of(api, metadata, ((Tuple2<?, ?>) tuple).getT2())))))
                 .collectList()
                 .flatMap(result -> entityMapper.encodeApis(uri, (List) result))
                 .flatMap(collection -> ResponseBuilder

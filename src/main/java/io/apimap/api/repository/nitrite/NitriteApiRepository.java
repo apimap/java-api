@@ -23,10 +23,14 @@ import io.apimap.api.configuration.NitriteConfiguration;
 import io.apimap.api.repository.entities.IApiVersion;
 import io.apimap.api.repository.nitrite.entities.Api;
 import io.apimap.api.repository.nitrite.entities.ApiVersion;
+import io.apimap.api.repository.nitrite.entities.Metadata;
 import io.apimap.api.repository.repository.IApiRepository;
+import io.apimap.api.service.query.Filter;
+import io.apimap.api.service.query.QueryFilter;
 import org.dizitart.no2.FindOptions;
 import org.dizitart.no2.SortOrder;
 import org.dizitart.no2.objects.Cursor;
+import org.dizitart.no2.objects.ObjectFilter;
 import org.dizitart.no2.objects.ObjectRepository;
 import org.dizitart.no2.objects.filters.ObjectFilters;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
@@ -34,15 +38,14 @@ import org.springframework.stereotype.Repository;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 
-import static org.dizitart.no2.objects.filters.ObjectFilters.eq;
-import static org.dizitart.no2.objects.filters.ObjectFilters.in;
+import static java.util.stream.Collectors.toCollection;
+import static org.dizitart.no2.objects.filters.ObjectFilters.*;
 
 @Repository
 @ConditionalOnBean(io.apimap.api.configuration.NitriteConfiguration.class)
-public class NitriteApiRepository extends NitriteRepository implements IApiRepository<Api, ApiVersion> {
+public class NitriteApiRepository extends NitriteRepository implements IApiRepository<Api, ApiVersion, ObjectFilter> {
     protected NitriteMetadataRepository metadataRepository;
     protected NitriteClassificationRepository classificationRepository;
 
@@ -60,6 +63,20 @@ public class NitriteApiRepository extends NitriteRepository implements IApiRepos
         ObjectRepository<Api> repository = database.getRepository(Api.class);
         Cursor<Api> cursor = repository.find();
         return Flux.fromIterable(cursor);
+    }
+
+    @Override
+    public Flux<Api> allByFilters(Mono<List<ObjectFilter>> filters) {
+        ObjectRepository<Api> repository = database.getRepository(Api.class);
+
+        return filters
+                .filter(Objects::nonNull)
+                .filter(list -> list.size() > 0)
+                .flatMapMany(filterList -> {
+                    ObjectFilter objectFilter = and(filterList.toArray(ObjectFilter[]::new));
+                    Cursor<Api> cursor = repository.find(objectFilter);
+                    return Flux.fromIterable(cursor.toList());
+                });
     }
 
     @Override
@@ -174,5 +191,30 @@ public class NitriteApiRepository extends NitriteRepository implements IApiRepos
 
         ObjectRepository<ApiVersion> repository = database.getRepository(ApiVersion.class);
         return Mono.justOrEmpty(repository.getById(repository.insert(entity).iterator().next()));
+    }
+
+
+    /* OB */
+
+    public Mono<List<ObjectFilter>> queryFilters(List<Filter> filters) {
+        HashMap<String, ArrayList<ObjectFilter>> tmp = new HashMap<>();
+
+        filters
+                .stream()
+                .filter(e -> e.type() == Filter.TYPE.NAME)
+                .forEach(e -> {
+                    String key = e.getKey();
+                    ArrayList<ObjectFilter> f = tmp.getOrDefault(key, new ArrayList<>());
+                    f.add(e.objectFilter());
+                    tmp.put(key, f);
+                });
+
+        ArrayList<ObjectFilter> objectFilters = tmp
+                .values()
+                .stream()
+                .map(objectFilterArrayList -> or(objectFilterArrayList.toArray(ObjectFilter[]::new)))
+                .collect(toCollection(ArrayList::new));
+
+        return Mono.just(objectFilters);
     }
 }

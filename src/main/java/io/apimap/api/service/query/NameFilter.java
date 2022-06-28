@@ -28,7 +28,7 @@ public class NameFilter extends Filter {
     }
 
     public String getKey() {
-        return null;
+        return "name";
     }
 
     @Override

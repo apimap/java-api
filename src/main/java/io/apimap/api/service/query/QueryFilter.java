@@ -76,11 +76,11 @@ public class QueryFilter extends Filter {
 
         switch (this.field) {
             case MetadataDataRestEntity.NAME_KEY:
-                return com.mongodb.client.model.Filters.regex("name", queryString);
+                return com.mongodb.client.model.Filters.regex("name", queryString,"i");
             case MetadataDataRestEntity.SYSTEM_IDENTIFIER_KEY:
-                return com.mongodb.client.model.Filters.regex("systemIdentifier", queryString);
+                return com.mongodb.client.model.Filters.regex("systemIdentifier", queryString,"i");
             case MetadataDataRestEntity.DESCRIPTION_KEY:
-                return com.mongodb.client.model.Filters.regex("description", queryString);
+                return com.mongodb.client.model.Filters.regex("description", queryString,"i");
             default:
                 return null;
         }

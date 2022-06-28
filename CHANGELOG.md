@@ -1,6 +1,11 @@
 Changelog
 ===
 
+### 28.06.2022
+- Updated api collection name query parsing
+- Made CodeRepository optional again
+- Made metadata filters case insensitive on mongodb
+
 ### 21.06.2022
 - Moving to openjdk 18-slim-bullseye docker image
 
