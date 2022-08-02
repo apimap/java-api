@@ -44,6 +44,7 @@ dependencies {
     implementation 'io.apimap.api:rest-interface:2.1.3'
 
     implementation 'io.micrometer:micrometer-core:1.9.0'
+    runtimeOnly 'io.micrometer:micrometer-registry-prometheus:1.9.0'
 
     testImplementation 'org.springframework.boot:spring-boot-starter-test:2.6.8'
     testImplementation 'org.junit.jupiter:junit-jupiter:5.8.2'
