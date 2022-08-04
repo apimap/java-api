@@ -22,9 +22,9 @@ package io.apimap.api.service;
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.apimap.api.configuration.ApimapConfiguration;
-import io.apimap.api.repository.entities.IApi;
-import io.apimap.api.repository.entities.IApiClassification;
-import io.apimap.api.repository.entities.IRESTEntityMapper;
+import io.apimap.api.repository.IRESTConverter;
+import io.apimap.api.repository.interfaces.IApi;
+import io.apimap.api.repository.interfaces.IApiClassification;
 import io.apimap.api.repository.repository.IApiRepository;
 import io.apimap.api.repository.repository.IClassificationRepository;
 import io.apimap.api.rest.ClassificationRootRestEntity;
@@ -51,10 +51,10 @@ public class ApiClassificationService {
 
     final protected IClassificationRepository classificationRepository;
     final protected IApiRepository apiRepository;
-    final protected IRESTEntityMapper entityMapper;
+    final protected IRESTConverter entityMapper;
     final protected ApimapConfiguration apimapConfiguration;
 
-    public ApiClassificationService(final IRESTEntityMapper entityMapper,
+    public ApiClassificationService(final IRESTConverter entityMapper,
                                     final IClassificationRepository classificationRepository,
                                     final IApiRepository apiRepository,
                                     final ApimapConfiguration apimapConfiguration) {

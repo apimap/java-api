@@ -26,11 +26,7 @@ import io.apimap.api.service.context.ApiContext;
 import io.apimap.api.service.context.AuthorizationContext;
 import io.apimap.api.service.context.ClassificationContext;
 import io.apimap.api.service.context.TaxonomyContext;
-import io.apimap.api.service.query.ClassificationFilter;
-import io.apimap.api.service.query.Filter;
-import io.apimap.api.service.query.MetadataFilter;
-import io.apimap.api.service.query.NameFilter;
-import io.apimap.api.service.query.QueryFilter;
+import io.apimap.api.service.query.*;
 import org.springframework.web.reactive.function.server.ServerRequest;
 
 import java.util.ArrayList;

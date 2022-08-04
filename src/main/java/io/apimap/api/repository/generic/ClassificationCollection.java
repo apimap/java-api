@@ -19,8 +19,8 @@ under the License.
 
 package io.apimap.api.repository.generic;
 
-import io.apimap.api.repository.entities.IMetadata;
-import io.apimap.api.repository.entities.ITaxonomyCollectionVersionURN;
+import io.apimap.api.repository.interfaces.IMetadata;
+import io.apimap.api.repository.interfaces.ITaxonomyCollectionVersionURN;
 
 import java.util.ArrayList;
 import java.util.List;

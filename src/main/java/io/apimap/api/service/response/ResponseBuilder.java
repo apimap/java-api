@@ -66,6 +66,13 @@ public class ResponseBuilder {
         return this;
     }
 
+    public Mono<ServerResponse> text(String body, MediaType contentType){
+        return ServerResponse.ok()
+                .header("Access-Control-Allow-Origin", "*")
+                .header("Access-Control-Request-Method", "GET,POST,DELETE")
+                .contentType(contentType)
+                .body(Mono.just(body), String.class);
+    }
     public Mono<ServerResponse> badRequest() {
         JsonApiRestResponseWrapper wrapper = new JsonApiRestResponseWrapper();
         wrapper.addErorr(new JsonApiError(

@@ -19,40 +19,11 @@ under the License.
 
 package io.apimap.api.repository.mongodb;
 
-import io.apimap.api.repository.entities.IApi;
-import io.apimap.api.repository.entities.IApiClassification;
-import io.apimap.api.repository.entities.IApiVersion;
-import io.apimap.api.repository.entities.IMetadata;
-import io.apimap.api.repository.entities.IRESTEntityMapper;
-import io.apimap.api.repository.entities.ITaxonomyCollection;
-import io.apimap.api.repository.entities.ITaxonomyCollectionVersion;
-import io.apimap.api.repository.entities.ITaxonomyCollectionVersionURN;
+import io.apimap.api.repository.IRESTConverter;
 import io.apimap.api.repository.generic.ClassificationCollection;
-import io.apimap.api.repository.mongodb.documents.Api;
-import io.apimap.api.repository.mongodb.documents.ApiClassification;
-import io.apimap.api.repository.mongodb.documents.ApiVersion;
-import io.apimap.api.repository.mongodb.documents.Metadata;
-import io.apimap.api.repository.mongodb.documents.TaxonomyCollection;
-import io.apimap.api.repository.mongodb.documents.TaxonomyCollectionVersion;
-import io.apimap.api.repository.mongodb.documents.TaxonomyCollectionVersionURN;
-import io.apimap.api.rest.ApiCollectionDataRestEntity;
-import io.apimap.api.rest.ApiCollectionRootRestEntity;
-import io.apimap.api.rest.ApiDataMetadataEntity;
-import io.apimap.api.rest.ApiDataRestEntity;
-import io.apimap.api.rest.ApiVersionCollectionRootRestEntity;
-import io.apimap.api.rest.ApiVersionDataRestEntity;
-import io.apimap.api.rest.ClassificationDataRestEntity;
-import io.apimap.api.rest.ClassificationRootRestEntity;
-import io.apimap.api.rest.ClassificationTreeDataRestEntity;
-import io.apimap.api.rest.ClassificationTreeRootRestEntity;
-import io.apimap.api.rest.MetadataDataRestEntity;
-import io.apimap.api.rest.TaxonomyCollectionDataRestEntity;
-import io.apimap.api.rest.TaxonomyCollectionRootRestEntity;
-import io.apimap.api.rest.TaxonomyDataRestEntity;
-import io.apimap.api.rest.TaxonomyTreeDataRestEntity;
-import io.apimap.api.rest.TaxonomyTreeRootRestEntity;
-import io.apimap.api.rest.TaxonomyVersionCollectionDataRestEntity;
-import io.apimap.api.rest.TaxonomyVersionCollectionRootRestEntity;
+import io.apimap.api.repository.interfaces.*;
+import io.apimap.api.repository.mongodb.documents.*;
+import io.apimap.api.rest.*;
 import io.apimap.api.rest.jsonapi.JsonApiRelationships;
 import io.apimap.api.rest.jsonapi.JsonApiRestRequestWrapper;
 import io.apimap.api.rest.jsonapi.JsonApiRestResponseWrapper;
@@ -62,20 +33,19 @@ import io.apimap.api.utils.Comparator;
 import io.apimap.api.utils.TaxonomyTreeBuilder;
 import io.apimap.api.utils.URIUtil;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
+import org.springframework.core.io.ByteArrayResource;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
+import reactor.util.function.Tuple2;
 
 import java.net.URI;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.List;
-import java.util.Objects;
+import java.nio.charset.StandardCharsets;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
 @ConditionalOnBean(io.apimap.api.configuration.MongoConfiguration.class)
-public class MongoRESTEntityMapper implements IRESTEntityMapper {
+public class MongoRESTConverter implements IRESTConverter {
 
 
     /*
@@ -129,6 +99,19 @@ public class MongoRESTEntityMapper implements IRESTEntityMapper {
         );
     }
 
+    @Override
+    public Mono<IDocument> decodeMetadataDocument(ApiContext apiContext, ByteArrayResource resource, IDocument.DocumentType type){
+        return Mono.just(
+            new Document(
+                apiContext.getApiId(),
+                apiContext.getApiVersion(),
+                new String(resource.getByteArray(), StandardCharsets.UTF_8),
+                new Date(),
+                type
+            )
+        );
+    }
+
     /* Taxonomy */
 
     @Override
@@ -175,6 +158,18 @@ public class MongoRESTEntityMapper implements IRESTEntityMapper {
                         object.getUrn(),
                         object.getNid(),
                         new Date()
+                )
+        );
+    }
+
+    /* Vote */
+
+    public Mono<IVote> decodeVote(ApiContext apiContext, JsonApiRestRequestWrapper<VoteDataRestEntity> object){
+        return Mono.just(
+                new Vote(
+                    apiContext.getApiId(),
+                        apiContext.getApiVersion(),
+                        object.getData().getRating()
                 )
         );
     }
@@ -233,10 +228,11 @@ public class MongoRESTEntityMapper implements IRESTEntityMapper {
     /* API Version */
 
     @Override
-    public Mono<JsonApiRestResponseWrapper<ApiVersionDataRestEntity>> encodeApiVersion(final URI uri, final IApiVersion object) {
+    public Mono<JsonApiRestResponseWrapper<ApiVersionDataRestEntity>> encodeApiVersion(final URI uri, final IApiVersion object, final Integer rating) {
         ApiVersionDataRestEntity content = new ApiVersionDataRestEntity(
                 object.getVersion(),
                 object.getCreated(),
+                new ApiVersionRatingEntity(rating),
                 URIUtil.fromURI(uri).append(object.getVersion()).stringValue()
         );
 
@@ -246,13 +242,14 @@ public class MongoRESTEntityMapper implements IRESTEntityMapper {
     }
 
     @Override
-    public Mono<JsonApiRestResponseWrapper<ApiVersionCollectionRootRestEntity>> encodeApiVersions(final URI uri, final List<IApiVersion> collection) {
+    public Mono<JsonApiRestResponseWrapper<ApiVersionCollectionRootRestEntity>> encodeApiVersions(final URI uri, final List<Tuple2<IApiVersion, Integer>> collection) {
         ArrayList<ApiVersionDataRestEntity> content = collection
                 .stream()
                 .map(version -> new ApiVersionDataRestEntity(
-                        version.getVersion(),
-                        version.getCreated(),
-                        URIUtil.fromURI(uri).append(version.getVersion()).stringValue())
+                        version.getT1().getVersion(),
+                        version.getT1().getCreated(),
+                        new ApiVersionRatingEntity(version.getT2()),
+                        URIUtil.fromURI(uri).append(version.getT1().getVersion()).stringValue())
                 )
                 .collect(Collectors.toCollection(ArrayList::new));
 
@@ -420,6 +417,12 @@ public class MongoRESTEntityMapper implements IRESTEntityMapper {
         );
     }
 
+    public Mono<Object> encodeMetadataDocument(URI uri, IDocument object) {
+        return Mono.just(
+                object.getBody()
+        );
+    }
+
     @Override
     public Mono<JsonApiRestResponseWrapper<TaxonomyTreeRootRestEntity>> encodeTaxonomyCollectionVersionURNs(URI uri, List<ITaxonomyCollectionVersionURN> urns) {
         TaxonomyTreeBuilder taxonomyTreeBuilder = TaxonomyTreeBuilder.empty();
@@ -451,20 +454,20 @@ public class MongoRESTEntityMapper implements IRESTEntityMapper {
     }
 
     @Override
-    public Mono<JsonApiRestResponseWrapper<TaxonomyCollectionRootRestEntity>> encodeTaxonomyCollections(URI uri, List<ITaxonomyCollection> collection) {
+    public Mono<JsonApiRestResponseWrapper<TaxonomyCollectionRootRestEntity>> encodeTaxonomyCollections(URI uri, List<Tuple2<ITaxonomyCollection,ITaxonomyCollectionVersion>> collection) {
         ArrayList<TaxonomyCollectionDataRestEntity> content = collection
                 .stream()
                 .map(e -> {
                     JsonApiRelationships relationships = new JsonApiRelationships();
-                    relationships.addRelationshipRef(JsonApiRestResponseWrapper.VERSION_COLLECTION, URIUtil.fromURI(uri).append(e.getNid()).append("version").uriValue());
-                    relationships.addRelationshipRef(JsonApiRestResponseWrapper.VERSION_ELEMENT, URIUtil.fromURI(uri).append(e.getNid()).append("version").append("latest").uriValue());
-                    relationships.addRelationshipRef(JsonApiRestResponseWrapper.URN_COLLECTION, URIUtil.fromURI(uri).append(e.getNid()).append("version").append("latest").append("urn").uriValue());
+                    relationships.addRelationshipRef(JsonApiRestResponseWrapper.VERSION_COLLECTION, URIUtil.fromURI(uri).append(e.getT1().getNid()).append("version").uriValue());
+                    relationships.addRelationshipRef(JsonApiRestResponseWrapper.VERSION_ELEMENT, URIUtil.fromURI(uri).append(e.getT1().getNid()).append("version").append(e.getT2().getVersion()).uriValue());
+                    relationships.addRelationshipRef(JsonApiRestResponseWrapper.URN_COLLECTION, URIUtil.fromURI(uri).append(e.getT1().getNid()).append("version").append(e.getT2().getVersion()).append("urn").uriValue());
 
                     return new TaxonomyCollectionDataRestEntity(
-                            e.getName(),
-                            e.getDescription(),
-                            e.getNid(),
-                            URIUtil.fromURI(uri).append(e.getNid()).stringValue(),
+                            e.getT1().getName(),
+                            e.getT1().getDescription(),
+                            e.getT1().getNid(),
+                            URIUtil.fromURI(uri).append(e.getT1().getNid()).stringValue(),
                             relationships
                     );
                 })
@@ -472,6 +475,33 @@ public class MongoRESTEntityMapper implements IRESTEntityMapper {
 
         return Mono.just(
                 new JsonApiRestResponseWrapper<TaxonomyCollectionRootRestEntity>(new TaxonomyCollectionRootRestEntity(content))
+        );
+    }
+
+    /* Votes */
+    @Override
+    public Mono<JsonApiRestResponseWrapper<VoteRootRestEntity>> encodeVotes(URI uri, List<IVote> votes){
+        ArrayList<VoteDataRestEntity> content = votes
+                .stream()
+                .map(e -> {
+                    return new VoteDataRestEntity(
+                            e.getRating()
+                    );
+                })
+                .collect(Collectors.toCollection(ArrayList::new));
+
+        return Mono.just(
+                new JsonApiRestResponseWrapper<VoteRootRestEntity>(new VoteRootRestEntity(content))
+        );
+    }
+
+    public Mono<JsonApiRestResponseWrapper<VoteDataRestEntity>> encodeVote(URI uri, IVote vote){
+        VoteDataRestEntity content = new VoteDataRestEntity(
+                vote.getRating()
+        );
+
+        return Mono.just(
+                new JsonApiRestResponseWrapper<VoteDataRestEntity>(content)
         );
     }
 }

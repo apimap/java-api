@@ -19,7 +19,7 @@ under the License.
 
 package io.apimap.api.repository.repository;
 
-import io.apimap.api.repository.entities.IApiClassification;
+import io.apimap.api.repository.interfaces.IApiClassification;
 import io.apimap.api.service.query.Filter;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;

@@ -17,35 +17,23 @@ specific language governing permissions and limitations
 under the License.
  */
 
-package io.apimap.api.repository.entities;
+package io.apimap.api.repository.interfaces;
 
 import java.util.Date;
 
-public interface IApiClassification {
+public interface ITaxonomyCollectionVersion {
 
-    static String createId(String apiName, String apiVersion, String urn) {
-        return apiName + "#" + apiVersion + "#" + urn;
+    static String createId(String nid, String version) {
+        return nid + "#" + version;
     }
 
-    String getApiId();
+    String getNid();
 
-    void setApiId(String apiId);
+    void setNid(String nid);
 
-    String getApiVersion();
+    String getVersion();
 
-    void setApiVersion(String apiVersion);
-
-    String getTaxonomyVersion();
-
-    void setTaxonomyVersion(String taxonomyVersion);
-
-    String getTaxonomyUrn();
-
-    void setTaxonomyUrn(String taxonomyUrn);
-
-    String getTaxonomyNid();
-
-    void setTaxonomyNid(String taxonomyNid);
+    void setVersion(String version);
 
     Date getCreated();
 

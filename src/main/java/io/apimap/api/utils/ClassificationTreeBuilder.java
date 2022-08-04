@@ -19,12 +19,8 @@ under the License.
 
 package io.apimap.api.utils;
 
-import io.apimap.api.repository.entities.IApi;
-import io.apimap.api.repository.entities.IApiClassification;
-import io.apimap.api.repository.entities.IApiVersion;
-import io.apimap.api.repository.entities.IMetadata;
-import io.apimap.api.repository.entities.ITaxonomyCollectionVersionURN;
 import io.apimap.api.repository.generic.ClassificationCollection;
+import io.apimap.api.repository.interfaces.*;
 import io.apimap.api.repository.repository.IApiRepository;
 import io.apimap.api.repository.repository.IClassificationRepository;
 import io.apimap.api.repository.repository.IMetadataRepository;

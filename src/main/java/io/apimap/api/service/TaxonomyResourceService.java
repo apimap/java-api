@@ -22,10 +22,10 @@ package io.apimap.api.service;
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.apimap.api.configuration.ApimapConfiguration;
-import io.apimap.api.repository.entities.IRESTEntityMapper;
-import io.apimap.api.repository.entities.ITaxonomyCollection;
-import io.apimap.api.repository.entities.ITaxonomyCollectionVersion;
-import io.apimap.api.repository.entities.ITaxonomyCollectionVersionURN;
+import io.apimap.api.repository.IRESTConverter;
+import io.apimap.api.repository.interfaces.ITaxonomyCollection;
+import io.apimap.api.repository.interfaces.ITaxonomyCollectionVersion;
+import io.apimap.api.repository.interfaces.ITaxonomyCollectionVersionURN;
 import io.apimap.api.repository.nitrite.entities.TaxonomyCollectionVersionURN;
 import io.apimap.api.repository.repository.ITaxonomyRepository;
 import io.apimap.api.rest.TaxonomyCollectionDataRestEntity;
@@ -45,6 +45,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.server.ServerRequest;
 import org.springframework.web.reactive.function.server.ServerResponse;
 import reactor.core.publisher.Mono;
+import reactor.util.function.Tuple2;
+import reactor.util.function.Tuples;
 
 import java.net.URI;
 import java.util.List;
@@ -55,9 +57,9 @@ public class TaxonomyResourceService {
 
     final protected ITaxonomyRepository taxonomyRepository;
     final protected ApimapConfiguration apimapConfiguration;
-    final protected IRESTEntityMapper entityMapper;
+    final protected IRESTConverter entityMapper;
 
-    public TaxonomyResourceService(final IRESTEntityMapper entityMapper,
+    public TaxonomyResourceService(final IRESTConverter entityMapper,
                                    final ITaxonomyRepository taxonomyRepository,
                                    final ApimapConfiguration apimapConfiguration) {
         this.taxonomyRepository = taxonomyRepository;
@@ -77,8 +79,11 @@ public class TaxonomyResourceService {
 
         return taxonomyRepository
                 .allTaxonomyCollection()
+                .flatMap(taxonomy -> taxonomyRepository.getTaxonomyCollectionVersion(((ITaxonomyCollection) taxonomy).getNid(), "latest")
+                        .flatMapMany(version -> Mono.just(Tuples.of(taxonomy, version)))
+                )
                 .collectList()
-                .flatMap(collection -> entityMapper.encodeTaxonomyCollections(uri, (List<ITaxonomyCollection>) collection))
+                .flatMap(collection -> entityMapper.encodeTaxonomyCollections(uri, (List<Tuple2<ITaxonomyCollection, ITaxonomyCollectionVersion>>) collection))
                 .flatMap(collection -> ResponseBuilder
                         .builder(startTime, apimapConfiguration)
                         .withResourceURI(uri)
@@ -185,7 +190,7 @@ public class TaxonomyResourceService {
 
         return taxonomyRepository
                 .getTaxonomyCollection(context.getNid())
-                .flatMapMany(collection -> taxonomyRepository.allTaxonomyCollectionVersion(((ITaxonomyCollection) collection).getNid()))
+                .flatMapMany(collection -> taxonomyRepository.allTaxonomyCollectionVersions(((ITaxonomyCollection) collection).getNid()))
                 .collectList()
                 .flatMap(version -> entityMapper.encodeTaxonomyCollectionVersions(uri, (List<ITaxonomyCollectionVersion>) version))
                 .flatMap(version -> ResponseBuilder

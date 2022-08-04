@@ -19,7 +19,7 @@ under the License.
 
 package io.apimap.api.repository.nitrite.entities;
 
-import io.apimap.api.repository.entities.IApiClassification;
+import io.apimap.api.repository.interfaces.IApiClassification;
 import org.dizitart.no2.objects.Id;
 
 import java.util.Date;

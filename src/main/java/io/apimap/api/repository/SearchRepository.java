@@ -1,9 +1,9 @@
 package io.apimap.api.repository;
 
-import io.apimap.api.repository.entities.IApi;
-import io.apimap.api.repository.entities.IApiClassification;
-import io.apimap.api.repository.entities.IApiVersion;
-import io.apimap.api.repository.entities.IMetadata;
+import io.apimap.api.repository.interfaces.IApi;
+import io.apimap.api.repository.interfaces.IApiClassification;
+import io.apimap.api.repository.interfaces.IApiVersion;
+import io.apimap.api.repository.interfaces.IMetadata;
 import io.apimap.api.repository.repository.IApiRepository;
 import io.apimap.api.repository.repository.IClassificationRepository;
 import io.apimap.api.repository.repository.IMetadataRepository;

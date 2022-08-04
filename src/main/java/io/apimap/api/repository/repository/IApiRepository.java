@@ -19,8 +19,8 @@ under the License.
 
 package io.apimap.api.repository.repository;
 
-import io.apimap.api.repository.entities.IApi;
-import io.apimap.api.repository.entities.IApiVersion;
+import io.apimap.api.repository.interfaces.IApi;
+import io.apimap.api.repository.interfaces.IApiVersion;
 import io.apimap.api.service.query.Filter;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;

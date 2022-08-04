@@ -20,13 +20,11 @@ under the License.
 package io.apimap.api.repository.nitrite;
 
 import io.apimap.api.configuration.NitriteConfiguration;
-import io.apimap.api.repository.entities.IApiVersion;
+import io.apimap.api.repository.interfaces.IApiVersion;
 import io.apimap.api.repository.nitrite.entities.Api;
 import io.apimap.api.repository.nitrite.entities.ApiVersion;
-import io.apimap.api.repository.nitrite.entities.Metadata;
 import io.apimap.api.repository.repository.IApiRepository;
 import io.apimap.api.service.query.Filter;
-import io.apimap.api.service.query.QueryFilter;
 import org.dizitart.no2.FindOptions;
 import org.dizitart.no2.SortOrder;
 import org.dizitart.no2.objects.Cursor;
@@ -192,7 +190,6 @@ public class NitriteApiRepository extends NitriteRepository implements IApiRepos
         ObjectRepository<ApiVersion> repository = database.getRepository(ApiVersion.class);
         return Mono.justOrEmpty(repository.getById(repository.insert(entity).iterator().next()));
     }
-
 
     /* OB */
 

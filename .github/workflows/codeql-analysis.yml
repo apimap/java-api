@@ -28,7 +28,7 @@ jobs:
         with:
           fetch-depth: 0
       - name: Initialize CodeQL
-        uses: github/codeql-action/init@v1
+        uses: github/codeql-action/init@v2
         with:
           languages: ${{ matrix.language }}
       - name: Set up JDK 16
@@ -40,7 +40,7 @@ jobs:
       - name: Build
         run: ./gradlew build
         env:
-          MULTI_PACKAGES_TOKEN: ${{ env.GITHUB_ACTOR }}
-          MULTI_PACKAGES_USER: ${{ secrets.GITHUB_TOKEN }}
+          MULTI_PACKAGES_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          MULTI_PACKAGES_USER: ${{ env.GITHUB_ACTOR }}
       - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@v1
+        uses: github/codeql-action/analyze@v2

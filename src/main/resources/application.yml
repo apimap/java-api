@@ -9,10 +9,12 @@ spring:
 springdoc:
   api-docs:
     enabled: true
+    path: "/documentation/openapi3"
   swagger-ui:
     enabled: true
     operationsSorter: alpha
     tagsSorter: alpha
+    path: "/documentation/swagger-ui"
 logging:
   level:
     root: INFO
@@ -29,7 +31,7 @@ management:
   endpoints:
     web:
       exposure:
-        include: "health,metrics,httptrace"
+        include: "health,metrics,httptrace,prometheus"
   trace:
     http:
       enabled: true
@@ -50,5 +52,7 @@ apimap:
   openapi:
     enabled: true
   version: ${project.version}
+  limits:
+    maximumMetadataDocumentSize: 25000
 
 
