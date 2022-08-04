@@ -55,6 +55,10 @@ bootRun {
     }
 }
 
+bootJar {
+    archiveName 'api-complete.jar'
+}
+
 jar{
     archiveName 'api.jar'
 }

@@ -43,7 +43,7 @@ jobs:
         uses: docker/setup-buildx-action@v1
       - name: Unpack
         if: ${{ steps.read_tag.outputs.release_tag != '' }}
-        run: mkdir -p build/dependency && (cd build/dependency; cp ../libs/api.jar .; jar -xf api.jar)
+        run: mkdir -p build/dependency && (cd build/dependency; cp ../libs/api-complete.jar .; jar -xf api-complete.jar)
       - name: Build and push
         if: ${{ steps.read_tag.outputs.release_tag != '' }}
         id: docker_build
