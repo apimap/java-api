@@ -9,27 +9,43 @@ jobs:
     runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
       - name: Set up JDK 16
         uses: actions/setup-java@v2
         with:
           java-version: '16'
           distribution: 'zulu'
+          cache: 'gradle'
       - name: Build
         run: ./gradlew build
         env:
           MULTI_PACKAGES_TOKEN: ${{ secrets.MULTI_PACKAGES_TOKEN }}
           MULTI_PACKAGES_USER: ${{ secrets.MULTI_PACKAGES_USER }}
+      - name: Release
+        run: gradle release --no-daemon -Dorg.ajoberstar.grgit.auth.username='$GITHUB_ACTOR' -Dorg.ajoberstar.grgit.auth.password='${{ secrets.GITHUB_TOKEN }}'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          MULTI_PACKAGES_TOKEN: ${{ secrets.MULTI_PACKAGES_TOKEN }}
+          MULTI_PACKAGES_USER: ${{ secrets.MULTI_PACKAGES_USER }}
+      - name: Read release tag
+        id: read_tag
+        run: echo "::set-output name=release_tag::$(git tag --points-at HEAD 'v[0-9]*' | head -n1)"
       - name: Login to Docker Hub
+        if: ${{ steps.read_tag.outputs.release_tag != '' }}
         uses: docker/login-action@v1
         with:
           username: ${{ secrets.DOCKER_HUB_USER }}
           password: ${{ secrets.DOCKER_HUB_PASSWORD }}
       - name: Set up Docker Buildx
+        if: ${{ steps.read_tag.outputs.release_tag != '' }}
         id: buildx
         uses: docker/setup-buildx-action@v1
       - name: Unpack
-        run: mkdir -p build/dependency && (cd build/dependency; cp ../libs/api.jar .; jar -xf api.jar)
+        if: ${{ steps.read_tag.outputs.release_tag != '' }}
+        run: mkdir -p build/dependency && (cd build/dependency; cp ../libs/api-complete.jar .; jar -xf api-complete.jar)
       - name: Build and push
+        if: ${{ steps.read_tag.outputs.release_tag != '' }}
         id: docker_build
         uses: docker/build-push-action@v2
         with:
@@ -37,6 +53,6 @@ jobs:
           file: ./Dockerfile
           builder: ${{ steps.buildx.outputs.name }}
           push: true
-          tags:  apimap/api:latest,apimap/api:1.5.0
+          tags:  apimap/api:latest,apimap/api:${{ steps.read_tag.outputs.release_tag }}
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: type=local,dest=/tmp/.buildx-cache

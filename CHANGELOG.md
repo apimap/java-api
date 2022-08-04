@@ -1,6 +1,11 @@
 Changelog
 ===
 
+### 04.08.2022
+- Added automated versioning to the project
+- Added prometheus
+- Added issue and PR request templates
+
 ### 28.06.2022
 - Updated api collection name query parsing
 - Made CodeRepository optional again

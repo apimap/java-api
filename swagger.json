@@ -6,8 +6,7 @@
     "license": {
       "name": "Apache 2.0",
       "url": "https://www.apache.org/licenses/LICENSE-2.0"
-    },
-    "version": "1.5.0"
+    }
   },
   "servers": [
     {
@@ -689,6 +688,261 @@
         ]
       }
     },
+    "/api/{apiName}/version/{apiVersion}/changelog": {
+      "get": {
+        "tags": [
+          "API"
+        ],
+        "summary": "Get API version README.md",
+        "operationId": "getChangelog",
+        "parameters": [
+          {
+            "name": "apiName",
+            "in": "path",
+            "description": "URL encoded API name",
+            "required": true
+          },
+          {
+            "name": "apiVersion",
+            "in": "path",
+            "description": "URL encoded API version identifier",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "API CHANGELOG Content",
+            "content": {
+              "text/markdown": {}
+            }
+          },
+          "404": {
+            "description": "No existing API or API Version found",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Json:api Container Object"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "API"
+        ],
+        "summary": "Updated CHANGELOG.md",
+        "operationId": "updateChangelog",
+        "parameters": [
+          {
+            "name": "apiName",
+            "in": "path",
+            "description": "URL encoded API name",
+            "required": true
+          },
+          {
+            "name": "apiVersion",
+            "in": "path",
+            "description": "URL encoded API version identifier",
+            "required": true
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "text/markdown": {
+              "schema": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "API CHANGELOG Updated Successfully",
+            "content": {
+              "text/markdown": {}
+            }
+          },
+          "400": {
+            "description": "Unable to parse incoming values",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Json:api Container Object"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized, valid bearer token missing og faulty",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Json:api Container Object"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No existing API or API Version found",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Json:api Container Object"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "token": []
+          }
+        ]
+      },
+      "post": {
+        "tags": [
+          "API"
+        ],
+        "summary": "Create a API version CHANGELOG.md",
+        "operationId": "createChangelog",
+        "parameters": [
+          {
+            "name": "apiName",
+            "in": "path",
+            "description": "URL encoded API name",
+            "required": true
+          },
+          {
+            "name": "apiVersion",
+            "in": "path",
+            "description": "URL encoded API version identifier",
+            "required": true
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "text/markdown": {
+              "schema": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "API CHANGELIG Created Successfully",
+            "content": {
+              "text/markdown": {}
+            }
+          },
+          "400": {
+            "description": "Unable to parse incoming values",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Json:api Container Object"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized, valid bearer token missing og faulty",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Json:api Container Object"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No existing API or API Version found",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Json:api Container Object"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "CHANGELOG already exists",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Json:api Container Object"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "token": []
+          }
+        ]
+      },
+      "delete": {
+        "tags": [
+          "API"
+        ],
+        "summary": "Delete API version CHANGELOG.md",
+        "operationId": "deleteChangelog",
+        "parameters": [
+          {
+            "name": "apiName",
+            "in": "path",
+            "description": "URL encoded API name",
+            "required": true
+          },
+          {
+            "name": "apiVersion",
+            "in": "path",
+            "description": "URL encoded API version identifier",
+            "required": true
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "API CHANGELOG Deleted Successfully",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServerResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized, valid bearer token missing og faulty",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Json:api Container Object"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No existing API or API Version found",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Json:api Container Object"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "token": []
+          }
+        ]
+      }
+    },
     "/api/{apiName}/version/{apiVersion}/classification": {
       "get": {
         "tags": [
@@ -1017,7 +1271,7 @@
         ],
         "responses": {
           "200": {
-            "description": "API Version Metadata Content",
+            "description": "API README Content",
             "content": {
               "text/markdown": {}
             }
@@ -1025,7 +1279,7 @@
           "404": {
             "description": "No existing API or API Version found",
             "content": {
-              "text/markdown": {
+              "*/*": {
                 "schema": {
                   "$ref": "#/components/schemas/Json:api Container Object"
                 }
@@ -1039,7 +1293,7 @@
           "API"
         ],
         "summary": "Updated README.md",
-        "operationId": "updateMetadata_1",
+        "operationId": "updateReadme",
         "parameters": [
           {
             "name": "apiName",
@@ -1065,7 +1319,7 @@
         },
         "responses": {
           "200": {
-            "description": "API Version Metadata Updated Successfully",
+            "description": "API README Updated Successfully",
             "content": {
               "text/markdown": {}
             }
@@ -1112,7 +1366,7 @@
           "API"
         ],
         "summary": "Create a API version README.md",
-        "operationId": "createMetadata_1",
+        "operationId": "createReadme",
         "parameters": [
           {
             "name": "apiName",
@@ -1138,7 +1392,7 @@
         },
         "responses": {
           "201": {
-            "description": "API Version Metadata Created Successfully",
+            "description": "API README Created Successfully",
             "content": {
               "text/markdown": {}
             }
@@ -1172,6 +1426,16 @@
                 }
               }
             }
+          },
+          "409": {
+            "description": "README already exists",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Json:api Container Object"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -1185,7 +1449,7 @@
           "API"
         ],
         "summary": "Delete API version README.md",
-        "operationId": "deleteMetadata_1",
+        "operationId": "deleteReadme",
         "parameters": [
           {
             "name": "apiName",
@@ -1202,7 +1466,7 @@
         ],
         "responses": {
           "204": {
-            "description": "API Version Metadata Deleted Successfully",
+            "description": "API README Deleted Successfully",
             "content": {
               "*/*": {
                 "schema": {
@@ -1237,6 +1501,158 @@
             "token": []
           }
         ]
+      }
+    },
+    "/api/{apiName}/version/{apiVersion}/vote": {
+      "get": {
+        "tags": [
+          "API"
+        ],
+        "summary": "Get all votes",
+        "operationId": "allVotes",
+        "parameters": [
+          {
+            "name": "apiName",
+            "in": "path",
+            "description": "URL encoded API name",
+            "required": true
+          },
+          {
+            "name": "apiVersion",
+            "in": "path",
+            "description": "URL encoded API version identifier",
+            "required": true
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "All API Version Votes",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Unable to parse incoming values",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Json:api Container Object"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized, valid bearer token missing og faulty",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Json:api Container Object"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No existing API or API Version found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Json:api Container Object"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "API"
+        ],
+        "summary": "Add a new vote to the API Version",
+        "operationId": "createVote",
+        "parameters": [
+          {
+            "name": "apiName",
+            "in": "path",
+            "description": "URL encoded API name",
+            "required": true
+          },
+          {
+            "name": "apiVersion",
+            "in": "path",
+            "description": "URL encoded API version identifier",
+            "required": true
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "API Version Vote Created Successfully",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Vote"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Unable to parse incoming values",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Json:api Container Object"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized, valid bearer token missing og faulty",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Json:api Container Object"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No existing API or API Version found",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Json:api Container Object"
+                }
+              }
+            }
+          }
+        }
       }
     },
     "/taxonomy": {
@@ -1918,9 +2334,22 @@
             "type": "string",
             "description": "Date created",
             "format": "date-time"
+          },
+          "rating": {
+            "$ref": "#/components/schemas/ApiVersionRatingEntity"
           }
         },
         "description": "Object attributes. This object must be used when doing a POST or PUT"
+      },
+      "ApiVersionRatingEntity": {
+        "type": "object",
+        "properties": {
+          "documentation": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "description": "Rating"
       },
       "API Version": {
         "required": [
@@ -2071,6 +2500,33 @@
           }
         },
         "description": "Object describing the metadata collection for each API version"
+      },
+      "Vote": {
+        "required": [
+          "type"
+        ],
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "description": "Object type definition",
+            "default": "vote:element"
+          },
+          "attributes": {
+            "$ref": "#/components/schemas/Vote Attributes"
+          }
+        },
+        "description": "Entity representing the value of one vote"
+      },
+      "Vote Attributes": {
+        "type": "object",
+        "properties": {
+          "rating": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "description": "Object attributes. This object must be used when doing a POST"
       },
       "Taxonomy Collection": {
         "required": [

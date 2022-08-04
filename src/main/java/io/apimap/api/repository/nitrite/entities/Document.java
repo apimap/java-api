@@ -77,6 +77,7 @@ public class Document implements IDocument {
     @Override
     public void setType(DocumentType type) {
         this.type = type;
+        this.id = IDocument.createId(this.apiId, this.apiVersion, this.type);
     }
 
     @Override

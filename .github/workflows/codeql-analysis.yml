@@ -16,6 +16,7 @@ jobs:
     permissions:
       actions: read
       contents: read
+      packages: read
       security-events: write
     strategy:
       fail-fast: false
@@ -24,6 +25,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v2
         with:
@@ -33,10 +36,11 @@ jobs:
         with:
           java-version: '16'
           distribution: 'zulu'
+          cache: 'gradle'
       - name: Build
         run: ./gradlew build
         env:
-          MULTI_PACKAGES_TOKEN: ${{ secrets.MULTI_PACKAGES_TOKEN }}
-          MULTI_PACKAGES_USER: ${{ secrets.MULTI_PACKAGES_USER }}
+          MULTI_PACKAGES_TOKEN: ${{ env.GITHUB_ACTOR }}
+          MULTI_PACKAGES_USER: ${{ secrets.GITHUB_TOKEN }}
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v2
