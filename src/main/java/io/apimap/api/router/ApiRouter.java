@@ -19,17 +19,9 @@ under the License.
 
 package io.apimap.api.router;
 
-import io.apimap.api.rest.ApiCollectionDataRestEntity;
-import io.apimap.api.rest.ApiDataRestEntity;
-import io.apimap.api.rest.ApiVersionDataRestEntity;
-import io.apimap.api.rest.ClassificationDataRestEntity;
-import io.apimap.api.rest.ClassificationRootRestEntity;
-import io.apimap.api.rest.MetadataDataRestEntity;
+import io.apimap.api.rest.*;
 import io.apimap.api.rest.jsonapi.JsonApiRestResponseWrapper;
-import io.apimap.api.service.ApiClassificationService;
-import io.apimap.api.service.ApiMetadataService;
-import io.apimap.api.service.ApiResourceService;
-import io.apimap.api.service.ClassificationResourceService;
+import io.apimap.api.service.*;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.enums.ParameterIn;
@@ -51,13 +43,8 @@ import org.springframework.web.reactive.function.server.ServerResponse;
 
 import java.util.List;
 
-import static org.springframework.http.MediaType.APPLICATION_JSON;
-import static org.springframework.web.reactive.function.server.RequestPredicates.DELETE;
-import static org.springframework.web.reactive.function.server.RequestPredicates.GET;
-import static org.springframework.web.reactive.function.server.RequestPredicates.POST;
-import static org.springframework.web.reactive.function.server.RequestPredicates.PUT;
-import static org.springframework.web.reactive.function.server.RequestPredicates.accept;
-import static org.springframework.web.reactive.function.server.RequestPredicates.contentType;
+import static org.springframework.http.MediaType.*;
+import static org.springframework.web.reactive.function.server.RequestPredicates.*;
 
 @Configuration
 public class ApiRouter {
@@ -71,6 +58,9 @@ public class ApiRouter {
     public static final String VERSIONED_ITEM_PATH = VERSIONED_PATH + "/{" + API_VERSION_KEY + "}";
     public static final String METADATA_PATH = VERSIONED_ITEM_PATH + "/metadata";
     public static final String CLASSIFICATION_PATH = VERSIONED_ITEM_PATH + "/classification";
+    public static final String README_PATH = VERSIONED_ITEM_PATH + "/readme";
+    public static final String CHANGELOG_PATH = VERSIONED_ITEM_PATH + "/changelog";
+    public static final String VOTE_PATH = VERSIONED_ITEM_PATH + "/vote";
 
     /*
      /api
@@ -81,7 +71,11 @@ public class ApiRouter {
      /api/{apiName}/version
      /api/{apiName}/version/{version}/classification
      /api/{apiName}/version/{version}/metadata
+     /api/{apiName}/version/{version}/readme
+     /api/{apiName}/version/{version}/changelog
+     /api/{apiName}/version/{version}/vote
     * */
+
     @Bean
     @RouterOperations({
             @RouterOperation(
@@ -437,10 +431,220 @@ public class ApiRouter {
                             },
                             security = {@SecurityRequirement(name = "token")}
                     )),
+            @RouterOperation(
+                    path = README_PATH,
+                    method = RequestMethod.POST,
+                    beanClass = ApiDocumentService.class,
+                    beanMethod = "createReadme",
+                    operation = @Operation(
+                            operationId = "createReadme",
+                            summary = "Create a API version README.md",
+                            tags = {"API"},
+                            responses = {
+                                    @ApiResponse(responseCode = "201", description = "API README Created Successfully", content = {@Content(mediaType = "text/markdown")}),
+                                    @ApiResponse(responseCode = "400", description = "Unable to parse incoming values", content = @Content(schema = @Schema(implementation = JsonApiRestResponseWrapper.class))),
+                                    @ApiResponse(responseCode = "401", description = "Unauthorized, valid bearer token missing og faulty", content = @Content(schema = @Schema(implementation = JsonApiRestResponseWrapper.class))),
+                                    @ApiResponse(responseCode = "404", description = "No existing API or API Version found", content = @Content(schema = @Schema(implementation = JsonApiRestResponseWrapper.class))),
+                                    @ApiResponse(responseCode = "409", description = "README already exists", content = @Content(schema = @Schema(implementation = JsonApiRestResponseWrapper.class)))
+                            },
+                            requestBody = @RequestBody(content = @Content(schema = @Schema(implementation = String.class))),
+                            parameters = {
+                                    @Parameter(in = ParameterIn.PATH, name = "apiName", description = "URL encoded API name"),
+                                    @Parameter(in = ParameterIn.PATH, name = "apiVersion", description = "URL encoded API version identifier")
+                            },
+                            security = {@SecurityRequirement(name = "token")}
+                    )),
+            @RouterOperation(
+                    path = README_PATH,
+                    method = RequestMethod.GET,
+                    beanClass = ApiDocumentService.class,
+                    beanMethod = "getReadme",
+                    operation = @Operation(
+                            operationId = "getReadme",
+                            summary = "Get API version README.md",
+                            tags = {"API"},
+                            parameters = {
+                                    @Parameter(in = ParameterIn.PATH, name = "apiName", description = "URL encoded API name"),
+                                    @Parameter(in = ParameterIn.PATH, name = "apiVersion", description = "URL encoded API version identifier")
+                            },
+                            responses = {
+                                    @ApiResponse(responseCode = "200", description = "API README Content", content = {@Content(mediaType = "text/markdown")}),
+                                    @ApiResponse(responseCode = "404", description = "No existing API or API Version found", content = @Content(schema = @Schema(implementation = JsonApiRestResponseWrapper.class)))
+                            }
+            )),
+            @RouterOperation(
+                    path = README_PATH,
+                    method = RequestMethod.DELETE,
+                    beanClass = ApiDocumentService.class,
+                    beanMethod = "deleteReadme",
+                    operation = @Operation(
+                            operationId = "deleteReadme",
+                            summary = "Delete API version README.md",
+                            tags = {"API"},
+                            parameters = {
+                                    @Parameter(in = ParameterIn.PATH, name = "apiName", description = "URL encoded API name"),
+                                    @Parameter(in = ParameterIn.PATH, name = "apiVersion", description = "URL encoded API version identifier")
+                            },
+                            responses = {
+                                    @ApiResponse(responseCode = "204", description = "API README Deleted Successfully"),
+                                    @ApiResponse(responseCode = "401", description = "Unauthorized, valid bearer token missing og faulty", content = @Content(schema = @Schema(implementation = JsonApiRestResponseWrapper.class))),
+                                    @ApiResponse(responseCode = "404", description = "No existing API or API Version found", content = @Content(schema = @Schema(implementation = JsonApiRestResponseWrapper.class)))
+                            },
+                            security = {@SecurityRequirement(name = "token")}
+                    )),
+            @RouterOperation(
+                    path = README_PATH,
+                    method = RequestMethod.PUT,
+                    beanClass = ApiDocumentService.class,
+                    beanMethod = "updateReadme",
+                    operation = @Operation(
+                            operationId = "updateReadme",
+                            summary = "Updated README.md",
+                            tags = {"API"},
+                            requestBody = @RequestBody(content = @Content(schema = @Schema(implementation = String.class))),
+                            parameters = {
+                                    @Parameter(in = ParameterIn.PATH, name = "apiName", description = "URL encoded API name"),
+                                    @Parameter(in = ParameterIn.PATH, name = "apiVersion", description = "URL encoded API version identifier")
+                            },
+                            responses = {
+                                    @ApiResponse(responseCode = "200", description = "API README Updated Successfully", content = {@Content(mediaType = "text/markdown")}),
+                                    @ApiResponse(responseCode = "400", description = "Unable to parse incoming values", content = @Content(schema = @Schema(implementation = JsonApiRestResponseWrapper.class))),
+                                    @ApiResponse(responseCode = "401", description = "Unauthorized, valid bearer token missing og faulty", content = @Content(schema = @Schema(implementation = JsonApiRestResponseWrapper.class))),
+                                    @ApiResponse(responseCode = "404", description = "No existing API or API Version found", content = @Content(schema = @Schema(implementation = JsonApiRestResponseWrapper.class)))
+                            },
+                            security = {@SecurityRequirement(name = "token")}
+                    )),
+            @RouterOperation(
+                    path = CHANGELOG_PATH,
+                    method = RequestMethod.POST,
+                    beanClass = ApiDocumentService.class,
+                    beanMethod = "createChangelog",
+                    operation = @Operation(
+                            operationId = "createChangelog",
+                            summary = "Create a API version CHANGELOG.md",
+                            tags = {"API"},
+                            responses = {
+                                    @ApiResponse(responseCode = "201", description = "API CHANGELIG Created Successfully", content = {@Content(mediaType = "text/markdown")}),
+                                    @ApiResponse(responseCode = "400", description = "Unable to parse incoming values", content = @Content(schema = @Schema(implementation = JsonApiRestResponseWrapper.class))),
+                                    @ApiResponse(responseCode = "401", description = "Unauthorized, valid bearer token missing og faulty", content = @Content(schema = @Schema(implementation = JsonApiRestResponseWrapper.class))),
+                                    @ApiResponse(responseCode = "404", description = "No existing API or API Version found", content = @Content(schema = @Schema(implementation = JsonApiRestResponseWrapper.class))),
+                                    @ApiResponse(responseCode = "409", description = "CHANGELOG already exists", content = @Content(schema = @Schema(implementation = JsonApiRestResponseWrapper.class)))
+                            },
+                            requestBody = @RequestBody(content = @Content(schema = @Schema(implementation = String.class))),
+                            parameters = {
+                                    @Parameter(in = ParameterIn.PATH, name = "apiName", description = "URL encoded API name"),
+                                    @Parameter(in = ParameterIn.PATH, name = "apiVersion", description = "URL encoded API version identifier")
+                            },
+                            security = {@SecurityRequirement(name = "token")}
+                    )),
+            @RouterOperation(
+                    path = CHANGELOG_PATH,
+                    method = RequestMethod.GET,
+                    beanClass = ApiDocumentService.class,
+                    beanMethod = "getChangelog",
+                    operation = @Operation(
+                            operationId = "getChangelog",
+                            summary = "Get API version README.md",
+                            tags = {"API"},
+                            parameters = {
+                                    @Parameter(in = ParameterIn.PATH, name = "apiName", description = "URL encoded API name"),
+                                    @Parameter(in = ParameterIn.PATH, name = "apiVersion", description = "URL encoded API version identifier")
+                            },
+                            responses = {
+                                    @ApiResponse(responseCode = "200", description = "API CHANGELOG Content", content = {@Content(mediaType = "text/markdown")}),
+                                    @ApiResponse(responseCode = "404", description = "No existing API or API Version found", content = @Content(schema = @Schema(implementation = JsonApiRestResponseWrapper.class)))
+                            }
+                    )),
+            @RouterOperation(
+                    path = CHANGELOG_PATH,
+                    method = RequestMethod.DELETE,
+                    beanClass = ApiDocumentService.class,
+                    beanMethod = "deleteChangelog",
+                    operation = @Operation(
+                            operationId = "deleteChangelog",
+                            summary = "Delete API version CHANGELOG.md",
+                            tags = {"API"},
+                            parameters = {
+                                    @Parameter(in = ParameterIn.PATH, name = "apiName", description = "URL encoded API name"),
+                                    @Parameter(in = ParameterIn.PATH, name = "apiVersion", description = "URL encoded API version identifier")
+                            },
+                            responses = {
+                                    @ApiResponse(responseCode = "204", description = "API CHANGELOG Deleted Successfully"),
+                                    @ApiResponse(responseCode = "401", description = "Unauthorized, valid bearer token missing og faulty", content = @Content(schema = @Schema(implementation = JsonApiRestResponseWrapper.class))),
+                                    @ApiResponse(responseCode = "404", description = "No existing API or API Version found", content = @Content(schema = @Schema(implementation = JsonApiRestResponseWrapper.class)))
+                            },
+                            security = {@SecurityRequirement(name = "token")}
+                    )),
+            @RouterOperation(
+                    path = CHANGELOG_PATH,
+                    method = RequestMethod.PUT,
+                    beanClass = ApiDocumentService.class,
+                    beanMethod = "updateChangelog",
+                    operation = @Operation(
+                            operationId = "updateChangelog",
+                            summary = "Updated CHANGELOG.md",
+                            tags = {"API"},
+                            requestBody = @RequestBody(content = @Content(schema = @Schema(implementation = String.class))),
+                            parameters = {
+                                    @Parameter(in = ParameterIn.PATH, name = "apiName", description = "URL encoded API name"),
+                                    @Parameter(in = ParameterIn.PATH, name = "apiVersion", description = "URL encoded API version identifier")
+                            },
+                            responses = {
+                                    @ApiResponse(responseCode = "200", description = "API CHANGELOG Updated Successfully", content = {@Content(mediaType = "text/markdown")}),
+                                    @ApiResponse(responseCode = "400", description = "Unable to parse incoming values", content = @Content(schema = @Schema(implementation = JsonApiRestResponseWrapper.class))),
+                                    @ApiResponse(responseCode = "401", description = "Unauthorized, valid bearer token missing og faulty", content = @Content(schema = @Schema(implementation = JsonApiRestResponseWrapper.class))),
+                                    @ApiResponse(responseCode = "404", description = "No existing API or API Version found", content = @Content(schema = @Schema(implementation = JsonApiRestResponseWrapper.class)))
+                            },
+                            security = {@SecurityRequirement(name = "token")}
+                    )),
+            @RouterOperation(
+                    path = VOTE_PATH,
+                    method = RequestMethod.POST,
+                    beanClass = ApiVoteService.class,
+                    beanMethod = "createVote",
+                    operation = @Operation(
+                            operationId = "createVote",
+                            summary = "Add a new vote to the API Version",
+                            tags = {"API"},
+                            requestBody = @RequestBody(content = @Content(schema = @Schema(implementation = String.class))),
+                            parameters = {
+                                    @Parameter(in = ParameterIn.PATH, name = "apiName", description = "URL encoded API name"),
+                                    @Parameter(in = ParameterIn.PATH, name = "apiVersion", description = "URL encoded API version identifier")
+                            },
+                            responses = {
+                                    @ApiResponse(responseCode = "200", description = "API Version Vote Created Successfully",  content = @Content(array = @ArraySchema(schema = @Schema(implementation = VoteDataRestEntity.class)))),
+                                    @ApiResponse(responseCode = "400", description = "Unable to parse incoming values", content = @Content(schema = @Schema(implementation = JsonApiRestResponseWrapper.class))),
+                                    @ApiResponse(responseCode = "401", description = "Unauthorized, valid bearer token missing og faulty", content = @Content(schema = @Schema(implementation = JsonApiRestResponseWrapper.class))),
+                                    @ApiResponse(responseCode = "404", description = "No existing API or API Version found", content = @Content(schema = @Schema(implementation = JsonApiRestResponseWrapper.class)))
+                            }
+                    )),
+            @RouterOperation(
+                    path = VOTE_PATH,
+                    method = RequestMethod.GET,
+                    beanClass = ApiVoteService.class,
+                    beanMethod = "allVotes",
+                    operation = @Operation(
+                            operationId = "allVotes",
+                            summary = "Get all votes",
+                            tags = {"API"},
+                            requestBody = @RequestBody(content = @Content(schema = @Schema(implementation = String.class))),
+                            parameters = {
+                                    @Parameter(in = ParameterIn.PATH, name = "apiName", description = "URL encoded API name"),
+                                    @Parameter(in = ParameterIn.PATH, name = "apiVersion", description = "URL encoded API version identifier")
+                            },
+                            responses = {
+                                    @ApiResponse(responseCode = "200", description = "All API Version Votes", content = @Content(array = @ArraySchema(schema = @Schema(implementation = VoteRootRestEntity.class)))),
+                                    @ApiResponse(responseCode = "400", description = "Unable to parse incoming values", content = @Content(schema = @Schema(implementation = JsonApiRestResponseWrapper.class))),
+                                    @ApiResponse(responseCode = "401", description = "Unauthorized, valid bearer token missing og faulty", content = @Content(schema = @Schema(implementation = JsonApiRestResponseWrapper.class))),
+                                    @ApiResponse(responseCode = "404", description = "No existing API or API Version found", content = @Content(schema = @Schema(implementation = JsonApiRestResponseWrapper.class)))
+                            }
+                    ))
     })
     RouterFunction<ServerResponse> apiRoutes(ApiResourceService apiService,
                                              ApiMetadataService metadataService,
-                                             ApiClassificationService classificationService) {
+                                             ApiClassificationService classificationService,
+                                             ApiVoteService apiVoteService,
+                                             ApiDocumentService apiDocumentService) {
         return RouterFunctions
                 .route(GET(ROOT_PATH).and(accept(APPLICATION_JSON)), apiService::allApis)
                 .andRoute(GET(ROOT_PATH).and(accept(new MediaType("application", "zip"))), apiService::allApisZip)
@@ -459,6 +663,18 @@ public class ApiRouter {
                 .andRoute(POST(METADATA_PATH).and(contentType(APPLICATION_JSON)), metadataService::createMetadata)
                 .andRoute(DELETE(METADATA_PATH), metadataService::deleteMetadata)
                 .andRoute(PUT(METADATA_PATH).and(contentType(APPLICATION_JSON)), metadataService::updateMetadata)
-                .andRoute(GET(METADATA_PATH).and(accept(APPLICATION_JSON)), metadataService::getMetadata);
+                .andRoute(GET(METADATA_PATH).and(accept(APPLICATION_JSON)), metadataService::getMetadata)
+                .andRoute(POST(README_PATH).and(contentType(TEXT_MARKDOWN)), apiDocumentService::createReadme)
+                .andRoute(GET(README_PATH).and(accept(TEXT_MARKDOWN)), apiDocumentService::getReadme)
+                .andRoute(GET(README_PATH).and(accept(TEXT_HTML)), apiDocumentService::getFormattedReadme)
+                .andRoute(DELETE(README_PATH), apiDocumentService::deleteReadme)
+                .andRoute(PUT(README_PATH).and(contentType(TEXT_MARKDOWN)), apiDocumentService::updateReadme)
+                .andRoute(POST(CHANGELOG_PATH).and(contentType(TEXT_MARKDOWN)), apiDocumentService::createChangelog)
+                .andRoute(GET(CHANGELOG_PATH).and(accept(TEXT_MARKDOWN)), apiDocumentService::getChangelog)
+                .andRoute(GET(CHANGELOG_PATH).and(accept(TEXT_HTML)), apiDocumentService::getFormattedChangelog)
+                .andRoute(DELETE(CHANGELOG_PATH), apiDocumentService::deleteChangelog)
+                .andRoute(PUT(CHANGELOG_PATH).and(contentType(MediaType.TEXT_MARKDOWN)), apiDocumentService::updateChangelog)
+                .andRoute(POST(VOTE_PATH).and(contentType(APPLICATION_JSON)), apiVoteService::createVote)
+                .andRoute(GET(VOTE_PATH).and(accept(APPLICATION_JSON)), apiVoteService::allVotes);
     }
 }

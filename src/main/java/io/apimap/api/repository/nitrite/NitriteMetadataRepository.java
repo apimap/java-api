@@ -20,6 +20,8 @@ under the License.
 package io.apimap.api.repository.nitrite;
 
 import io.apimap.api.configuration.NitriteConfiguration;
+import io.apimap.api.repository.interfaces.IDocument;
+import io.apimap.api.repository.nitrite.entities.Document;
 import io.apimap.api.repository.nitrite.entities.Metadata;
 import io.apimap.api.repository.repository.IMetadataRepository;
 import io.apimap.api.service.query.Filter;
@@ -32,20 +34,14 @@ import org.springframework.stereotype.Repository;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 import static java.util.stream.Collectors.toCollection;
-import static org.dizitart.no2.objects.filters.ObjectFilters.and;
-import static org.dizitart.no2.objects.filters.ObjectFilters.eq;
-import static org.dizitart.no2.objects.filters.ObjectFilters.or;
+import static org.dizitart.no2.objects.filters.ObjectFilters.*;
 
 @Repository
 @ConditionalOnBean(io.apimap.api.configuration.NitriteConfiguration.class)
-public class NitriteMetadataRepository extends NitriteRepository implements IMetadataRepository<Metadata, ObjectFilter> {
+public class NitriteMetadataRepository extends NitriteRepository implements IMetadataRepository<Metadata, Document, ObjectFilter> {
     public NitriteMetadataRepository(NitriteConfiguration nitriteConfiguration) {
         super(nitriteConfiguration, "metadata");
     }
@@ -139,5 +135,54 @@ public class NitriteMetadataRepository extends NitriteRepository implements IMet
         }
 
         return Mono.just(objectFilters);
+    }
+
+    /* TIMetadataDocument */
+
+    @Override
+    public Mono<Document> getDocument(final String apiId, final String apiVersion, final IDocument.DocumentType documentType) {
+        final ObjectRepository<Document> repository = database.getRepository(Document.class);
+        return Mono.justOrEmpty(repository.find(
+                and(
+                        eq("apiId", apiId),
+                        eq("apiVersion", apiVersion),
+                        eq("type", documentType)
+                )
+        ).firstOrDefault());
+    }
+
+    @Override
+    public Mono<Boolean> deleteDocument(final String apiId, final String apiVersion, final IDocument.DocumentType documentType) {
+        final ObjectRepository<Document> repository = database.getRepository(Document.class);
+        return Mono.just(repository.remove(
+                and(
+                        eq("apiId", apiId),
+                        eq("apiVersion", apiVersion),
+                        eq("type", documentType)
+                )
+        ).getAffectedCount() > 0);
+    }
+
+    @Override
+    public Mono<Document> updateDocument(final String apiId, final String apiVersion, final Document entity) {
+        entity.setApiId(apiId);
+        entity.setApiVersion(apiVersion);
+
+        final ObjectRepository<Document> repository = database.getRepository(Document.class);
+        return Mono.justOrEmpty(repository.getById(repository.update(
+                eq("id", entity.getId()),
+                entity,
+                true
+        ).iterator().next()));
+    }
+
+    @Override
+    public Mono<Document> addDocument(final String apiId, final String apiVersion, final Document entity) {
+        entity.setCreated(new Date());
+        entity.setApiId(apiId);
+        entity.setApiVersion(apiVersion);
+
+        final ObjectRepository<Document> repository = database.getRepository(Document.class);
+        return Mono.justOrEmpty(repository.getById(repository.insert(entity).iterator().next()));
     }
 }

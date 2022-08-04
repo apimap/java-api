@@ -37,9 +37,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Objects;
 
-import static org.dizitart.no2.objects.filters.ObjectFilters.and;
-import static org.dizitart.no2.objects.filters.ObjectFilters.eq;
-import static org.dizitart.no2.objects.filters.ObjectFilters.or;
+import static org.dizitart.no2.objects.filters.ObjectFilters.*;
 
 @Repository
 @ConditionalOnBean(io.apimap.api.configuration.NitriteConfiguration.class)

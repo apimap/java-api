@@ -19,13 +19,15 @@ under the License.
 
 package io.apimap.api.repository.mongodb;
 
+import io.apimap.api.repository.interfaces.IDocument;
+import io.apimap.api.repository.mongodb.documents.Document;
 import io.apimap.api.repository.mongodb.documents.Metadata;
 import io.apimap.api.repository.repository.IMetadataRepository;
 import io.apimap.api.service.query.Filter;
 import io.apimap.api.service.query.QueryFilter;
-import org.bson.Document;
 import org.bson.conversions.Bson;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
+import org.springframework.data.mongodb.core.FindAndModifyOptions;
 import org.springframework.data.mongodb.core.ReactiveMongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
@@ -36,11 +38,7 @@ import org.springframework.web.server.ResponseStatusException;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 import static com.mongodb.client.model.Filters.and;
 import static com.mongodb.client.model.Filters.or;
@@ -49,7 +47,7 @@ import static java.util.stream.Collectors.toCollection;
 
 @Repository
 @ConditionalOnBean(io.apimap.api.configuration.MongoConfiguration.class)
-public class MongoDBMetadataRepository extends MongoDBRepository implements IMetadataRepository<Metadata, Bson> {
+public class MongoDBMetadataRepository extends MongoDBRepository implements IMetadataRepository<Metadata, Document, Bson> {
 
     public MongoDBMetadataRepository(ReactiveMongoTemplate template) {
         super(template);
@@ -65,7 +63,7 @@ public class MongoDBMetadataRepository extends MongoDBRepository implements IMet
                         .filter(Objects::nonNull)
                         .filter(list -> list.size() > 0)
                         .flatMapMany(filterList -> {
-                            return collection.find(and(filterList), Document.class);
+                            return collection.find(and(filterList), org.bson.Document.class);
                         })
                 )
                 .flatMap(e -> Mono.just(new Metadata(
@@ -112,6 +110,9 @@ public class MongoDBMetadataRepository extends MongoDBRepository implements IMet
     public Mono<Metadata> update(final Metadata entity) {
         return get(entity.getApiId(), entity.getApiVersion())
                 .flatMap(metadata -> {
+                    final FindAndModifyOptions options = new FindAndModifyOptions();
+                    options.returnNew(true);
+
                     final Update update = new Update();
                     update.set("description", entity.getDescription());
                     update.set("name", entity.getName());
@@ -125,7 +126,7 @@ public class MongoDBMetadataRepository extends MongoDBRepository implements IMet
                     update.set("documentation", entity.getDocumentation());
 
                     final Query query = new Query().addCriteria(Criteria.where("id").is(metadata.getId()));
-                    return template.findAndModify(query, update, Metadata.class);
+                    return template.findAndModify(query, update, options, Metadata.class);
                 });
     }
 
@@ -185,5 +186,57 @@ public class MongoDBMetadataRepository extends MongoDBRepository implements IMet
         }
 
         return Mono.just(objectFilters);
+    }
+
+    /* TIMetadataDocument */
+    @Override
+    public Mono<Document> getDocument(String apiId, String apiVersion, IDocument.DocumentType documentType){
+        final Query query = new Query().addCriteria(Criteria.where("apiId").is(apiId));
+        query.addCriteria(Criteria.where("apiVersion").is(apiVersion));
+        query.addCriteria(Criteria.where("type").is(documentType));
+
+        return template.findOne(query, Document.class);
+    }
+
+    @Override
+    public Mono<Boolean> deleteDocument(String apiId, String apiVersion, IDocument.DocumentType documentType){
+        final Query query = new Query().addCriteria(Criteria.where("apiId").is(apiId));
+        query.addCriteria(Criteria.where("apiVersion").is(apiVersion));
+        query.addCriteria(Criteria.where("type").is(documentType));
+
+        return template
+                .remove(query, Document.class)
+                .flatMap(result -> Mono.just((result.getDeletedCount() > 0)));
+    }
+
+    @Override
+    public Mono<Document> addDocument(String apiId, String apiVersion, Document entity){
+        entity.setCreated(new Date());
+        entity.setApiId(apiId);
+        entity.setApiVersion(apiVersion);
+
+        return getDocument(entity.getApiId(), entity.getApiVersion(), entity.getType())
+                .doOnNext(document -> {
+                    throw new ResponseStatusException(HttpStatus.CONFLICT, "Metadata Document of type '" + entity.getType() + "' already exists");
+                })
+                .switchIfEmpty(Mono.defer(() -> template.insert(entity)));
+    }
+
+    @Override
+    public Mono<Document> updateDocument(String apiId, String apiVersion, Document entity){
+        return getDocument(apiId, apiVersion, entity.getType())
+                .flatMap(document -> {
+                    final Update update = new Update();
+                    update.set("body", entity.getBody());
+
+                    final FindAndModifyOptions options = new FindAndModifyOptions();
+                    options.returnNew(true);
+
+                    final Query query = new Query().addCriteria(Criteria.where("apiId").is(apiId));
+                    query.addCriteria(Criteria.where("apiVersion").is(apiVersion));
+                    query.addCriteria(Criteria.where("type").is(entity.getType()));
+
+                    return template.findAndModify(query, update, options, Document.class);
+                });
     }
 }

@@ -41,6 +41,10 @@ class GlobalExceptionHandler implements WebExceptionHandler {
             return Mono.error(new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "Database not available"));
         }
 
+        if (ex instanceof ResponseStatusException) {
+            return Mono.error(new ResponseStatusException(((ResponseStatusException) ex).getStatus(), ((ResponseStatusException) ex).getReason() != null ? ((ResponseStatusException) ex).getReason() : "Unknown error"));
+        }
+
         return Mono.error(new ResponseStatusException(HttpStatus.BAD_REQUEST, "Unknown error"));
     }
 }

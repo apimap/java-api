@@ -19,7 +19,7 @@ under the License.
 
 package io.apimap.api.repository.nitrite.entities;
 
-import io.apimap.api.repository.entities.IApi;
+import io.apimap.api.repository.interfaces.IApi;
 import org.dizitart.no2.IndexType;
 import org.dizitart.no2.objects.Id;
 import org.dizitart.no2.objects.Index;

@@ -17,44 +17,30 @@ specific language governing permissions and limitations
 under the License.
  */
 
-package io.apimap.api.repository.entities;
+package io.apimap.api.repository;
 
 import io.apimap.api.repository.generic.ClassificationCollection;
 import io.apimap.api.repository.generic.StatisticsCollection;
 import io.apimap.api.repository.generic.StatisticsValue;
-import io.apimap.api.rest.ApiCollectionRootRestEntity;
-import io.apimap.api.rest.ApiDataRestEntity;
-import io.apimap.api.rest.ApiVersionCollectionRootRestEntity;
-import io.apimap.api.rest.ApiVersionDataRestEntity;
-import io.apimap.api.rest.ClassificationDataRestEntity;
-import io.apimap.api.rest.ClassificationRootRestEntity;
-import io.apimap.api.rest.ClassificationTreeRootRestEntity;
-import io.apimap.api.rest.MetadataDataRestEntity;
-import io.apimap.api.rest.StatisticsCollectionCollectionRootRestEntity;
-import io.apimap.api.rest.StatisticsCollectionDataRestEntity;
-import io.apimap.api.rest.StatisticsCollectionRootRestEntity;
-import io.apimap.api.rest.StatisticsDataRestEntity;
-import io.apimap.api.rest.TaxonomyCollectionDataRestEntity;
-import io.apimap.api.rest.TaxonomyCollectionRootRestEntity;
-import io.apimap.api.rest.TaxonomyDataRestEntity;
-import io.apimap.api.rest.TaxonomyTreeRootRestEntity;
-import io.apimap.api.rest.TaxonomyVersionCollectionDataRestEntity;
-import io.apimap.api.rest.TaxonomyVersionCollectionRootRestEntity;
+import io.apimap.api.repository.interfaces.*;
+import io.apimap.api.rest.*;
 import io.apimap.api.rest.jsonapi.JsonApiRestRequestWrapper;
 import io.apimap.api.rest.jsonapi.JsonApiRestResponseWrapper;
 import io.apimap.api.service.context.ApiContext;
 import io.apimap.api.service.context.TaxonomyContext;
 import io.apimap.api.utils.URIUtil;
+import org.springframework.core.io.ByteArrayResource;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
 import reactor.core.publisher.Mono;
+import reactor.util.function.Tuple2;
 
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public interface IRESTEntityMapper {
+public interface IRESTConverter {
     String SUPPORTED_METADATA_VERSION = "1";
 
     default void validateApiDataRestEntity(ApiDataRestEntity object) {
@@ -106,6 +92,9 @@ public interface IRESTEntityMapper {
     /* Metadata */
     Mono<IMetadata> decodeMetadata(ApiContext apiContext, JsonApiRestRequestWrapper<MetadataDataRestEntity> object);
 
+    /* Metadata Document */
+    Mono<IDocument> decodeMetadataDocument(ApiContext apiContext, ByteArrayResource resource, IDocument.DocumentType type);
+
     /* Taxonomy */
     Mono<ITaxonomyCollection> decodeTaxonomyCollection(JsonApiRestRequestWrapper<TaxonomyCollectionDataRestEntity> object);
 
@@ -115,6 +104,9 @@ public interface IRESTEntityMapper {
 
     /* ApiClassification */
     Mono<IApiClassification> decodeClassification(ApiContext apiContext, ClassificationDataRestEntity object);
+
+    /* Vote */
+    Mono<IVote> decodeVote(ApiContext apiContext, JsonApiRestRequestWrapper<VoteDataRestEntity> object);
 
     /*
         To REST
@@ -126,12 +118,15 @@ public interface IRESTEntityMapper {
     Mono<JsonApiRestResponseWrapper<ApiCollectionRootRestEntity>> encodeApis(URI uri, List<reactor.util.function.Tuple3<IApi, IMetadata, IApiVersion>> apis);
 
     /* API Version */
-    Mono<JsonApiRestResponseWrapper<ApiVersionDataRestEntity>> encodeApiVersion(URI uri, IApiVersion version);
+    Mono<JsonApiRestResponseWrapper<ApiVersionDataRestEntity>> encodeApiVersion(URI uri, IApiVersion version, Integer rating);
 
-    Mono<JsonApiRestResponseWrapper<ApiVersionCollectionRootRestEntity>> encodeApiVersions(URI uri, List<IApiVersion> versions);
+    Mono<JsonApiRestResponseWrapper<ApiVersionCollectionRootRestEntity>> encodeApiVersions(URI uri, List<reactor.util.function.Tuple2<IApiVersion, Integer>> versions);
 
     /* Metadata */
     Mono<JsonApiRestResponseWrapper<MetadataDataRestEntity>> encodeMetadata(URI uri, IMetadata object);
+
+    /* Metadata Document */
+    Mono<Object> encodeMetadataDocument(URI uri, IDocument object);
 
     /* API Classification */
     Mono<JsonApiRestResponseWrapper<ClassificationRootRestEntity>> encodeApiClassifications(URI uri, List<IApiClassification> classifications);
@@ -142,7 +137,7 @@ public interface IRESTEntityMapper {
     /* Taxonomy */
     Mono<JsonApiRestResponseWrapper<TaxonomyCollectionDataRestEntity>> encodeTaxonomyCollection(URI uri, ITaxonomyCollection collection);
 
-    Mono<JsonApiRestResponseWrapper<TaxonomyCollectionRootRestEntity>> encodeTaxonomyCollections(URI uri, List<ITaxonomyCollection> collections);
+    Mono<JsonApiRestResponseWrapper<TaxonomyCollectionRootRestEntity>> encodeTaxonomyCollections(URI uri, List<Tuple2<ITaxonomyCollection, ITaxonomyCollectionVersion>> collections);
 
     Mono<JsonApiRestResponseWrapper<TaxonomyVersionCollectionDataRestEntity>> encodeTaxonomyCollectionVersion(URI uri, ITaxonomyCollectionVersion version);
 
@@ -151,4 +146,8 @@ public interface IRESTEntityMapper {
     Mono<JsonApiRestResponseWrapper<TaxonomyDataRestEntity>> encodeTaxonomyCollectionVersionURN(URI uri, ITaxonomyCollectionVersionURN urn);
 
     Mono<JsonApiRestResponseWrapper<TaxonomyTreeRootRestEntity>> encodeTaxonomyCollectionVersionURNs(URI uri, List<ITaxonomyCollectionVersionURN> urns);
+
+    /* Vote */
+    Mono<JsonApiRestResponseWrapper<VoteDataRestEntity>> encodeVote(URI uri, IVote vote);
+    Mono<JsonApiRestResponseWrapper<VoteRootRestEntity>> encodeVotes(URI uri, List<IVote> votes);
 }

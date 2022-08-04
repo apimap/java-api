@@ -17,7 +17,7 @@ specific language governing permissions and limitations
 under the License.
  */
 
-package io.apimap.api.repository.entities;
+package io.apimap.api.repository.interfaces;
 
 import io.apimap.api.rest.MetadataDataRestEntity;
 import io.apimap.api.service.query.Filter;

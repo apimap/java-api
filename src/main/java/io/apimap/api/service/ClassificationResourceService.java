@@ -20,11 +20,11 @@ under the License.
 package io.apimap.api.service;
 
 import io.apimap.api.configuration.ApimapConfiguration;
+import io.apimap.api.repository.IRESTConverter;
 import io.apimap.api.repository.SearchRepository;
-import io.apimap.api.repository.entities.IApi;
-import io.apimap.api.repository.entities.IApiClassification;
-import io.apimap.api.repository.entities.IMetadata;
-import io.apimap.api.repository.entities.IRESTEntityMapper;
+import io.apimap.api.repository.interfaces.IApi;
+import io.apimap.api.repository.interfaces.IApiClassification;
+import io.apimap.api.repository.interfaces.IMetadata;
 import io.apimap.api.repository.repository.IApiRepository;
 import io.apimap.api.repository.repository.IClassificationRepository;
 import io.apimap.api.repository.repository.IMetadataRepository;
@@ -48,7 +48,7 @@ import java.util.List;
 @Service
 public class ClassificationResourceService {
 
-    final protected IRESTEntityMapper entityMapper;
+    final protected IRESTConverter entityMapper;
     final protected IClassificationRepository classificationRepository;
     final protected IApiRepository apiRepository;
     final protected ApimapConfiguration apimapConfiguration;
@@ -62,7 +62,7 @@ public class ClassificationResourceService {
                                          final ITaxonomyRepository taxonomyRepository,
                                          final ApimapConfiguration apimapConfiguration,
                                          final SearchRepository searchRepository,
-                                         IRESTEntityMapper entityMapper) {
+                                         IRESTConverter entityMapper) {
         this.classificationRepository = classificationRepository;
         this.apiRepository = apiRepository;
         this.metadataRepository = metadataRepository;

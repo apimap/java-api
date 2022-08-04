@@ -23,14 +23,10 @@ import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import io.apimap.api.configuration.ApimapConfiguration;
-import io.apimap.api.repository.entities.IApi;
-import io.apimap.api.repository.entities.IApiVersion;
-import io.apimap.api.repository.entities.IMetadata;
-import io.apimap.api.repository.entities.IRESTEntityMapper;
-import io.apimap.api.repository.repository.IApiRepository;
-import io.apimap.api.repository.repository.IClassificationRepository;
-import io.apimap.api.repository.repository.IMetadataRepository;
-import io.apimap.api.repository.repository.ITaxonomyRepository;
+import io.apimap.api.repository.IRESTConverter;
+import io.apimap.api.repository.interfaces.IApi;
+import io.apimap.api.repository.interfaces.IApiVersion;
+import io.apimap.api.repository.repository.*;
 import io.apimap.api.rest.ApiCollectionRootRestEntity;
 import io.apimap.api.rest.ApiDataRestEntity;
 import io.apimap.api.rest.ApiVersionCollectionRootRestEntity;
@@ -71,11 +67,12 @@ import java.util.zip.ZipOutputStream;
 public class ApiResourceService {
     private static final Logger LOGGER = LoggerFactory.getLogger(ApiResourceService.class);
 
-    final protected IRESTEntityMapper entityMapper;
+    final protected IRESTConverter entityMapper;
     final protected IApiRepository apiRepository;
     final protected IMetadataRepository metadataRepository;
     final protected ITaxonomyRepository taxonomyRepository;
     final protected IClassificationRepository classificationRepository;
+    final protected IVoteRepository voteRepository;
 
     final protected ApimapConfiguration apimapConfiguration;
 
@@ -84,13 +81,15 @@ public class ApiResourceService {
                               final ITaxonomyRepository taxonomyRepository,
                               final IClassificationRepository classificationRepository,
                               final ApimapConfiguration apimapConfiguration,
-                              final IRESTEntityMapper entityMapper) {
+                              final IRESTConverter entityMapper,
+                              final IVoteRepository voteRepository) {
         this.apiRepository = apiRepository;
         this.taxonomyRepository = taxonomyRepository;
         this.metadataRepository = metadataRepository;
         this.classificationRepository = classificationRepository;
         this.apimapConfiguration = apimapConfiguration;
         this.entityMapper = entityMapper;
+        this.voteRepository = voteRepository;
     }
 
     @NotNull
@@ -294,14 +293,18 @@ public class ApiResourceService {
 
         return apiRepository
                 .get(context.getApiName())
-                .flatMap(api -> apiRepository.getApiVersion(((IApi) api).getId(), context.getApiVersion()))
-                .flatMap(version -> entityMapper.encodeApiVersion(uri, (IApiVersion) version))
+                .flatMap(api -> apiRepository.getApiVersion(((IApi) api).getId(), context.getApiVersion())
+                        .flatMap(version -> voteRepository.rating(((IApi) api).getId(), context.getApiVersion())
+                            .flatMap(rating -> Mono.just(Tuples.of((IApiVersion) version, rating)))))
+                .flatMap(tuple -> entityMapper.encodeApiVersion(uri, (IApiVersion)((Tuple2) tuple).getT1(), (Integer)((Tuple2) tuple).getT2()))
                 .flatMap(version -> ResponseBuilder
                         .builder(startTime, apimapConfiguration)
                         .withResourceURI(uri)
                         .withBody((JsonApiRestResponseWrapper<?>) version)
                         .addRelatedRef(JsonApiRestResponseWrapper.METADATA_COLLECTION, URIUtil.apiCollectionFromURI(uri).append(context.getApiName()).append("version").append(context.getApiVersion()).append("metadata").uriValue())
                         .addRelatedRef(JsonApiRestResponseWrapper.CLASSIFICATION_COLLECTION, URIUtil.apiCollectionFromURI(uri).append(context.getApiName()).append("version").append(context.getApiVersion()).append("classification").uriValue())
+                        .addRelatedRef(JsonApiRestResponseWrapper.README_ELEMENT, URIUtil.apiCollectionFromURI(uri).append(context.getApiName()).append("version").append(context.getApiVersion()).append("readme").uriValue())
+                        .addRelatedRef(JsonApiRestResponseWrapper.CHANGELOG_ELEMENT, URIUtil.apiCollectionFromURI(uri).append(context.getApiName()).append("version").append(context.getApiVersion()).append("changelog").uriValue())
                         .okResource()
                 )
                 .switchIfEmpty(Mono.defer(() -> ServerResponse.notFound().build()));
@@ -316,9 +319,11 @@ public class ApiResourceService {
 
         return apiRepository
                 .get(context.getApiName())
-                .flatMapMany(api -> apiRepository.allApiVersions(((IApi) api).getId()))
+                .flatMapMany(api -> apiRepository.allApiVersions(((IApi) api).getId())
+                        .flatMap(version -> voteRepository.rating(((IApi) api).getId(), ((IApiVersion) version).getVersion())
+                                .flatMap(rating -> Mono.justOrEmpty(Tuples.of((IApiVersion) version, rating)))))
                 .collectList()
-                .flatMap(collection -> entityMapper.encodeApiVersions(uri, (List<IApiVersion>) collection))
+                .flatMap(collection -> entityMapper.encodeApiVersions(uri, (List<Tuple2<IApiVersion, Integer>>) collection))
                 .flatMap(collection -> ResponseBuilder
                         .builder(startTime, apimapConfiguration)
                         .withResourceURI(uri)
@@ -344,7 +349,7 @@ public class ApiResourceService {
                 .zipWith(apiRepository.get(context.getApiName()), (version, api) -> entityMapper.decodeApiVersion((IApi) api, (JsonApiRestRequestWrapper<ApiVersionDataRestEntity>) version))
                 .flatMap(tuple -> tuple)
                 .flatMap(version -> apiRepository.addApiVersion((IApiVersion) version))
-                .flatMap(version -> entityMapper.encodeApiVersion(uri, (IApiVersion) version))
+                .flatMap(version -> entityMapper.encodeApiVersion(uri, (IApiVersion) version, Integer.valueOf(0)))
                 .flatMap(version -> ResponseBuilder
                         .builder(startTime, apimapConfiguration)
                         .withResourceURI(uri)

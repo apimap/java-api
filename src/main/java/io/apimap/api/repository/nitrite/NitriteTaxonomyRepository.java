@@ -20,7 +20,7 @@ under the License.
 package io.apimap.api.repository.nitrite;
 
 import io.apimap.api.configuration.NitriteConfiguration;
-import io.apimap.api.repository.entities.ITaxonomyCollectionVersionURN;
+import io.apimap.api.repository.interfaces.ITaxonomyCollectionVersionURN;
 import io.apimap.api.repository.nitrite.entities.TaxonomyCollection;
 import io.apimap.api.repository.nitrite.entities.TaxonomyCollectionVersion;
 import io.apimap.api.repository.nitrite.entities.TaxonomyCollectionVersionURN;
@@ -40,9 +40,7 @@ import reactor.core.publisher.Mono;
 
 import java.util.Date;
 
-import static org.dizitart.no2.objects.filters.ObjectFilters.and;
-import static org.dizitart.no2.objects.filters.ObjectFilters.eq;
-import static org.dizitart.no2.objects.filters.ObjectFilters.regex;
+import static org.dizitart.no2.objects.filters.ObjectFilters.*;
 
 @Repository
 @ConditionalOnBean(io.apimap.api.configuration.NitriteConfiguration.class)
@@ -100,7 +98,7 @@ public class NitriteTaxonomyRepository extends NitriteRepository implements ITax
     /* TCV */
 
     @Override
-    public Flux<TaxonomyCollectionVersion> allTaxonomyCollectionVersion(String nid) {
+    public Flux<TaxonomyCollectionVersion> allTaxonomyCollectionVersions(String nid) {
         ObjectRepository<TaxonomyCollectionVersion> repository = database.getRepository(TaxonomyCollectionVersion.class);
         Cursor<TaxonomyCollectionVersion> cursor = repository.find(eq("nid", nid));
         return Flux.fromIterable(cursor.toList());
@@ -184,15 +182,23 @@ public class NitriteTaxonomyRepository extends NitriteRepository implements ITax
         ObjectRepository<TaxonomyCollectionVersionURN> repository = database.getRepository(TaxonomyCollectionVersionURN.class);
 
         if ("latest".equals(taxonomyVersion)) {
-            return Mono.justOrEmpty(repository.find(
-                    and(
-                        eq("id", ITaxonomyCollectionVersionURN.createId(urn, taxonomyVersion)),
-                        eq("type", type.getValue())
-                    ),
-                    FindOptions.sort("created", SortOrder.Ascending)
-            ).firstOrDefault());
+            if (!type.getValue().equals(TaxonomyDataRestEntity.ReferenceType.UNKNOWN.getValue())) {
+                return Mono.justOrEmpty(repository.find(
+                        and(
+                                eq("id", ITaxonomyCollectionVersionURN.createId(urn, taxonomyVersion)),
+                                eq("type", type.getValue())
+                        ),
+                        FindOptions.sort("created", SortOrder.Ascending)
+                ).firstOrDefault());
+            }else{
+                return Mono.justOrEmpty(repository.find(
+                        and(
+                                eq("id", ITaxonomyCollectionVersionURN.createId(urn, taxonomyVersion))
+                        ),
+                        FindOptions.sort("created", SortOrder.Ascending)
+                ).firstOrDefault());
+            }
         }
-
 
         if (!type.getValue().equals(TaxonomyDataRestEntity.ReferenceType.UNKNOWN.getValue())) {
             return Mono.justOrEmpty(repository.find(and(

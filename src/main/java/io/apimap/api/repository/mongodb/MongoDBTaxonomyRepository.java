@@ -26,6 +26,7 @@ import io.apimap.api.repository.repository.ITaxonomyRepository;
 import io.apimap.api.rest.TaxonomyDataRestEntity;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.mongodb.core.FindAndModifyOptions;
 import org.springframework.data.mongodb.core.ReactiveMongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
@@ -90,7 +91,7 @@ public class MongoDBTaxonomyRepository extends MongoDBRepository implements ITax
     /* TCV */
 
     @Override
-    public Flux<TaxonomyCollectionVersion> allTaxonomyCollectionVersion(String nid) {
+    public Flux<TaxonomyCollectionVersion> allTaxonomyCollectionVersions(String nid) {
         final Query query = new Query().addCriteria(Criteria.where("nid").is(nid)).with(Sort.by(Sort.Direction.ASC, "created"));
         return template.find(query, TaxonomyCollectionVersion.class);
     }
@@ -145,7 +146,7 @@ public class MongoDBTaxonomyRepository extends MongoDBRepository implements ITax
     @Override
     public Flux<TaxonomyCollectionVersionURN> allTaxonomyCollectionVersionURNCollection(String nid, String version) {
         if ("latest".equals(version)) {
-            return allTaxonomyCollectionVersion(nid)
+            return allTaxonomyCollectionVersions(nid)
                     .take(1, true)
                     .flatMap(latest -> {
                         final Query query = new Query().addCriteria(Criteria.where("nid").is(nid));
@@ -225,11 +226,15 @@ public class MongoDBTaxonomyRepository extends MongoDBRepository implements ITax
         return getTaxonomyCollectionVersionURN(urn, taxonomyVersion, TaxonomyDataRestEntity.ReferenceType.UNKNOWN)
                 .filter(Objects::nonNull)
                 .flatMap(versionURN -> {
-                    Update update = new Update();
+                    final FindAndModifyOptions options = new FindAndModifyOptions();
+                    options.returnNew(true);
+
+                    final Update update = new Update();
                     update.set("title", entity.getTitle());
                     update.set("description", entity.getDescription());
                     update.set("type", entity.getType());
-                    return template.findAndModify(query, update, TaxonomyCollectionVersionURN.class);
+
+                    return template.findAndModify(query, update, options, TaxonomyCollectionVersionURN.class);
                 });
 
     }

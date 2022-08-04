@@ -17,42 +17,29 @@ specific language governing permissions and limitations
 under the License.
  */
 
-package io.apimap.api.repository.entities;
+package io.apimap.api.repository.interfaces;
 
 import java.util.Date;
-import java.util.UUID;
 
-public interface IApi {
+public interface IApiVersion {
 
-    static String createToken() {
-        return UUID.randomUUID().toString();
+    static String createId(String apiId, String apiVersion) {
+        return apiId + "#" + apiVersion;
     }
 
-    static String createId() {
-        return UUID.randomUUID().toString();
-    }
+    String getVersion();
 
-    String getName();
-
-    void setName(String name);
-
-    String getCodeRepositoryUrl();
-
-    void setCodeRepositoryUrl(String codeRepositoryUrl);
-
-    String getId();
-
-    void setId(String id);
+    void setVersion(String version);
 
     Date getCreated();
 
     void setCreated(Date created);
 
-    String getToken();
+    String getApiId();
 
-    void setToken(String token);
+    void setApiId(String apiId);
 
-    void generateToken();
+    String getId();
 
-    void clearToken();
+    void setId(String id);
 }

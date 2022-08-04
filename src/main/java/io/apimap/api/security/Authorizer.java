@@ -20,8 +20,8 @@ under the License.
 package io.apimap.api.security;
 
 import io.apimap.api.configuration.AccessConfiguration;
-import io.apimap.api.repository.entities.IApi;
-import io.apimap.api.repository.entities.ITaxonomyCollection;
+import io.apimap.api.repository.interfaces.IApi;
+import io.apimap.api.repository.interfaces.ITaxonomyCollection;
 import io.apimap.api.repository.repository.IApiRepository;
 import io.apimap.api.repository.repository.ITaxonomyRepository;
 import io.apimap.api.service.context.ApiContext;

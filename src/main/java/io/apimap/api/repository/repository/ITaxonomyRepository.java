@@ -19,9 +19,9 @@ under the License.
 
 package io.apimap.api.repository.repository;
 
-import io.apimap.api.repository.entities.ITaxonomyCollection;
-import io.apimap.api.repository.entities.ITaxonomyCollectionVersion;
-import io.apimap.api.repository.entities.ITaxonomyCollectionVersionURN;
+import io.apimap.api.repository.interfaces.ITaxonomyCollection;
+import io.apimap.api.repository.interfaces.ITaxonomyCollectionVersion;
+import io.apimap.api.repository.interfaces.ITaxonomyCollectionVersionURN;
 import io.apimap.api.rest.TaxonomyDataRestEntity;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -47,7 +47,7 @@ public interface ITaxonomyRepository<TITaxonomyCollection extends ITaxonomyColle
 
     Mono<Boolean> deleteTaxonomyCollectionVersion(String nid, String version);
 
-    Flux<TITaxonomyCollectionVersion> allTaxonomyCollectionVersion(String nid);
+    Flux<TITaxonomyCollectionVersion> allTaxonomyCollectionVersions(String nid);
 
     Mono<TITaxonomyCollectionVersion> addTaxonomyCollectionVersion(TITaxonomyCollectionVersion entity);
 

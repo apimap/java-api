@@ -2,8 +2,8 @@ package io.apimap.api.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.apimap.api.configuration.ApimapConfiguration;
-import io.apimap.api.repository.entities.IApi;
-import io.apimap.api.repository.entities.IRESTEntityMapper;
+import io.apimap.api.repository.interfaces.IApi;
+import io.apimap.api.repository.IRESTConverter;
 import io.apimap.api.repository.generic.StatisticsValue;
 import io.apimap.api.repository.repository.IApiRepository;
 import io.apimap.api.repository.repository.IMetadataRepository;
@@ -46,7 +46,7 @@ class StatisticsServiceTest {
     ApimapConfiguration mockApimapConfiguration;
 
     @Mock
-    IRESTEntityMapper irestEntityMapper;
+    IRESTConverter irestConverter;
 
     @Mock
     ServerRequest serverRequest;
@@ -76,11 +76,11 @@ class StatisticsServiceTest {
                 mockTaxonomyRepository,
                 mockMetadataRepository,
                 mockApimapConfiguration,
-                irestEntityMapper);
+                irestConverter);
 
         Mockito.when(serverRequest.uri()).thenReturn(URI.create("api-catalog-entry"));
 
-        Mockito.when(irestEntityMapper.encodeStatistics(any(), any())).thenAnswer(invocation -> {
+        Mockito.when(irestConverter.encodeStatistics(any(), any())).thenAnswer(invocation -> {
             ArrayList<StatisticsDataRestEntity> items = (ArrayList<StatisticsDataRestEntity>) invocation.getArgument(1, List.class)
                     .stream()
                     .map(e -> new StatisticsDataRestEntity(

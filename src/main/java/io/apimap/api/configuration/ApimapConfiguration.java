@@ -34,6 +34,12 @@ public class ApimapConfiguration {
     protected Enabled hostIdentifier;
     protected Enabled openapi;
     protected String version;
+    protected Limits limits;
+
+    @Override
+    protected Object clone() throws CloneNotSupportedException {
+        return super.clone();
+    }
 
     public String getVersion() {
         return version;
@@ -70,6 +76,14 @@ public class ApimapConfiguration {
         this.metadata = metadata;
     }
 
+    public Limits getLimits() {
+        return limits;
+    }
+
+    public void setLimits(Limits limits) {
+        this.limits = limits;
+    }
+
     private static class Enabled {
         boolean enabled;
 
@@ -79,6 +93,26 @@ public class ApimapConfiguration {
 
         public void setEnabled(boolean enabled) {
             this.enabled = enabled;
+        }
+    }
+
+    public static class Limits {
+        // Maximum byte size of README and Changelog body
+        protected long maximumMetadataDocumentSize;
+
+        public Limits() {
+        }
+
+        public Limits(long maximumMetadataDocumentSize) {
+            this.maximumMetadataDocumentSize = maximumMetadataDocumentSize;
+        }
+
+        public long getMaximumMetadataDocumentSize() {
+            return maximumMetadataDocumentSize;
+        }
+
+        public void setMaximumMetadataDocumentSize(long maximumMetadataDocumentSize) {
+            this.maximumMetadataDocumentSize = maximumMetadataDocumentSize;
         }
     }
 }

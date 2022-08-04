@@ -21,15 +21,13 @@ package io.apimap.api.repository.mongodb;
 
 import io.apimap.api.repository.mongodb.documents.Api;
 import io.apimap.api.repository.mongodb.documents.ApiVersion;
-import io.apimap.api.repository.mongodb.documents.Metadata;
 import io.apimap.api.repository.repository.IApiRepository;
 import io.apimap.api.service.query.Filter;
-import io.apimap.api.service.query.QueryFilter;
 import org.bson.Document;
 import org.bson.conversions.Bson;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
-import org.springframework.data.annotation.Id;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.mongodb.core.FindAndModifyOptions;
 import org.springframework.data.mongodb.core.ReactiveMongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
@@ -119,10 +117,14 @@ public class MongoDBApiRepository extends MongoDBRepository implements IApiRepos
                     return Mono.justOrEmpty(api);
                 })
                 .flatMap(api -> {
-                    Update update = new Update();
+                    final FindAndModifyOptions options = new FindAndModifyOptions();
+                    options.returnNew(true);
+
+                    final Update update = new Update();
                     update.set("name", api.getName());
                     update.set("codeRepositoryUrl", api.getCodeRepositoryUrl());
-                    return template.findAndModify(query, update, Api.class);
+
+                    return template.findAndModify(query, update, options, Api.class);
                 })
                 .flatMap(api -> {
                     api.clearToken();

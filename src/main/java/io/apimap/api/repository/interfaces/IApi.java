@@ -17,43 +17,28 @@ specific language governing permissions and limitations
 under the License.
  */
 
-package io.apimap.api.repository.entities;
+package io.apimap.api.repository.interfaces;
 
 import java.util.Date;
+import java.util.UUID;
 
-public interface ITaxonomyCollectionVersionURN {
+public interface IApi {
 
-    static String createId(String urn, String version) {
-        return urn + "#" + version;
+    static String createToken() {
+        return UUID.randomUUID().toString();
     }
 
-    String getUrl();
+    static String createId() {
+        return UUID.randomUUID().toString();
+    }
 
-    void setUrl(String url);
+    String getName();
 
-    String getTitle();
+    void setName(String name);
 
-    void setTitle(String title);
+    String getCodeRepositoryUrl();
 
-    String getDescription();
-
-    void setDescription(String description);
-
-    String getNid();
-
-    void setNid(String nid);
-
-    String getVersion();
-
-    void setVersion(String version);
-
-    String getUrn();
-
-    void setUrn(String urn);
-
-    String getType();
-
-    void setType(String type);
+    void setCodeRepositoryUrl(String codeRepositoryUrl);
 
     String getId();
 
@@ -62,4 +47,12 @@ public interface ITaxonomyCollectionVersionURN {
     Date getCreated();
 
     void setCreated(Date created);
+
+    String getToken();
+
+    void setToken(String token);
+
+    void generateToken();
+
+    void clearToken();
 }

@@ -31,6 +31,8 @@ db.createCollection("metadata")
 db.createCollection("taxonomyCollection")
 db.createCollection("taxonomyCollectionVersion")
 db.createCollection("taxonomyCollectionVersionURN")
+db.createCollection("document")
+db.createCollection("vote")
 ```
 
 ### 2.1) Create indexes
@@ -104,7 +106,9 @@ db.createRole(
             { resource: { db: "apimap", collection: "metadata" }, actions: [ "insert", "remove", "update", "find" ] },
             { resource: { db: "apimap", collection: "taxonomyCollection" }, actions: [ "insert", "remove", "update", "find" ] },
             { resource: { db: "apimap", collection: "taxonomyCollectionVersion" }, actions: [ "insert", "remove", "update", "find" ] },
-            { resource: { db: "apimap", collection: "taxonomyCollectionVersionURN" }, actions: [ "insert", "remove", "update", "find" ] }
+            { resource: { db: "apimap", collection: "taxonomyCollectionVersionURN" }, actions: [ "insert", "remove", "update", "find" ] },
+            { resource: { db: "apimap", collection: "vote" }, actions: [ "insert", "remove", "update", "find" ] },
+            { resource: { db: "apimap", collection: "document" }, actions: [ "insert", "remove", "update", "find" ] }
         ],
         roles: []
     }

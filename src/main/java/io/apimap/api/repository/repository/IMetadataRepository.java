@@ -19,7 +19,8 @@ under the License.
 
 package io.apimap.api.repository.repository;
 
-import io.apimap.api.repository.entities.IMetadata;
+import io.apimap.api.repository.interfaces.IDocument;
+import io.apimap.api.repository.interfaces.IMetadata;
 import io.apimap.api.service.query.Filter;
 import io.apimap.api.service.query.QueryFilter;
 import reactor.core.publisher.Flux;
@@ -28,8 +29,9 @@ import reactor.core.publisher.Mono;
 import java.util.List;
 
 public interface IMetadataRepository<TIMetadata extends IMetadata,
+                                     TIMetadataDocument extends IDocument,
                                      OB> {
-    /* M */
+    /* TIMetadata */
     Flux<TIMetadata> allByFilters(Mono<List<OB>> filters);
 
     Flux<TIMetadata> all();
@@ -48,4 +50,13 @@ public interface IMetadataRepository<TIMetadata extends IMetadata,
 
     /* OB */
     Mono<List<OB>> queryFilters(List<Filter> filters, QueryFilter queryFilter);
+
+    /* TIMetadataDocument */
+    Mono<TIMetadataDocument> getDocument(String apiId, String apiVersion, IDocument.DocumentType documentType);
+
+    Mono<Boolean> deleteDocument(String apiId, String apiVersion, IDocument.DocumentType documentType);
+
+    Mono<TIMetadataDocument> addDocument(String apiId, String apiVersion,TIMetadataDocument entity);
+
+    Mono<TIMetadataDocument> updateDocument(String apiId, String apiVersion,TIMetadataDocument entity);
 }

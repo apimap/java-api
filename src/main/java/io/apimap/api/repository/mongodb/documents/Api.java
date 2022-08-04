@@ -19,7 +19,7 @@ under the License.
 
 package io.apimap.api.repository.mongodb.documents;
 
-import io.apimap.api.repository.entities.IApi;
+import io.apimap.api.repository.interfaces.IApi;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
