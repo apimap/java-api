@@ -1,6 +1,5 @@
 plugins {
     id 'java'
-    id 'jacoco'
     id 'org.springframework.boot' version "2.6.8"
     id 'maven-publish'
     id "com.github.johnrengelman.processes" version "0.5.0"
@@ -48,17 +47,6 @@ dependencies {
 
     testImplementation 'org.springframework.boot:spring-boot-starter-test:2.6.8'
     testImplementation 'org.junit.jupiter:junit-jupiter:5.8.2'
-}
-
-jacoco {
-    toolVersion = "0.8.6"
-}
-
-jacocoTestReport {
-    reports {
-        xml.enabled true
-        html.enabled false
-    }
 }
 
 bootRun {
