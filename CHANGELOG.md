@@ -5,6 +5,8 @@ Changelog
 - Added automated versioning to the project
 - Added prometheus
 - Added issue and PR request templates
+- Added rating support
+- Added readme and changelog uploads
 
 ### 28.06.2022
 - Updated api collection name query parsing
