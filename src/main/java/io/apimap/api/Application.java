@@ -34,7 +34,6 @@ import org.springframework.boot.autoconfigure.mongo.MongoReactiveAutoConfigurati
         info = @Info(
                 title = "Apimap.io",
                 description = "Apimap.io is a centralized registry of our APIs. This API is built to comply with the JSON:API standard version 1.1 (https://jsonapi.org/)",
-                version = "1.4.2",
                 license = @License(name = "Apache 2.0", url = "https://www.apache.org/licenses/LICENSE-2.0")
         ),
         tags = {
