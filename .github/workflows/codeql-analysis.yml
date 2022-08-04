@@ -40,7 +40,7 @@ jobs:
       - name: Build
         run: ./gradlew build
         env:
-          MULTI_PACKAGES_TOKEN: ${{ env.GITHUB_ACTOR }}
-          MULTI_PACKAGES_USER: ${{ secrets.GITHUB_TOKEN }}
+          MULTI_PACKAGES_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          MULTI_PACKAGES_USER: ${{ env.GITHUB_ACTOR }}
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v2
