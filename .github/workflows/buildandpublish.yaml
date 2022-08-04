@@ -26,6 +26,8 @@ jobs:
         run: gradle release --no-daemon -Dorg.ajoberstar.grgit.auth.username='$GITHUB_ACTOR' -Dorg.ajoberstar.grgit.auth.password='${{ secrets.GITHUB_TOKEN }}'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          MULTI_PACKAGES_TOKEN: ${{ secrets.MULTI_PACKAGES_TOKEN }}
+          MULTI_PACKAGES_USER: ${{ secrets.MULTI_PACKAGES_USER }}
       - name: Read release tag
         id: read_tag
         run: echo "::set-output name=release_tag::$(git tag --points-at HEAD 'v[0-9]*' | head -n1)"
