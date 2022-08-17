@@ -5,6 +5,7 @@ Changelog
 - Fixed fetch bug
 - Updated example data to match portal and developer portal
 - Updated spring boot versions
+- Fixed name bug when trying to delete an API using mongodb backend
 
 ### 04.08.2022
 - Added automated versioning to the project

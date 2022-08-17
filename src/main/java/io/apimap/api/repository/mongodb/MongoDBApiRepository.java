@@ -148,7 +148,7 @@ public class MongoDBApiRepository extends MongoDBRepository implements IApiRepos
 
     @Override
     public Mono<Boolean> delete(final String apiName) {
-        final Query query = new Query().addCriteria(Criteria.where("apiName").is(apiName));
+        final Query query = new Query().addCriteria(Criteria.where("name").is(apiName));
         return template
                 .remove(query, Api.class)
                 .flatMap(result -> Mono.just((result.getDeletedCount() > 0)));
