@@ -28,6 +28,7 @@ import io.apimap.api.service.query.Filter;
 import org.bson.Document;
 import org.bson.conversions.Bson;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
+import org.springframework.data.mongodb.core.FindAndModifyOptions;
 import org.springframework.data.mongodb.core.ReactiveMongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
@@ -121,10 +122,14 @@ public class MongoDBClassificationRepository extends MongoDBRepository implement
                     return Mono.just(classification);
                 })
                 .flatMap(classification -> {
-                    Update update = new Update();
+                    final FindAndModifyOptions options = new FindAndModifyOptions();
+                    options.returnNew(true);
+                    options.upsert(true);
+
+                    final Update update = new Update();
                     update.set("taxonomyVersion", entity.getTaxonomyVersion());
                     update.set("taxonomyNid", entity.getTaxonomyNid());
-                    return template.findAndModify(query, update, ApiClassification.class);
+                    return template.findAndModify(query, update, options, ApiClassification.class);
                 });
     }
 

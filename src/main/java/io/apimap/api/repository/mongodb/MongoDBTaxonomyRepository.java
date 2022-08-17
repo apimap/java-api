@@ -228,6 +228,7 @@ public class MongoDBTaxonomyRepository extends MongoDBRepository implements ITax
                 .flatMap(versionURN -> {
                     final FindAndModifyOptions options = new FindAndModifyOptions();
                     options.returnNew(true);
+                    options.upsert(true);
 
                     final Update update = new Update();
                     update.set("title", entity.getTitle());

@@ -7,6 +7,7 @@ Changelog
 - Updated spring boot versions
 - Fixed name bug when trying to delete an API using mongodb backend
 - Fixed null check bug
+- Fixed upsert mongodb default values changed
 
 ### 04.08.2022
 - Added automated versioning to the project

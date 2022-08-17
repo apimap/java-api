@@ -121,6 +121,7 @@ public class MongoDBApiRepository extends MongoDBRepository implements IApiRepos
                 .flatMap(api -> {
                     final FindAndModifyOptions options = new FindAndModifyOptions();
                     options.returnNew(true);
+                    options.upsert(true);
 
                     final Update update = new Update();
                     update.set("name", api.getName());

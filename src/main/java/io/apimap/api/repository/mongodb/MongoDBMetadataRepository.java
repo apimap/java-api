@@ -112,6 +112,7 @@ public class MongoDBMetadataRepository extends MongoDBRepository implements IMet
                 .flatMap(metadata -> {
                     final FindAndModifyOptions options = new FindAndModifyOptions();
                     options.returnNew(true);
+                    options.upsert(true);
 
                     final Update update = new Update();
                     update.set("description", entity.getDescription());
@@ -231,6 +232,7 @@ public class MongoDBMetadataRepository extends MongoDBRepository implements IMet
 
                     final FindAndModifyOptions options = new FindAndModifyOptions();
                     options.returnNew(true);
+                    options.upsert(true);
 
                     final Query query = new Query().addCriteria(Criteria.where("apiId").is(apiId));
                     query.addCriteria(Criteria.where("apiVersion").is(apiVersion));
