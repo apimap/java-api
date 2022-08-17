@@ -17,7 +17,7 @@ specific language governing permissions and limitations
 under the License.
  */
 
-package io.apimap.api.configuration;
+ package io.apimap.api.configuration;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

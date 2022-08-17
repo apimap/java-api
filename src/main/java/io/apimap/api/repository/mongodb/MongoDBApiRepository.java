@@ -70,10 +70,12 @@ public class MongoDBApiRepository extends MongoDBRepository implements IApiRepos
         return template
                 .getCollection("api")
                 .flatMapMany(collection -> filters
-                        .filter(Objects::nonNull)
-                        .filter(list -> list.size() > 0)
                         .flatMapMany(filterList -> {
-                            return collection.find(and(filterList), Document.class);
+                            if(filterList.size() < 1){
+                                return collection.find(Document.class);
+                            }else{
+                                return collection.find(and(filterList), Document.class);
+                            }
                         })
                         .switchIfEmpty(collection.find(Document.class))
                 )

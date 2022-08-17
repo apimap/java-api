@@ -1,6 +1,11 @@
 Changelog
 ===
 
+### 17.08.2022
+- Fixed fetch bug
+- Updated example data to match portal and developer portal
+- Updated spring boot versions
+
 ### 04.08.2022
 - Added automated versioning to the project
 - Added prometheus

@@ -68,12 +68,14 @@ public class NitriteApiRepository extends NitriteRepository implements IApiRepos
         ObjectRepository<Api> repository = database.getRepository(Api.class);
 
         return filters
-                .filter(Objects::nonNull)
-                .filter(list -> list.size() > 0)
                 .flatMapMany(filterList -> {
-                    ObjectFilter objectFilter = and(filterList.toArray(ObjectFilter[]::new));
-                    Cursor<Api> cursor = repository.find(objectFilter);
-                    return Flux.fromIterable(cursor.toList());
+                    if(filterList.size() < 1){
+                        return all();
+                    }else{
+                        ObjectFilter objectFilter = and(filterList.toArray(ObjectFilter[]::new));
+                        Cursor<Api> cursor = repository.find(objectFilter);
+                        return Flux.fromIterable(cursor.toList());
+                    }
                 });
     }
 
