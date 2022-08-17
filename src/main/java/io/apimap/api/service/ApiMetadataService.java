@@ -91,7 +91,6 @@ public class ApiMetadataService {
 
         return request
                 .bodyToMono(ParameterizedTypeReference.forType(type))
-                .filter(Objects::nonNull)
                 .flatMap(metadata -> entityMapper.decodeMetadata(context, (JsonApiRestRequestWrapper<MetadataDataRestEntity>) metadata))
                 .flatMap(metadata -> apiRepository
                         .get(context.getApiName())
