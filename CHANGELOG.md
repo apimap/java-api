@@ -3,6 +3,7 @@ Changelog
 
 ### 18.08.2022
 - Fixed bug when using CosmosDB in azure. Update or insert not working when using mongodb 3.6
+- Fixed PUT also works when no document exists before
 
 ### 17.08.2022
 - Fixed fetch bug
