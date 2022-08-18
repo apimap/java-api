@@ -2,7 +2,7 @@ Changelog
 ===
 
 ### 18.08.2022
-- Fixed empty document returned when using CosmosDB in azure
+- Fixed bug when using CosmosDB in azure. Update or insert not working when using mongodb 3.6
 
 ### 17.08.2022
 - Fixed fetch bug
