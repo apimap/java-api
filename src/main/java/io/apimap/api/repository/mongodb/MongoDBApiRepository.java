@@ -127,7 +127,8 @@ public class MongoDBApiRepository extends MongoDBRepository implements IApiRepos
                     update.set("name", api.getName());
                     update.set("codeRepositoryUrl", api.getCodeRepositoryUrl());
 
-                    return template.findAndModify(query, update, options, Api.class);
+                    return template.findAndModify(query, update, options, Api.class)
+                            .switchIfEmpty(add(entity));
                 })
                 .flatMap(api -> {
                     api.clearToken();

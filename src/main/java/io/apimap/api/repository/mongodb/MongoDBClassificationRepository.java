@@ -129,7 +129,8 @@ public class MongoDBClassificationRepository extends MongoDBRepository implement
                     final Update update = new Update();
                     update.set("taxonomyVersion", entity.getTaxonomyVersion());
                     update.set("taxonomyNid", entity.getTaxonomyNid());
-                    return template.findAndModify(query, update, options, ApiClassification.class);
+                    return template.findAndModify(query, update, options, ApiClassification.class)
+                            .switchIfEmpty(add(entity));
                 });
     }
 

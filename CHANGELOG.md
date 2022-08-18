@@ -1,6 +1,9 @@
 Changelog
 ===
 
+### 18.08.2022
+- Fixed empty document returned when using CosmosDB in azure
+
 ### 17.08.2022
 - Fixed fetch bug
 - Updated example data to match portal and developer portal

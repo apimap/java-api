@@ -235,7 +235,8 @@ public class MongoDBTaxonomyRepository extends MongoDBRepository implements ITax
                     update.set("description", entity.getDescription());
                     update.set("type", entity.getType());
 
-                    return template.findAndModify(query, update, options, TaxonomyCollectionVersionURN.class);
+                    return template.findAndModify(query, update, options, TaxonomyCollectionVersionURN.class)
+                            .switchIfEmpty(addTaxonomyCollectionVersionURN(entity));
                 });
 
     }
