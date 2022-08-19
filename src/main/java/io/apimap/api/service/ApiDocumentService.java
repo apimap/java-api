@@ -217,10 +217,11 @@ public class ApiDocumentService {
                         throw new ResponseStatusException(HttpStatus.PAYLOAD_TOO_LARGE, "Maximum upload size is " + apimapConfiguration.getLimits().getMaximumMetadataDocumentSize() + " byte(s)");
                     }
                 })
-                .flatMap(document -> entityMapper.decodeMetadataDocument(context, document, type))
-                .flatMap(document -> apiRepository
+                .flatMap(byteArrayResource -> apiRepository
                         .get(context.getApiName())
-                        .flatMap(api -> metadataRepository.updateDocument(((IApi) api).getId(), context.getApiVersion(), document))
+                        .flatMap(api -> entityMapper.decodeMetadataDocument(context.withApiId(((IApi) api).getId()), byteArrayResource, type)
+                                .flatMap(document -> metadataRepository.updateDocument(((IApi) api).getId(), context.getApiVersion(), document))
+                        )
                 )
                 .flatMap(document -> entityMapper.encodeMetadataDocument(uri, (IDocument) document))
                 .flatMap(content -> ResponseBuilder

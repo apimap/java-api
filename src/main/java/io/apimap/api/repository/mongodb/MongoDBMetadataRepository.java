@@ -127,9 +127,9 @@ public class MongoDBMetadataRepository extends MongoDBRepository implements IMet
                     update.set("documentation", entity.getDocumentation());
 
                     final Query query = new Query().addCriteria(Criteria.where("id").is(metadata.getId()));
-                    return template.findAndModify(query, update, options, Metadata.class)
-                            .switchIfEmpty(add(entity));
-                });
+                    return template.findAndModify(query, update, options, Metadata.class);
+                })
+                .switchIfEmpty(add(entity));
     }
 
     @Override
@@ -239,8 +239,8 @@ public class MongoDBMetadataRepository extends MongoDBRepository implements IMet
                     query.addCriteria(Criteria.where("apiVersion").is(apiVersion));
                     query.addCriteria(Criteria.where("type").is(entity.getType()));
 
-                    return template.findAndModify(query, update, options, Document.class)
-                            .switchIfEmpty(addDocument(apiId, apiVersion, entity));
-                });
+                    return template.findAndModify(query, update, options, Document.class);
+                })
+                .switchIfEmpty(addDocument(apiId, apiVersion, entity));
     }
 }
