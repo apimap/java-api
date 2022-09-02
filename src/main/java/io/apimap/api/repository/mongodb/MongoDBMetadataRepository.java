@@ -19,6 +19,7 @@ under the License.
 
 package io.apimap.api.repository.mongodb;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import io.apimap.api.repository.interfaces.IDocument;
 import io.apimap.api.repository.mongodb.documents.Document;
 import io.apimap.api.repository.mongodb.documents.Metadata;
@@ -38,7 +39,11 @@ import org.springframework.web.server.ResponseStatusException;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import java.util.*;
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Objects;
 
 import static com.mongodb.client.model.Filters.and;
 import static com.mongodb.client.model.Filters.or;
@@ -49,6 +54,7 @@ import static java.util.stream.Collectors.toCollection;
 @ConditionalOnBean(io.apimap.api.configuration.MongoConfiguration.class)
 public class MongoDBMetadataRepository extends MongoDBRepository implements IMetadataRepository<Metadata, Document, Bson> {
 
+    @SuppressFBWarnings
     public MongoDBMetadataRepository(ReactiveMongoTemplate template) {
         super(template);
     }
@@ -80,7 +86,7 @@ public class MongoDBMetadataRepository extends MongoDBRepository implements IMet
                         e.get("interfaceSpecification", String.class),
                         e.get("systemIdentifier", String.class),
                         e.get("documentation", List.class),
-                        e.get("created", Date.class)
+                        e.get("created", Instant.class)
                 )));
     }
 
@@ -97,7 +103,7 @@ public class MongoDBMetadataRepository extends MongoDBRepository implements IMet
 
     @Override
     public Mono<Metadata> add(final Metadata entity) {
-        entity.setCreated(new Date());
+        entity.setCreated(Instant.now());
 
         return get(entity.getApiId(), entity.getApiVersion())
                 .doOnNext(api -> {
@@ -213,7 +219,7 @@ public class MongoDBMetadataRepository extends MongoDBRepository implements IMet
 
     @Override
     public Mono<Document> addDocument(String apiId, String apiVersion, Document entity){
-        entity.setCreated(new Date());
+        entity.setCreated(Instant.now());
         entity.setApiId(apiId);
         entity.setApiVersion(apiVersion);
 

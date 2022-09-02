@@ -23,14 +23,14 @@ import io.apimap.api.repository.interfaces.ITaxonomyCollectionVersion;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
-import java.util.Date;
+import java.time.Instant;
 
 @Document
 public class TaxonomyCollectionVersion implements ITaxonomyCollectionVersion {
 
     protected String nid;
     protected String version;
-    protected Date created;
+    protected Instant created;
 
     @Id
     private String id;
@@ -38,9 +38,9 @@ public class TaxonomyCollectionVersion implements ITaxonomyCollectionVersion {
     public TaxonomyCollectionVersion() {
     }
 
-    public TaxonomyCollectionVersion(String nid,
-                                     String version,
-                                     Date created) {
+    public TaxonomyCollectionVersion(final String nid,
+                                     final String version,
+                                     final Instant created) {
         this.version = version;
         this.nid = nid;
         this.created = created;
@@ -68,12 +68,12 @@ public class TaxonomyCollectionVersion implements ITaxonomyCollectionVersion {
     }
 
     @Override
-    public Date getCreated() {
+    public Instant getCreated() {
         return this.created;
     }
 
     @Override
-    public void setCreated(Date created) {
+    public void setCreated(Instant created) {
         this.created = created;
     }
 

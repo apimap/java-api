@@ -22,7 +22,7 @@ package io.apimap.api.service.query;
 import org.bson.conversions.Bson;
 import org.dizitart.no2.objects.ObjectFilter;
 
-public abstract class Filter {
+public abstract class Filter implements Cloneable {
     private final String value;
 
     public Filter(String value) {

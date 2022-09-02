@@ -1,6 +1,6 @@
 package io.apimap.api.repository.interfaces;
 
-import java.util.Date;
+import java.time.Instant;
 
 public interface IDocument {
     enum DocumentType {
@@ -28,9 +28,9 @@ public interface IDocument {
 
     public void setBody(String body);
 
-    public Date getCreated();
+    public Instant getCreated();
 
-    public void setCreated(Date created);
+    public void setCreated(Instant created);
 
     public DocumentType getType();
 

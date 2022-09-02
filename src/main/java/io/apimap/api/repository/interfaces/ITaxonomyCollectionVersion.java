@@ -19,7 +19,7 @@ under the License.
 
 package io.apimap.api.repository.interfaces;
 
-import java.util.Date;
+import java.time.Instant;
 
 public interface ITaxonomyCollectionVersion {
 
@@ -35,9 +35,9 @@ public interface ITaxonomyCollectionVersion {
 
     void setVersion(String version);
 
-    Date getCreated();
+    Instant getCreated();
 
-    void setCreated(Date created);
+    void setCreated(Instant created);
 
     String getId();
 

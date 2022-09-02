@@ -19,7 +19,7 @@ under the License.
 
 package io.apimap.api.repository.interfaces;
 
-import java.util.Date;
+import java.time.Instant;
 import java.util.UUID;
 
 public interface IApi {
@@ -44,9 +44,9 @@ public interface IApi {
 
     void setId(String id);
 
-    Date getCreated();
+    Instant getCreated();
 
-    void setCreated(Date created);
+    void setCreated(Instant created);
 
     String getToken();
 

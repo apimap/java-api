@@ -22,7 +22,7 @@ package io.apimap.api.repository.nitrite.entities;
 import io.apimap.api.repository.interfaces.IApiClassification;
 import org.dizitart.no2.objects.Id;
 
-import java.util.Date;
+import java.time.Instant;
 
 public class ApiClassification implements IApiClassification {
     protected String apiId;
@@ -30,7 +30,7 @@ public class ApiClassification implements IApiClassification {
     protected String taxonomyVersion;
     protected String taxonomyUrn;
     protected String taxonomyNid;
-    protected Date created;
+    protected Instant created;
 
     @Id
     private String id;
@@ -43,7 +43,7 @@ public class ApiClassification implements IApiClassification {
                              String taxonomyVersion,
                              String taxonomyUrn,
                              String taxonomyNid,
-                             Date created) {
+                             Instant created) {
         this.apiId = apiId;
         this.taxonomyUrn = taxonomyUrn;
         this.taxonomyVersion = taxonomyVersion;
@@ -104,12 +104,12 @@ public class ApiClassification implements IApiClassification {
     }
 
     @Override
-    public Date getCreated() {
+    public Instant getCreated() {
         return created;
     }
 
     @Override
-    public void setCreated(Date created) {
+    public void setCreated(Instant created) {
         this.created = created;
     }
 

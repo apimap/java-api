@@ -19,6 +19,7 @@ under the License.
 
 package io.apimap.api.repository.nitrite;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import io.apimap.api.configuration.NitriteConfiguration;
 import org.dizitart.no2.Nitrite;
 import org.slf4j.Logger;
@@ -29,9 +30,11 @@ public class NitriteRepository {
 
     protected final NitriteConfiguration nitriteConfiguration;
 
-    protected Nitrite database;
+    protected final Nitrite database;
 
-    public NitriteRepository(NitriteConfiguration nitriteConfiguration, String identifier) {
+    @SuppressFBWarnings
+    public NitriteRepository(final NitriteConfiguration nitriteConfiguration,
+                             final String identifier) {
         this.nitriteConfiguration = nitriteConfiguration;
 
         String dbFileName = null;

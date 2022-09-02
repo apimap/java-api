@@ -25,7 +25,7 @@ import org.dizitart.no2.objects.Id;
 import org.dizitart.no2.objects.Index;
 import org.dizitart.no2.objects.Indices;
 
-import java.util.Date;
+import java.time.Instant;
 
 @Indices({
         @Index(value = "nid", type = IndexType.NonUnique)
@@ -36,25 +36,25 @@ public class TaxonomyCollectionVersion implements ITaxonomyCollectionVersion {
 
     protected String nid;
     protected String version;
-    protected Date created;
+    protected Instant created;
 
     public TaxonomyCollectionVersion() {
     }
 
-    public TaxonomyCollectionVersion(String nid,
-                                     String version,
-                                     Date created) {
+    public TaxonomyCollectionVersion(final String nid,
+                                     final String version,
+                                     final Instant created) {
         this.version = version;
         this.nid = nid;
         this.created = created;
         this.id = ITaxonomyCollectionVersion.createId(nid, version);
     }
 
-    public TaxonomyCollectionVersion(String nid,
-                                     String version) {
+    public TaxonomyCollectionVersion(final String nid,
+                                     final String version) {
         this.version = version;
         this.nid = nid;
-        this.created = new Date();
+        this.created = Instant.now();
         this.id = ITaxonomyCollectionVersion.createId(nid, version);
     }
 
@@ -89,12 +89,12 @@ public class TaxonomyCollectionVersion implements ITaxonomyCollectionVersion {
     }
 
     @Override
-    public Date getCreated() {
+    public Instant getCreated() {
         return created;
     }
 
     @Override
-    public void setCreated(Date created) {
+    public void setCreated(Instant created) {
         this.created = created;
     }
 

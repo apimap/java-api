@@ -21,21 +21,21 @@ package io.apimap.api.utils;
 
 import org.jetbrains.annotations.NotNull;
 
+import java.io.UnsupportedEncodingException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 
 public class URIUtil {
-    protected java.net.URI uri;
+    protected URI uri;
 
-    public URIUtil() {
-    }
-
-    public URIUtil(java.net.URI uri) {
+    public URIUtil(URI uri) {
         this.uri = uri;
     }
 
-    public static URIUtil rootLevelFromURI(java.net.URI uri) {
-        java.net.URI rootURI;
+    public static URIUtil rootLevelFromURI(final URI uri) {
+        URI rootURI;
 
         try {
             if (uri.getPort() <= 0) {
@@ -44,18 +44,18 @@ public class URIUtil {
                 rootURI = new java.net.URI(uri.getScheme() + "://" + uri.getHost() + ":" + uri.getPort() + "/");
             }
         } catch (Exception e) {
-            return new URIUtil();
+            return new URIUtil(null);
         }
 
         return new URIUtil(rootURI);
     }
 
-    public static URIUtil fromURI(java.net.URI uri) {
+    public static URIUtil fromURI(final URI uri) {
         return new URIUtil(uri);
     }
 
     @NotNull
-    public static URIUtil taxonomyCollectionFromURI(java.net.URI uri) {
+    public static URIUtil taxonomyCollectionFromURI(final URI uri) {
         URIUtil.rootLevelFromURI(uri);
         return URIUtil.rootLevelFromURI(uri).append("taxonomy");
     }
@@ -93,7 +93,7 @@ public class URIUtil {
             }
 
             this.uri = new java.net.URI(basePath + "/" + path);
-        } catch (Exception e) {
+        } catch (UnsupportedEncodingException | URISyntaxException e) {
             return this;
         }
 

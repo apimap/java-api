@@ -32,6 +32,7 @@ import org.springframework.web.reactive.function.server.ServerRequest;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 
 public class RequestUtil {
 
@@ -177,10 +178,13 @@ public class RequestUtil {
     }
 
     public static String bearerTokenFromRequest(final ServerRequest request) {
-        if (request.headers().firstHeader("Authorization") == null) {
-            return null;
-        } else {
-            return request.headers().firstHeader("Authorization").substring(7);
+        if(request != null) {
+            String authorizationHeader = request.headers().firstHeader("Authorization");
+            if (authorizationHeader != null) {
+                return authorizationHeader.substring(7);
+            }
         }
+
+        return null;
     }
 }

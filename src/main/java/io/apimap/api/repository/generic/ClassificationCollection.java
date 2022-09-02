@@ -19,6 +19,7 @@ under the License.
 
 package io.apimap.api.repository.generic;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import io.apimap.api.repository.interfaces.IMetadata;
 import io.apimap.api.repository.interfaces.ITaxonomyCollectionVersionURN;
 
@@ -26,23 +27,19 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ClassificationCollection {
-    ITaxonomyCollectionVersionURN taxonomy;
-    private List<IMetadata> items = new ArrayList<>();
+    protected final ITaxonomyCollectionVersionURN taxonomy;
+    protected final List<IMetadata> items;
 
-    public ClassificationCollection() {
-    }
-
-    public ClassificationCollection(ITaxonomyCollectionVersionURN taxonomy, List<IMetadata> items) {
+    @SuppressFBWarnings
+    public ClassificationCollection(final ITaxonomyCollectionVersionURN taxonomy,
+                                    final List<IMetadata> items) {
         this.taxonomy = taxonomy;
-        this.items = items;
+        this.items = new ArrayList<IMetadata>(items);
     }
 
+    @SuppressFBWarnings
     public ITaxonomyCollectionVersionURN getTaxonomy() {
         return taxonomy;
-    }
-
-    public void setTaxonomy(ITaxonomyCollectionVersionURN taxonomy) {
-        this.taxonomy = taxonomy;
     }
 
     public String getId() {
@@ -50,11 +47,7 @@ public class ClassificationCollection {
     }
 
     public List<IMetadata> getItems() {
-        return items;
-    }
-
-    public void setItems(List<IMetadata> items) {
-        this.items = items;
+        return new ArrayList<>(items);
     }
 
     @Override

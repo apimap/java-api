@@ -23,7 +23,8 @@ import io.apimap.api.repository.interfaces.IMetadata;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
-import java.util.Date;
+import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 
 @Document
@@ -42,7 +43,7 @@ public class Metadata implements IMetadata {
     protected String interfaceSpecification;
     protected String systemIdentifier;
     protected List<String> documentation;
-    protected Date created;
+    protected Instant created;
 
     @Id
     private String id;
@@ -50,20 +51,20 @@ public class Metadata implements IMetadata {
     public Metadata() {
     }
 
-    public Metadata(String apiId,
-                    String description,
-                    String apiVersion,
-                    String name,
-                    String visibility,
-                    String interfaceDescriptionLanguage,
-                    String architectureLayer,
-                    String businessUnit,
-                    String metadataVersion,
-                    String releaseStatus,
-                    String interfaceSpecification,
-                    String systemIdentifier,
-                    List<String> documentation,
-                    Date created) {
+    public Metadata(final String apiId,
+                    final String description,
+                    final String apiVersion,
+                    final String name,
+                    final String visibility,
+                    final String interfaceDescriptionLanguage,
+                    final String architectureLayer,
+                    final String businessUnit,
+                    final String metadataVersion,
+                    final String releaseStatus,
+                    final String interfaceSpecification,
+                    final String systemIdentifier,
+                    final List<String> documentation,
+                    final Instant created) {
         this.apiId = apiId;
         this.name = name;
         this.description = description;
@@ -77,7 +78,7 @@ public class Metadata implements IMetadata {
         this.releaseStatus = releaseStatus;
         this.interfaceSpecification = interfaceSpecification;
         this.systemIdentifier = systemIdentifier;
-        this.documentation = documentation;
+        this.documentation = new ArrayList<String>(documentation);
         this.id = IMetadata.createId(apiId, apiVersion);
     }
 
@@ -178,18 +179,18 @@ public class Metadata implements IMetadata {
     }
 
     public List<String> getDocumentation() {
-        return documentation;
+        return new ArrayList<String>(documentation);
     }
 
     public void setDocumentation(List<String> documentation) {
-        this.documentation = documentation;
+        this.documentation = new ArrayList<String>(documentation);
     }
 
-    public Date getCreated() {
+    public Instant getCreated() {
         return created;
     }
 
-    public void setCreated(Date created) {
+    public void setCreated(Instant created) {
         this.created = created;
     }
 

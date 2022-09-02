@@ -26,12 +26,21 @@ import org.dizitart.no2.objects.ObjectFilter;
 import java.util.Arrays;
 import java.util.stream.Collectors;
 
-public class QueryFilter extends Filter {
-    private String field;
+public class QueryFilter extends Filter implements Cloneable {
+    private final String field;
 
     public QueryFilter(String field, String value) {
         super(value);
-        setField(field);
+
+        switch (field) {
+            case MetadataDataRestEntity.NAME_KEY ->
+                    this.field = MetadataDataRestEntity.NAME_KEY;
+            case MetadataDataRestEntity.SYSTEM_IDENTIFIER_KEY ->
+                    this.field = MetadataDataRestEntity.SYSTEM_IDENTIFIER_KEY;
+            case MetadataDataRestEntity.DESCRIPTION_KEY ->
+                    this.field = MetadataDataRestEntity.DESCRIPTION_KEY;
+            default -> this.field = null;
+        }
     }
 
     @Override
@@ -39,51 +48,33 @@ public class QueryFilter extends Filter {
         return field;
     }
 
-    public void setField(String field) {
-        switch (field) {
-            case MetadataDataRestEntity.NAME_KEY:
-                this.field = MetadataDataRestEntity.NAME_KEY;
-                break;
-            case MetadataDataRestEntity.SYSTEM_IDENTIFIER_KEY:
-                this.field = MetadataDataRestEntity.SYSTEM_IDENTIFIER_KEY;
-                break;
-            case MetadataDataRestEntity.DESCRIPTION_KEY:
-                this.field = MetadataDataRestEntity.DESCRIPTION_KEY;
-                break;
-            default:
-                this.field = null;
-        }
-    }
-
     public ObjectFilter objectFilter() {
         String queryString = createQueryString(getValue());
 
-        switch (this.field) {
-            case MetadataDataRestEntity.NAME_KEY:
-                return org.dizitart.no2.objects.filters.ObjectFilters.regex("name", queryString);
-            case MetadataDataRestEntity.SYSTEM_IDENTIFIER_KEY:
-                return org.dizitart.no2.objects.filters.ObjectFilters.regex("systemIdentifier", queryString);
-            case MetadataDataRestEntity.DESCRIPTION_KEY:
-                return org.dizitart.no2.objects.filters.ObjectFilters.regex("description", queryString);
-            default:
-                return null;
-        }
+        return switch (this.field) {
+            case MetadataDataRestEntity.NAME_KEY ->
+                    org.dizitart.no2.objects.filters.ObjectFilters.regex("name", queryString);
+            case MetadataDataRestEntity.SYSTEM_IDENTIFIER_KEY ->
+                    org.dizitart.no2.objects.filters.ObjectFilters.regex("systemIdentifier", queryString);
+            case MetadataDataRestEntity.DESCRIPTION_KEY ->
+                    org.dizitart.no2.objects.filters.ObjectFilters.regex("description", queryString);
+            default -> null;
+        };
     }
 
     @Override
     public Bson mongoObjectFilter() {
         String queryString = createQueryString(getValue());
 
-        switch (this.field) {
-            case MetadataDataRestEntity.NAME_KEY:
-                return com.mongodb.client.model.Filters.regex("name", queryString,"i");
-            case MetadataDataRestEntity.SYSTEM_IDENTIFIER_KEY:
-                return com.mongodb.client.model.Filters.regex("systemIdentifier", queryString,"i");
-            case MetadataDataRestEntity.DESCRIPTION_KEY:
-                return com.mongodb.client.model.Filters.regex("description", queryString,"i");
-            default:
-                return null;
-        }
+        return switch (this.field) {
+            case MetadataDataRestEntity.NAME_KEY ->
+                    com.mongodb.client.model.Filters.regex("name", queryString, "i");
+            case MetadataDataRestEntity.SYSTEM_IDENTIFIER_KEY ->
+                    com.mongodb.client.model.Filters.regex("systemIdentifier", queryString, "i");
+            case MetadataDataRestEntity.DESCRIPTION_KEY ->
+                    com.mongodb.client.model.Filters.regex("description", queryString, "i");
+            default -> null;
+        };
     }
 
     @Override

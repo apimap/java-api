@@ -19,6 +19,9 @@ under the License.
 
 package io.apimap.api;
 
+import io.apimap.api.configuration.ApimapConfiguration;
+import io.apimap.api.configuration.MongoConfiguration;
+import io.apimap.api.configuration.NitriteConfiguration;
 import io.swagger.v3.oas.annotations.OpenAPIDefinition;
 import io.swagger.v3.oas.annotations.info.Info;
 import io.swagger.v3.oas.annotations.info.License;
@@ -29,6 +32,8 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.data.mongo.MongoDataAutoConfiguration;
 import org.springframework.boot.autoconfigure.mongo.MongoAutoConfiguration;
 import org.springframework.boot.autoconfigure.mongo.MongoReactiveAutoConfiguration;
+import org.springframework.boot.context.properties.ConfigurationPropertiesScan;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 
 @OpenAPIDefinition(
         info = @Info(
@@ -50,6 +55,7 @@ import org.springframework.boot.autoconfigure.mongo.MongoReactiveAutoConfigurati
         MongoDataAutoConfiguration.class,
         MongoReactiveAutoConfiguration.class
 })
+@EnableConfigurationProperties({ApimapConfiguration.class, NitriteConfiguration.class})
 public class Application {
     public static void main(String[] args) {
         SpringApplication.run(Application.class, args);

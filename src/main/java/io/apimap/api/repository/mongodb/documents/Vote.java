@@ -3,13 +3,13 @@ package io.apimap.api.repository.mongodb.documents;
 import io.apimap.api.repository.interfaces.IVote;
 import org.springframework.data.annotation.Id;
 
-import java.util.Date;
+import java.time.Instant;
 
 public class Vote implements IVote {
     protected String apiId;
     protected String apiVersion;
     protected Integer rating;
-    protected Date created;
+    protected Instant created;
 
     @Id
     private String id;
@@ -17,7 +17,10 @@ public class Vote implements IVote {
     public Vote() {
     }
 
-    public Vote(String apiId, String apiVersion, Integer rating, Date created) {
+    public Vote(final String apiId,
+                final String apiVersion,
+                final Integer rating,
+                final Instant created) {
         this.apiId = apiId;
         this.apiVersion = apiVersion;
         this.rating = rating;
@@ -25,11 +28,13 @@ public class Vote implements IVote {
         this.id = IVote.createId();
     }
 
-    public Vote(String apiId, String apiVersion, Integer rating) {
+    public Vote(final String apiId,
+                final String apiVersion,
+                final Integer rating) {
         this.apiId = apiId;
         this.apiVersion = apiVersion;
         this.rating = rating;
-        this.created = new Date();
+        this.created = Instant.now();
         this.id = IVote.createId();
     }
 
@@ -57,11 +62,11 @@ public class Vote implements IVote {
         this.rating = value;
     }
 
-    public Date getCreated() {
+    public Instant getCreated() {
         return created;
     }
 
-    public void setCreated(Date created) {
+    public void setCreated(Instant created) {
         this.created = created;
     }
 

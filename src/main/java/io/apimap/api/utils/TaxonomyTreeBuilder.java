@@ -39,11 +39,11 @@ public class TaxonomyTreeBuilder {
     }
 
     public ArrayList<TaxonomyTreeDataRestEntity> getTree() {
-        return tree;
+        return new ArrayList<>(tree);
     }
 
     public void setTree(ArrayList<TaxonomyTreeDataRestEntity> tree) {
-        this.tree = tree;
+        this.tree = new ArrayList<>(tree);
     }
 
     public boolean insert(TaxonomyTreeDataRestEntity newEntity) {

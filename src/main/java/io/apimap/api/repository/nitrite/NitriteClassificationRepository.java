@@ -19,6 +19,7 @@ under the License.
 
 package io.apimap.api.repository.nitrite;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import io.apimap.api.configuration.NitriteConfiguration;
 import io.apimap.api.repository.nitrite.entities.ApiClassification;
 import io.apimap.api.repository.nitrite.entities.TaxonomyCollectionVersionURN;
@@ -33,7 +34,7 @@ import org.springframework.stereotype.Repository;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import java.util.Date;
+import java.time.Instant;
 import java.util.List;
 import java.util.Objects;
 
@@ -47,6 +48,7 @@ public class NitriteClassificationRepository extends NitriteRepository implement
 
     protected NitriteTaxonomyRepository taxonomyRepository;
 
+    @SuppressFBWarnings
     public NitriteClassificationRepository(NitriteConfiguration nitriteConfiguration,
                                            NitriteTaxonomyRepository taxonomyRepository) {
         super(nitriteConfiguration, "classification");
@@ -107,7 +109,7 @@ public class NitriteClassificationRepository extends NitriteRepository implement
 
     @Override
     public Mono<ApiClassification> add(ApiClassification entity) {
-        entity.setCreated(new Date());
+        entity.setCreated(Instant.now());
 
         ObjectRepository<ApiClassification> repository = database.getRepository(ApiClassification.class);
         return Mono.justOrEmpty(repository.getById(repository.insert(entity).iterator().next()));

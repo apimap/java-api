@@ -3,13 +3,13 @@ package io.apimap.api.repository.mongodb.documents;
 import io.apimap.api.repository.interfaces.IDocument;
 import org.springframework.data.annotation.Id;
 
-import java.util.Date;
+import java.time.Instant;
 
 public class Document implements IDocument {
     protected String apiId;
     protected String apiVersion;
     protected String body;
-    protected Date created;
+    protected Instant created;
     protected DocumentType type;
 
     @Id
@@ -18,7 +18,7 @@ public class Document implements IDocument {
     public Document() {
     }
 
-    public Document(String apiId, String apiVersion, String body, Date created, DocumentType type) {
+    public Document(String apiId, String apiVersion, String body, Instant created, DocumentType type) {
         this.apiId = apiId;
         this.apiVersion = apiVersion;
         this.body = body;
@@ -62,11 +62,11 @@ public class Document implements IDocument {
         this.body = body;
     }
 
-    public Date getCreated() {
+    public Instant getCreated() {
         return created;
     }
 
-    public void setCreated(Date created) {
+    public void setCreated(Instant created) {
         this.created = created;
     }
 

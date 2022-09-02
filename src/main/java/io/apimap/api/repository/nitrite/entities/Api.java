@@ -25,7 +25,7 @@ import org.dizitart.no2.objects.Id;
 import org.dizitart.no2.objects.Index;
 import org.dizitart.no2.objects.Indices;
 
-import java.util.Date;
+import java.time.Instant;
 
 @Indices({
         @Index(value = "name", type = IndexType.NonUnique),
@@ -34,7 +34,7 @@ public class Api implements IApi {
     protected String name;
     protected String codeRepositoryUrl;
     protected String token;
-    protected Date created;
+    protected Instant created;
 
     @Id
     private String id;
@@ -47,7 +47,7 @@ public class Api implements IApi {
         this.name = name;
         this.codeRepositoryUrl = codeRepositoryUrl;
         this.id = IApi.createId();
-        this.created = new Date();
+        this.created = Instant.now();
     }
 
     public Api(String name,
@@ -57,7 +57,7 @@ public class Api implements IApi {
         this.codeRepositoryUrl = codeRepositoryUrl;
         this.id = IApi.createId();
         this.token = token;
-        this.created = new Date();
+        this.created = Instant.now();
     }
 
     public void generateToken() {
@@ -100,11 +100,11 @@ public class Api implements IApi {
         this.token = token;
     }
 
-    public Date getCreated() {
+    public Instant getCreated() {
         return created;
     }
 
-    public void setCreated(Date created) {
+    public void setCreated(Instant created) {
         this.created = created;
     }
 

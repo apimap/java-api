@@ -23,7 +23,7 @@ import io.apimap.api.repository.interfaces.IApi;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
-import java.util.Date;
+import java.time.Instant;
 
 @Document
 public class Api implements IApi {
@@ -31,7 +31,7 @@ public class Api implements IApi {
     protected String name;
     protected String codeRepositoryUrl;
     protected String token;
-    protected Date created;
+    protected Instant created;
 
     @Id
     private String id;
@@ -39,30 +39,34 @@ public class Api implements IApi {
     public Api() {
     }
 
-    public Api(String name,
-               String codeRepositoryUrl) {
+    public Api(final String name,
+               final String codeRepositoryUrl) {
         this.token = null;
         this.name = name;
         this.codeRepositoryUrl = codeRepositoryUrl;
         this.id = IApi.createId();
-        this.created = new Date();
+        this.created = Instant.now();
     }
 
-    public Api(String name,
-               String codeRepositoryUrl,
-               String token) {
+    public Api(final String name,
+               final String codeRepositoryUrl,
+               final String token) {
         this.token = token;
         this.name = name;
         this.codeRepositoryUrl = codeRepositoryUrl;
         this.id = IApi.createId();
-        this.created = new Date();
+        this.created = Instant.now();
     }
 
-    public Api(String name, String codeRepositoryUrl, String token, Date created, String id) {
+    public Api(final String name,
+               final String codeRepositoryUrl,
+               final String token,
+               final Instant created,
+               final String id) {
         this.name = name;
         this.codeRepositoryUrl = codeRepositoryUrl;
         this.token = token;
-        this.created = created;
+        this.created = Instant.now();
         this.id = id;
     }
 
@@ -109,12 +113,12 @@ public class Api implements IApi {
     }
 
     @Override
-    public Date getCreated() {
+    public Instant getCreated() {
         return created;
     }
 
     @Override
-    public void setCreated(Date created) {
+    public void setCreated(Instant created) {
         this.created = created;
     }
 

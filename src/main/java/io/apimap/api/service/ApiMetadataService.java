@@ -21,6 +21,7 @@ package io.apimap.api.service;
 
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import io.apimap.api.configuration.ApimapConfiguration;
 import io.apimap.api.repository.IRESTConverter;
 import io.apimap.api.repository.interfaces.IApi;
@@ -43,7 +44,6 @@ import org.springframework.web.reactive.function.server.ServerResponse;
 import reactor.core.publisher.Mono;
 
 import java.net.URI;
-import java.util.Objects;
 
 @Service
 public class ApiMetadataService {
@@ -53,6 +53,7 @@ public class ApiMetadataService {
     final protected IApiRepository apiRepository;
     final protected ApimapConfiguration apimapConfiguration;
 
+    @SuppressFBWarnings
     public ApiMetadataService(final IRESTConverter entityMapper,
                               final IMetadataRepository metadataRepository,
                               final IApiRepository apiRepository,

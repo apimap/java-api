@@ -25,7 +25,7 @@ import org.dizitart.no2.objects.Id;
 import org.dizitart.no2.objects.Index;
 import org.dizitart.no2.objects.Indices;
 
-import java.util.Date;
+import java.time.Instant;
 
 import static io.apimap.api.repository.repository.ITaxonomyRepository.DEFAULT_TAXONOMY_TYPE;
 
@@ -40,7 +40,7 @@ public class TaxonomyCollectionVersionURN implements ITaxonomyCollectionVersionU
     protected String version;
     protected String urn;
     protected String type;
-    protected Date created;
+    protected Instant created;
 
     @Id
     private String id;
@@ -65,11 +65,11 @@ public class TaxonomyCollectionVersionURN implements ITaxonomyCollectionVersionU
         this.id = ITaxonomyCollectionVersionURN.createId(urn, version);
     }
 
-    public Date getCreated() {
+    public Instant getCreated() {
         return created;
     }
 
-    public void setCreated(Date created) {
+    public void setCreated(Instant created) {
         this.created = created;
     }
 

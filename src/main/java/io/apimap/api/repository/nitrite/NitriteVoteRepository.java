@@ -1,5 +1,6 @@
 package io.apimap.api.repository.nitrite;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import io.apimap.api.configuration.NitriteConfiguration;
 import io.apimap.api.repository.nitrite.entities.Vote;
 import io.apimap.api.repository.repository.IVoteRepository;
@@ -10,7 +11,7 @@ import org.springframework.stereotype.Repository;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import java.util.Date;
+import java.time.Instant;
 
 import static org.dizitart.no2.objects.filters.ObjectFilters.and;
 import static org.dizitart.no2.objects.filters.ObjectFilters.eq;
@@ -19,6 +20,7 @@ import static org.dizitart.no2.objects.filters.ObjectFilters.eq;
 @ConditionalOnBean(io.apimap.api.configuration.NitriteConfiguration.class)
 public class NitriteVoteRepository extends NitriteRepository implements IVoteRepository<Vote> {
 
+    @SuppressFBWarnings
     public NitriteVoteRepository(final NitriteConfiguration nitriteConfiguration) {
         super(nitriteConfiguration, "vote");
     }
@@ -34,7 +36,7 @@ public class NitriteVoteRepository extends NitriteRepository implements IVoteRep
 
     @Override
     public Mono<Vote> add(final Vote entity) {
-        entity.setCreated(new Date());
+        entity.setCreated(Instant.now());
 
         final ObjectRepository<Vote> repository = database.getRepository(Vote.class);
         return Mono.justOrEmpty(repository.getById(repository.insert(entity).iterator().next()));

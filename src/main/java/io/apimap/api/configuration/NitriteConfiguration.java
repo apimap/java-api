@@ -40,6 +40,10 @@ public class NitriteConfiguration {
         LOGGER.info("Configuring Nitrite database");
     }
 
+    public NitriteConfiguration(String filePath) {
+        this.filePath = filePath;
+    }
+
     public String getFilePath() {
         return filePath;
     }

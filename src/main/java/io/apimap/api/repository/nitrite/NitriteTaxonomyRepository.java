@@ -19,6 +19,7 @@ under the License.
 
 package io.apimap.api.repository.nitrite;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import io.apimap.api.configuration.NitriteConfiguration;
 import io.apimap.api.repository.interfaces.ITaxonomyCollectionVersionURN;
 import io.apimap.api.repository.nitrite.entities.TaxonomyCollection;
@@ -38,7 +39,7 @@ import org.springframework.web.server.ResponseStatusException;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import java.util.Date;
+import java.time.Instant;
 
 import static org.dizitart.no2.objects.filters.ObjectFilters.*;
 
@@ -46,6 +47,7 @@ import static org.dizitart.no2.objects.filters.ObjectFilters.*;
 @ConditionalOnBean(io.apimap.api.configuration.NitriteConfiguration.class)
 public class NitriteTaxonomyRepository extends NitriteRepository implements ITaxonomyRepository<TaxonomyCollection, TaxonomyCollectionVersion, TaxonomyCollectionVersionURN> {
 
+    @SuppressFBWarnings
     public NitriteTaxonomyRepository(NitriteConfiguration nitriteConfiguration) {
         super(nitriteConfiguration, "taxonomy");
     }
@@ -73,7 +75,7 @@ public class NitriteTaxonomyRepository extends NitriteRepository implements ITax
     public Mono<TaxonomyCollection> addTaxonomyCollection(TaxonomyCollection entity) {
         ObjectRepository<TaxonomyCollection> repository = database.getRepository(TaxonomyCollection.class);
         entity.generateToken();
-        entity.setCreated(new Date());
+        entity.setCreated(Instant.now());
 
         return getTaxonomyCollection(entity.getNid())
                 .doOnNext(api -> {
@@ -106,7 +108,7 @@ public class NitriteTaxonomyRepository extends NitriteRepository implements ITax
 
     @Override
     public Mono<TaxonomyCollectionVersion> addTaxonomyCollectionVersion(TaxonomyCollectionVersion entity) {
-        entity.setCreated(new Date());
+        entity.setCreated(Instant.now());
 
         ObjectRepository<TaxonomyCollectionVersion> repository = database.getRepository(TaxonomyCollectionVersion.class);
         return Mono.justOrEmpty(repository.getById(repository.insert(entity).iterator().next()));
@@ -212,7 +214,7 @@ public class NitriteTaxonomyRepository extends NitriteRepository implements ITax
 
     @Override
     public Mono<TaxonomyCollectionVersionURN> addTaxonomyCollectionVersionURN(TaxonomyCollectionVersionURN entity) {
-        entity.setCreated(new Date());
+        entity.setCreated(Instant.now());
 
         ObjectRepository<TaxonomyCollectionVersionURN> repository = database.getRepository(TaxonomyCollectionVersionURN.class);
         return Mono.justOrEmpty(repository.getById(repository.insert(entity).iterator().next()));

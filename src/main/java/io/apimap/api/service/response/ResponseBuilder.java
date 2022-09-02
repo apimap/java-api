@@ -19,6 +19,7 @@ under the License.
 
 package io.apimap.api.service.response;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import io.apimap.api.configuration.ApimapConfiguration;
 import io.apimap.api.configuration.NodeConfiguration;
 import io.apimap.api.rest.jsonapi.JsonApiError;
@@ -56,6 +57,7 @@ public class ResponseBuilder {
         return new ResponseBuilder(startTime, apimapConfiguration);
     }
 
+    @SuppressFBWarnings
     public ResponseBuilder withBody(JsonApiRestResponseWrapper<?> content) {
         this.body = content;
         return this;
