@@ -36,11 +36,11 @@ management:
     http:
       enabled: true
 mongodb:
-  enabled: true
+  enabled: false
   database-name: "apimap"
   uri: "mongodb://apimapUser:<password>@localhost:27017/apimap"
 nitrite:
-  enabled: false
+  enabled: true
   filePath: "/tmp/apimap"
 apimap:
   metadata:

@@ -18,11 +18,11 @@ public class TaxonomyTreeBuilderSubstitute extends TaxonomyTreeBuilder {
         return super.insert(newEntity);
     }
 
-    public void recursiveInsert(ArrayList<TaxonomyTreeDataRestEntity> tree, TaxonomyTreeDataRestEntity node, String url, ArrayList<String> paths) {
-        super.recursiveInsert(tree, node, url, paths);
+    public void recursiveInsert(TaxonomyTreeDataRestEntity node, String url, ArrayList<String> paths) {
+        super.recursiveInsert(this.tree, node, url, paths);
     }
 
     public List<String> splitURLParts(String url) {
-        return super.splitURLParts(url);
+        return new ArrayList<String>(super.splitURLParts(url));
     }
 }

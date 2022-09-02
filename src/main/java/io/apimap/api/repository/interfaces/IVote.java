@@ -1,6 +1,6 @@
 package io.apimap.api.repository.interfaces;
 
-import java.util.Date;
+import java.time.Instant;
 import java.util.UUID;
 
 public interface IVote {
@@ -14,8 +14,8 @@ public interface IVote {
     public void setApiVersion(String apiVersion);
     public Integer getRating();
     public void setRating(Integer value);
-    public Date getCreated();
-    public void setCreated(Date created);
+    public Instant getCreated();
+    public void setCreated(Instant created);
     public String getId();
     public void setId(String id);
 }

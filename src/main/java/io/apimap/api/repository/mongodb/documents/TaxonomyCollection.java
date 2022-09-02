@@ -23,7 +23,7 @@ import io.apimap.api.repository.interfaces.ITaxonomyCollection;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
-import java.util.Date;
+import java.time.Instant;
 import java.util.UUID;
 
 @Document
@@ -33,7 +33,7 @@ public class TaxonomyCollection implements ITaxonomyCollection {
     protected String nid;
     protected String description;
     protected String token;
-    protected Date created;
+    protected Instant created;
 
     @Id
     private String id;
@@ -41,10 +41,10 @@ public class TaxonomyCollection implements ITaxonomyCollection {
     public TaxonomyCollection() {
     }
 
-    public TaxonomyCollection(String name,
-                              String nid,
-                              String description,
-                              String token) {
+    public TaxonomyCollection(final String name,
+                              final String nid,
+                              final String description,
+                              final String token) {
         this.name = name;
         this.nid = nid;
         this.description = description;
@@ -65,7 +65,7 @@ public class TaxonomyCollection implements ITaxonomyCollection {
     }
 
     @Override
-    public void setCreated(Date created) {
+    public void setCreated(Instant created) {
         this.created = created;
     }
 
@@ -102,7 +102,7 @@ public class TaxonomyCollection implements ITaxonomyCollection {
     }
 
     @Override
-    public Date getCreated() {
+    public Instant getCreated() {
         return this.created;
     }
 

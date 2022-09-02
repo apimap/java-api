@@ -23,7 +23,7 @@ import io.apimap.api.repository.interfaces.ITaxonomyCollectionVersionURN;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
-import java.util.Date;
+import java.time.Instant;
 
 import static io.apimap.api.repository.repository.ITaxonomyRepository.DEFAULT_TAXONOMY_TYPE;
 
@@ -35,7 +35,7 @@ public class TaxonomyCollectionVersionURN implements ITaxonomyCollectionVersionU
     protected String description;
     protected String nid;
     protected String version;
-    protected Date created;
+    protected Instant created;
     protected String urn;
     protected String type;
 
@@ -45,13 +45,13 @@ public class TaxonomyCollectionVersionURN implements ITaxonomyCollectionVersionU
     public TaxonomyCollectionVersionURN() {
     }
 
-    public TaxonomyCollectionVersionURN(String url,
-                                        String title,
-                                        String description,
-                                        String nid,
-                                        String version,
-                                        String urn,
-                                        String type) {
+    public TaxonomyCollectionVersionURN(final String url,
+                                        final String title,
+                                        final String description,
+                                        final String nid,
+                                        final String version,
+                                        final String urn,
+                                        final String type) {
         this.urn = urn;
         this.url = url;
         this.title = title;
@@ -73,7 +73,7 @@ public class TaxonomyCollectionVersionURN implements ITaxonomyCollectionVersionU
     }
 
     @Override
-    public void setCreated(Date created) {
+    public void setCreated(Instant created) {
         this.created = created;
     }
 
@@ -148,7 +148,7 @@ public class TaxonomyCollectionVersionURN implements ITaxonomyCollectionVersionU
     }
 
     @Override
-    public Date getCreated() {
+    public Instant getCreated() {
         return this.created;
     }
 

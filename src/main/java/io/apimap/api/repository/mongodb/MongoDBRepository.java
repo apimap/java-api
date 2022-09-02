@@ -19,12 +19,14 @@ under the License.
 
 package io.apimap.api.repository.mongodb;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.springframework.data.mongodb.core.ReactiveMongoTemplate;
 
 public abstract class MongoDBRepository {
     protected final ReactiveMongoTemplate template;
 
-    public MongoDBRepository(ReactiveMongoTemplate template) {
+    @SuppressFBWarnings
+    public MongoDBRepository(final ReactiveMongoTemplate template) {
         this.template = template;
     }
 }

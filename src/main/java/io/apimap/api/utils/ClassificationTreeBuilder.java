@@ -19,6 +19,7 @@ under the License.
 
 package io.apimap.api.utils;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import io.apimap.api.repository.generic.ClassificationCollection;
 import io.apimap.api.repository.interfaces.*;
 import io.apimap.api.repository.repository.IApiRepository;
@@ -42,6 +43,7 @@ public class ClassificationTreeBuilder {
     final protected IMetadataRepository metadataRepository;
     final protected ITaxonomyRepository taxonomyRepository;
 
+    @SuppressFBWarnings
     public ClassificationTreeBuilder(final IClassificationRepository classificationRepository,
                                      final IApiRepository apiRepository,
                                      final IMetadataRepository metadataRepository,

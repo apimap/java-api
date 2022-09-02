@@ -21,6 +21,7 @@ package io.apimap.api.service;
 
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import io.apimap.api.configuration.ApimapConfiguration;
 import io.apimap.api.repository.IRESTConverter;
 import io.apimap.api.repository.interfaces.ITaxonomyCollection;
@@ -59,6 +60,7 @@ public class TaxonomyResourceService {
     final protected ApimapConfiguration apimapConfiguration;
     final protected IRESTConverter entityMapper;
 
+    @SuppressFBWarnings
     public TaxonomyResourceService(final IRESTConverter entityMapper,
                                    final ITaxonomyRepository taxonomyRepository,
                                    final ApimapConfiguration apimapConfiguration) {

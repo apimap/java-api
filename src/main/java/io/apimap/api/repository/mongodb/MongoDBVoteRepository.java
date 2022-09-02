@@ -1,5 +1,6 @@
 package io.apimap.api.repository.mongodb;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import io.apimap.api.repository.mongodb.documents.Vote;
 import io.apimap.api.repository.repository.IVoteRepository;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
@@ -12,13 +13,14 @@ import org.springframework.stereotype.Repository;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import java.util.Date;
+import java.time.Instant;
 import java.util.LinkedHashMap;
 
 @Repository
 @ConditionalOnBean(io.apimap.api.configuration.MongoConfiguration.class)
 public class MongoDBVoteRepository extends MongoDBRepository implements IVoteRepository<Vote> {
 
+    @SuppressFBWarnings
     public MongoDBVoteRepository(final ReactiveMongoTemplate template) {
         super(template);
     }
@@ -34,7 +36,7 @@ public class MongoDBVoteRepository extends MongoDBRepository implements IVoteRep
 
     @Override
     public Mono<Vote> add(Vote entity){
-        entity.setCreated(new Date());
+        entity.setCreated(Instant.now());
         return template.insert(entity);
     }
 
@@ -50,7 +52,7 @@ public class MongoDBVoteRepository extends MongoDBRepository implements IVoteRep
 
         return template
                 .aggregate(aggregation, Vote.class, LinkedHashMap.class)
-                .flatMap(e -> Mono.just(Double.valueOf((Double) e.get(FIELD_NAME)).intValue()))
+                .flatMap(e -> Mono.just(((Double) e.get(FIELD_NAME)).intValue()))
                 .take(1)
                 .single(-1);
     }

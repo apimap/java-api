@@ -25,7 +25,7 @@ import org.dizitart.no2.objects.Id;
 import org.dizitart.no2.objects.Index;
 import org.dizitart.no2.objects.Indices;
 
-import java.util.Date;
+import java.time.Instant;
 import java.util.UUID;
 
 @Indices({
@@ -37,7 +37,7 @@ public class TaxonomyCollection implements ITaxonomyCollection {
     protected String nid;
     protected String description;
     protected String token;
-    protected Date created;
+    protected Instant created;
 
     @Id
     private String id;
@@ -45,10 +45,10 @@ public class TaxonomyCollection implements ITaxonomyCollection {
     public TaxonomyCollection() {
     }
 
-    public TaxonomyCollection(String name,
-                              String nid,
-                              String description,
-                              String token) {
+    public TaxonomyCollection(final String name,
+                              final String nid,
+                              final String description,
+                              final String token) {
         this.name = name;
         this.nid = nid;
         this.description = description;
@@ -56,9 +56,9 @@ public class TaxonomyCollection implements ITaxonomyCollection {
         this.id = ITaxonomyCollection.createId(nid);
     }
 
-    public TaxonomyCollection(String name,
-                              String description,
-                              String nid) {
+    public TaxonomyCollection(final String name,
+                              final String description,
+                              final String nid) {
         this.name = name;
         this.nid = nid;
         this.description = description;
@@ -73,11 +73,11 @@ public class TaxonomyCollection implements ITaxonomyCollection {
         this.token = null;
     }
 
-    public Date getCreated() {
+    public Instant getCreated() {
         return created;
     }
 
-    public void setCreated(Date created) {
+    public void setCreated(Instant created) {
         this.created = created;
     }
 

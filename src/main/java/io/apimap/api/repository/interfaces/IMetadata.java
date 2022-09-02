@@ -23,7 +23,7 @@ import io.apimap.api.rest.MetadataDataRestEntity;
 import io.apimap.api.service.query.Filter;
 import io.apimap.api.service.query.MetadataFilter;
 
-import java.util.Date;
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -115,9 +115,9 @@ public interface IMetadata {
 
     void setDocumentation(List<String> documentation);
 
-    Date getCreated();
+    Instant getCreated();
 
-    void setCreated(Date created);
+    void setCreated(Instant created);
 
     String getId();
 

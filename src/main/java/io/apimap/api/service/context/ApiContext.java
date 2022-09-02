@@ -22,6 +22,7 @@ package io.apimap.api.service.context;
 import io.apimap.api.service.query.Filter;
 import io.apimap.api.service.query.QueryFilter;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class ApiContext {
@@ -31,17 +32,24 @@ public class ApiContext {
     final protected QueryFilter query;
     protected String apiId;
 
-    public ApiContext(String apiName, String apiVersion, List<Filter> filters, QueryFilter query) {
+    public ApiContext(final String apiName,
+                      final String apiVersion,
+                      final List<Filter> filters,
+                      final QueryFilter query) {
         this.apiName = apiName;
         this.apiVersion = apiVersion;
-        this.filters = filters;
+        this.filters = new ArrayList<>(filters);
         this.query = query;
     }
 
-    public ApiContext(String apiName, String apiVersion, List<Filter> filters, QueryFilter query, String apiId) {
+    public ApiContext(final String apiName,
+                      final String apiVersion,
+                      final List<Filter> filters,
+                      final QueryFilter query,
+                      final String apiId) {
         this.apiName = apiName;
         this.apiVersion = apiVersion;
-        this.filters = filters;
+        this.filters = new ArrayList<>(filters);
         this.query = query;
         this.apiId = apiId;
     }
@@ -69,10 +77,10 @@ public class ApiContext {
     }
 
     public List<Filter> getFilters() {
-        return filters;
+        return new ArrayList<>(filters);
     }
 
-    public QueryFilter getQuery() {
+    public QueryFilter getQuery() throws CloneNotSupportedException {
         return query;
     }
 }

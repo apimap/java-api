@@ -22,6 +22,7 @@ package io.apimap.api.service;
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import io.apimap.api.configuration.ApimapConfiguration;
 import io.apimap.api.repository.IRESTConverter;
 import io.apimap.api.repository.interfaces.IApi;
@@ -76,6 +77,7 @@ public class ApiResourceService {
 
     final protected ApimapConfiguration apimapConfiguration;
 
+    @SuppressFBWarnings
     public ApiResourceService(final IApiRepository apiRepository,
                               final IMetadataRepository metadataRepository,
                               final ITaxonomyRepository taxonomyRepository,
@@ -118,75 +120,75 @@ public class ApiResourceService {
 
     @NotNull
     @PreAuthorize("@Authorizer.isValidAccessToken(#request)")
-    public Mono<ServerResponse> allApisZip(final ServerRequest request) {
+    public Mono<ServerResponse> allApisZip(final ServerRequest request){
         NettyDataBufferFactory nettyDataBufferFactory = new NettyDataBufferFactory(new UnpooledByteBufAllocator(false));
         DataBuffer dataBuffer = nettyDataBufferFactory.allocateBuffer();
-        ZipOutputStream zipOutputStream = new ZipOutputStream(dataBuffer.asOutputStream());
+
         ReentrantLock lock = new ReentrantLock();
 
-        ObjectMapper mapper = new ObjectMapper();
-        mapper.configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
+        try(ZipOutputStream zipOutputStream = new ZipOutputStream(dataBuffer.asOutputStream())){
+            ObjectMapper mapper = new ObjectMapper();
+            mapper.configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
 
-        return Mono.when(
-                        apiRepository
-                                .all()
-                                .collectList()
-                                .publishOn(Schedulers.boundedElastic())
-                                .doOnNext(collection -> {
-                                    try {
-                                        lock.lock();
-                                        zipOutputStream.putNextEntry(new ZipEntry("apis.json"));
-                                        zipOutputStream.write(mapper.writeValueAsBytes(collection));
-                                        zipOutputStream.closeEntry();
-                                        lock.unlock();
-                                    } catch (IOException ignored) {
-                                    }
-                                }),
-                        classificationRepository
-                                .all()
-                                .collectList()
-                                .publishOn(Schedulers.boundedElastic())
-                                .doOnNext(collection -> {
-                                    try {
-                                        lock.lock();
-                                        zipOutputStream.putNextEntry(new ZipEntry("classifications.json"));
-                                        zipOutputStream.write(mapper.writeValueAsBytes(collection));
-                                        zipOutputStream.closeEntry();
-                                        lock.unlock();
-                                    } catch (IOException ignored) {
-                                    }
-                                }),
-                        metadataRepository
-                                .all()
-                                .collectList()
-                                .publishOn(Schedulers.boundedElastic())
-                                .doOnNext(collection -> {
-                                    try {
-                                        lock.lock();
-                                        zipOutputStream.putNextEntry(new ZipEntry("metadata.json"));
-                                        zipOutputStream.write(mapper.writeValueAsBytes(collection));
-                                        zipOutputStream.closeEntry();
-                                        lock.unlock();
-                                    } catch (IOException ignored) {
-                                    }
-                                })
-                )
-                .thenReturn(Boolean.TRUE)
-                .publishOn(Schedulers.boundedElastic())
-                .flatMap(status -> {
-                    lock.lock();
-                    try {
-                        zipOutputStream.close();
-                    } catch (IOException ignored) {
-                    }
-                    lock.unlock();
-
-                    return ServerResponse.status(HttpStatus.OK)
-                            .header("Access-Control-Allow-Origin", "*")
-                            .header("Access-Control-Request-Method", "GET")
-                            .contentType(new MediaType("application", "zip"))
-                            .body(Mono.just(dataBuffer), DataBuffer.class);
-                });
+            return Mono.when(
+                            apiRepository
+                                    .all()
+                                    .collectList()
+                                    .publishOn(Schedulers.boundedElastic())
+                                    .doOnNext(collection -> {
+                                        try {
+                                            lock.lock();
+                                            zipOutputStream.putNextEntry(new ZipEntry("apis.json"));
+                                            zipOutputStream.write(mapper.writeValueAsBytes(collection));
+                                            zipOutputStream.closeEntry();
+                                        } catch (IOException ignored) {
+                                        } finally {
+                                            lock.unlock();
+                                        }
+                                    }),
+                            classificationRepository
+                                    .all()
+                                    .collectList()
+                                    .publishOn(Schedulers.boundedElastic())
+                                    .doOnNext(collection -> {
+                                        try {
+                                            lock.lock();
+                                            zipOutputStream.putNextEntry(new ZipEntry("classifications.json"));
+                                            zipOutputStream.write(mapper.writeValueAsBytes(collection));
+                                            zipOutputStream.closeEntry();
+                                        } catch (IOException ignored) {
+                                        } finally {
+                                            lock.unlock();
+                                        }
+                                    }),
+                            metadataRepository
+                                    .all()
+                                    .collectList()
+                                    .publishOn(Schedulers.boundedElastic())
+                                    .doOnNext(collection -> {
+                                        try {
+                                            lock.lock();
+                                            zipOutputStream.putNextEntry(new ZipEntry("metadata.json"));
+                                            zipOutputStream.write(mapper.writeValueAsBytes(collection));
+                                            zipOutputStream.closeEntry();
+                                        } catch (IOException ignored) {
+                                        } finally {
+                                            lock.unlock();
+                                        }
+                                    })
+                    )
+                    .thenReturn(Boolean.TRUE)
+                    .publishOn(Schedulers.boundedElastic())
+                    .flatMap(status ->
+                          ServerResponse.status(HttpStatus.OK)
+                                .header("Access-Control-Allow-Origin", "*")
+                                .header("Access-Control-Request-Method", "GET")
+                                .contentType(new MediaType("application", "zip"))
+                                .body(Mono.just(dataBuffer), DataBuffer.class)
+                    );
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @NotNull

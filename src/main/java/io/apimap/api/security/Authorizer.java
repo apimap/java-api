@@ -19,6 +19,7 @@ under the License.
 
 package io.apimap.api.security;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import io.apimap.api.configuration.AccessConfiguration;
 import io.apimap.api.repository.interfaces.IApi;
 import io.apimap.api.repository.interfaces.ITaxonomyCollection;
@@ -33,19 +34,22 @@ import org.springframework.web.reactive.function.server.ServerRequest;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 
+import java.util.concurrent.ExecutionException;
+
 /*
  This is not to add security, it is just a minimal effort to make it a little harder
   to update someone else's information
  */
 @Component("Authorizer")
 public class Authorizer {
-    protected IApiRepository apiRepository;
-    protected ITaxonomyRepository taxonomyRepository;
-    protected AccessConfiguration accessConfiguration;
+    protected final IApiRepository apiRepository;
+    protected final ITaxonomyRepository taxonomyRepository;
+    protected final AccessConfiguration accessConfiguration;
 
-    public Authorizer(IApiRepository apiRepository,
-                      ITaxonomyRepository taxonomyRepository,
-                      AccessConfiguration accessConfiguration) {
+    @SuppressFBWarnings
+    public Authorizer(final IApiRepository apiRepository,
+                      final ITaxonomyRepository taxonomyRepository,
+                      final AccessConfiguration accessConfiguration) {
         this.apiRepository = apiRepository;
         this.taxonomyRepository = taxonomyRepository;
         this.accessConfiguration = accessConfiguration;
@@ -71,7 +75,7 @@ public class Authorizer {
                     .switchIfEmpty(Mono.defer(() -> Mono.just(Boolean.FALSE)))
                     .toFuture()
                     .get(); // Fix: Spring 5.8.x
-        } catch (Exception ignored) {
+        } catch (ExecutionException | InterruptedException e) {
             return false;
         }
     }
@@ -96,7 +100,7 @@ public class Authorizer {
                     .switchIfEmpty(Mono.defer(() -> Mono.just(Boolean.FALSE)))
                     .toFuture()
                     .get(); // Fix: Spring 5.8.x
-        } catch (Exception ignored) {
+        } catch (ExecutionException | InterruptedException e) {
             return false;
         }
     }

@@ -19,6 +19,7 @@ under the License.
 
 package io.apimap.api.repository.nitrite;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import io.apimap.api.configuration.NitriteConfiguration;
 import io.apimap.api.repository.interfaces.IApiVersion;
 import io.apimap.api.repository.nitrite.entities.Api;
@@ -36,7 +37,10 @@ import org.springframework.stereotype.Repository;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import java.util.*;
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 
 import static java.util.stream.Collectors.toCollection;
 import static org.dizitart.no2.objects.filters.ObjectFilters.*;
@@ -44,15 +48,10 @@ import static org.dizitart.no2.objects.filters.ObjectFilters.*;
 @Repository
 @ConditionalOnBean(io.apimap.api.configuration.NitriteConfiguration.class)
 public class NitriteApiRepository extends NitriteRepository implements IApiRepository<Api, ApiVersion, ObjectFilter> {
-    protected NitriteMetadataRepository metadataRepository;
-    protected NitriteClassificationRepository classificationRepository;
 
-    public NitriteApiRepository(NitriteConfiguration nitriteConfiguration,
-                                NitriteMetadataRepository metadataRepository,
-                                NitriteClassificationRepository classificationRepository) {
+    @SuppressFBWarnings
+    public NitriteApiRepository(NitriteConfiguration nitriteConfiguration) {
         super(nitriteConfiguration, "api");
-        this.metadataRepository = metadataRepository;
-        this.classificationRepository = classificationRepository;
     }
 
     /* A */
@@ -91,7 +90,7 @@ public class NitriteApiRepository extends NitriteRepository implements IApiRepos
     public Mono<Api> add(Api entity) {
         ObjectRepository<Api> repository = database.getRepository(Api.class);
         entity.generateToken();
-        entity.setCreated(new Date());
+        entity.setCreated(Instant.now());
         return Mono.justOrEmpty(repository.getById(repository.insert(entity).iterator().next()));
     }
 
@@ -138,12 +137,9 @@ public class NitriteApiRepository extends NitriteRepository implements IApiRepos
 
     @Override
     public Mono<Long> numberOfApis() {
-        if (database == null) {
-            Mono.just(0);
-        }
         ObjectRepository<Api> repository = database.getRepository(Api.class);
         Cursor<Api> cursor = repository.find();
-        return Mono.justOrEmpty(Long.valueOf(cursor.totalCount()));
+        return Mono.justOrEmpty((long) cursor.totalCount());
     }
 
     /* AV */
@@ -187,7 +183,7 @@ public class NitriteApiRepository extends NitriteRepository implements IApiRepos
 
     @Override
     public Mono<ApiVersion> addApiVersion(ApiVersion entity) {
-        entity.setCreated(new Date());
+        entity.setCreated(Instant.now());
 
         ObjectRepository<ApiVersion> repository = database.getRepository(ApiVersion.class);
         return Mono.justOrEmpty(repository.getById(repository.insert(entity).iterator().next()));

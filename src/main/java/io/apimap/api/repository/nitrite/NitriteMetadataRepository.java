@@ -19,6 +19,7 @@ under the License.
 
 package io.apimap.api.repository.nitrite;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import io.apimap.api.configuration.NitriteConfiguration;
 import io.apimap.api.repository.interfaces.IDocument;
 import io.apimap.api.repository.nitrite.entities.Document;
@@ -34,7 +35,11 @@ import org.springframework.stereotype.Repository;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import java.util.*;
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Objects;
 
 import static java.util.stream.Collectors.toCollection;
 import static org.dizitart.no2.objects.filters.ObjectFilters.*;
@@ -42,6 +47,8 @@ import static org.dizitart.no2.objects.filters.ObjectFilters.*;
 @Repository
 @ConditionalOnBean(io.apimap.api.configuration.NitriteConfiguration.class)
 public class NitriteMetadataRepository extends NitriteRepository implements IMetadataRepository<Metadata, Document, ObjectFilter> {
+
+    @SuppressFBWarnings
     public NitriteMetadataRepository(NitriteConfiguration nitriteConfiguration) {
         super(nitriteConfiguration, "metadata");
     }
@@ -74,7 +81,7 @@ public class NitriteMetadataRepository extends NitriteRepository implements IMet
     }
 
     public Mono<Metadata> add(Metadata entity) {
-        entity.setCreated(new Date());
+        entity.setCreated(Instant.now());
 
         ObjectRepository<Metadata> repository = database.getRepository(Metadata.class);
         return Mono.justOrEmpty(repository.getById(repository.insert(entity).iterator().next()));
@@ -178,7 +185,7 @@ public class NitriteMetadataRepository extends NitriteRepository implements IMet
 
     @Override
     public Mono<Document> addDocument(final String apiId, final String apiVersion, final Document entity) {
-        entity.setCreated(new Date());
+        entity.setCreated(Instant.now());
         entity.setApiId(apiId);
         entity.setApiVersion(apiVersion);
 

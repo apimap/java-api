@@ -1,6 +1,7 @@
 package io.apimap.api.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import io.apimap.api.configuration.ApimapConfiguration;
 import io.apimap.api.repository.interfaces.IApi;
 import io.apimap.api.repository.IRESTConverter;
@@ -23,8 +24,8 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.net.URI;
+import java.time.Instant;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -52,12 +53,12 @@ class StatisticsServiceTest {
     ServerRequest serverRequest;
 
     @Test
+    @SuppressFBWarnings
     void getApiCreatedStatistics() {
         final String api1Name = "The first API";
         final String api2Name = "The second API";
 
-        final Date apiCreated = new Date();
-
+        final Instant apiCreated = Instant.now();
 
         IApi api1 = Mockito.mock(IApi.class);
         Mockito.when(api1.getName()).thenReturn(api1Name);

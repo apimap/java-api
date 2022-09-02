@@ -21,6 +21,7 @@ package io.apimap.api.service;
 
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import io.apimap.api.configuration.ApimapConfiguration;
 import io.apimap.api.repository.IRESTConverter;
 import io.apimap.api.repository.interfaces.IApi;
@@ -54,6 +55,7 @@ public class ApiClassificationService {
     final protected IRESTConverter entityMapper;
     final protected ApimapConfiguration apimapConfiguration;
 
+    @SuppressFBWarnings
     public ApiClassificationService(final IRESTConverter entityMapper,
                                     final IClassificationRepository classificationRepository,
                                     final IApiRepository apiRepository,

@@ -25,7 +25,7 @@ public class ClassificationSearchFilterTest {
         );
 
         ArrayList<String> paths = new ArrayList<>(util.splitURLParts(node.getUrl()));
-        util.recursiveInsert(util.getTree(), node, "taxonomy://" + util.splitURLParts(node.getUrl()).get(0), paths);
+        util.recursiveInsert(node, "taxonomy://" + util.splitURLParts(node.getUrl()).get(0), paths);
 
         assertEquals(1, util.getTree().size());
         assertEquals(1, util.getTree().get(0).getEntities().size());

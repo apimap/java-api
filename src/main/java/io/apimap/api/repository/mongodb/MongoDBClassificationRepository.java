@@ -20,6 +20,7 @@ under the License.
 package io.apimap.api.repository.mongodb;
 
 import com.mongodb.client.model.Filters;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import io.apimap.api.repository.mongodb.documents.ApiClassification;
 import io.apimap.api.repository.mongodb.documents.TaxonomyCollectionVersionURN;
 import io.apimap.api.repository.repository.IClassificationRepository;
@@ -39,7 +40,7 @@ import org.springframework.web.server.ResponseStatusException;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import java.util.Date;
+import java.time.Instant;
 import java.util.List;
 import java.util.Objects;
 
@@ -52,6 +53,7 @@ public class MongoDBClassificationRepository extends MongoDBRepository implement
 
     final protected MongoDBTaxonomyRepository taxonomyRepository;
 
+    @SuppressFBWarnings
     public MongoDBClassificationRepository(final ReactiveMongoTemplate template,
                                            final MongoDBTaxonomyRepository taxonomyRepository) {
         super(template);
@@ -89,7 +91,7 @@ public class MongoDBClassificationRepository extends MongoDBRepository implement
                         e.get("taxonomyVersion", String.class),
                         e.get("taxonomyUrn", String.class),
                         e.get("taxonomyNid", String.class),
-                        e.get("created", Date.class)
+                        e.get("created", Instant.class)
                 )));
     }
 
@@ -136,7 +138,7 @@ public class MongoDBClassificationRepository extends MongoDBRepository implement
 
     @Override
     public Mono<ApiClassification> add(final ApiClassification entity) {
-        entity.setCreated(new Date());
+        entity.setCreated(Instant.now());
 
         return get(entity.getApiId(), entity.getApiVersion(), entity.getTaxonomyUrn())
                 .doOnNext(api -> {

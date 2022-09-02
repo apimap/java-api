@@ -19,6 +19,7 @@ under the License.
 
 package io.apimap.api.repository.mongodb;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import io.apimap.api.repository.mongodb.documents.Api;
 import io.apimap.api.repository.mongodb.documents.ApiVersion;
 import io.apimap.api.repository.repository.IApiRepository;
@@ -38,7 +39,11 @@ import org.springframework.web.server.ResponseStatusException;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import java.util.*;
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Objects;
 
 import static com.mongodb.client.model.Filters.and;
 import static com.mongodb.client.model.Filters.or;
@@ -50,6 +55,7 @@ public class MongoDBApiRepository extends MongoDBRepository implements IApiRepos
 
     final protected MongoDBMetadataRepository metadataRepository;
 
+    @SuppressFBWarnings
     public MongoDBApiRepository(final ReactiveMongoTemplate template,
                                 final MongoDBMetadataRepository metadataRepository) {
         super(template);
@@ -83,7 +89,7 @@ public class MongoDBApiRepository extends MongoDBRepository implements IApiRepos
                         e.get("name", String.class),
                         e.get("codeRepositoryUrl", String.class),
                         null,
-                        e.get("created", Date.class),
+                        e.get("created", Instant.class),
                         e.get("_id", String.class)
                 )));
     }
@@ -99,7 +105,7 @@ public class MongoDBApiRepository extends MongoDBRepository implements IApiRepos
     @Override
     public Mono<Api> add(final Api entity) {
         entity.generateToken();
-        entity.setCreated(new Date());
+        entity.setCreated(Instant.now());
 
         return get(entity.getName())
                 .doOnNext(api -> {
@@ -198,7 +204,7 @@ public class MongoDBApiRepository extends MongoDBRepository implements IApiRepos
 
     @Override
     public Mono<ApiVersion> addApiVersion(final ApiVersion entity) {
-        entity.setCreated(new Date());
+        entity.setCreated(Instant.now());
 
         return getApiVersion(entity.getApiId(), entity.getVersion())
                 .doOnNext(api -> {

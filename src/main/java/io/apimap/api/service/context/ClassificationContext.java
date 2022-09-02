@@ -22,6 +22,7 @@ package io.apimap.api.service.context;
 import io.apimap.api.service.query.Filter;
 import io.apimap.api.service.query.QueryFilter;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class ClassificationContext {
@@ -29,9 +30,11 @@ public class ClassificationContext {
     final protected List<Filter> filters;
     final protected QueryFilter query;
 
-    public ClassificationContext(String classificationURN, List<Filter> filters, QueryFilter query) {
+    public ClassificationContext(final String classificationURN,
+                                 final List<Filter> filters,
+                                 final QueryFilter query) {
         this.classificationURN = classificationURN;
-        this.filters = filters;
+        this.filters = new ArrayList<>(filters);
         this.query = query;
     }
 
@@ -41,12 +44,12 @@ public class ClassificationContext {
 
     public boolean isEmpty() {
         return classificationURN == null
-                && (filters == null || filters.size() < 1)
+                && filters.size() < 1
                 && query == null;
     }
 
     public List<Filter> getFilters() {
-        return filters;
+        return new ArrayList<>(filters);
     }
 
     public QueryFilter getQuery() {

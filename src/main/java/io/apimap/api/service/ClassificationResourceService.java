@@ -19,6 +19,7 @@ under the License.
 
 package io.apimap.api.service;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import io.apimap.api.configuration.ApimapConfiguration;
 import io.apimap.api.repository.IRESTConverter;
 import io.apimap.api.repository.SearchRepository;
@@ -56,6 +57,7 @@ public class ClassificationResourceService {
     final protected ClassificationTreeBuilder classificationTreeBuilder;
     final protected SearchRepository searchRepository;
 
+    @SuppressFBWarnings
     public ClassificationResourceService(final IClassificationRepository classificationRepository,
                                          final IApiRepository apiRepository,
                                          final IMetadataRepository metadataRepository,

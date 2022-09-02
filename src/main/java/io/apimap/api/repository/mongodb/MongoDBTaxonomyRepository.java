@@ -19,6 +19,7 @@ under the License.
 
 package io.apimap.api.repository.mongodb;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import io.apimap.api.repository.mongodb.documents.TaxonomyCollection;
 import io.apimap.api.repository.mongodb.documents.TaxonomyCollectionVersion;
 import io.apimap.api.repository.mongodb.documents.TaxonomyCollectionVersionURN;
@@ -37,13 +38,14 @@ import org.springframework.web.server.ResponseStatusException;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import java.util.Date;
+import java.time.Instant;
 import java.util.Objects;
 
 @Repository
 @ConditionalOnBean(io.apimap.api.configuration.MongoConfiguration.class)
 public class MongoDBTaxonomyRepository extends MongoDBRepository implements ITaxonomyRepository<TaxonomyCollection, TaxonomyCollectionVersion, TaxonomyCollectionVersionURN> {
 
+    @SuppressFBWarnings
     public MongoDBTaxonomyRepository(ReactiveMongoTemplate template) {
         super(template);
     }
@@ -65,7 +67,7 @@ public class MongoDBTaxonomyRepository extends MongoDBRepository implements ITax
     @Override
     public Mono<TaxonomyCollection> addTaxonomyCollection(TaxonomyCollection entity) {
         entity.generateToken();
-        entity.setCreated(new Date());
+        entity.setCreated(Instant.now());
 
         return getTaxonomyCollection(entity.getNid())
                 .doOnNext(api -> {
@@ -98,7 +100,7 @@ public class MongoDBTaxonomyRepository extends MongoDBRepository implements ITax
 
     @Override
     public Mono<TaxonomyCollectionVersion> addTaxonomyCollectionVersion(TaxonomyCollectionVersion entity) {
-        entity.setCreated(new Date());
+        entity.setCreated(Instant.now());
 
         return getTaxonomyCollectionVersion(entity.getNid(), entity.getVersion())
                 .doOnNext(api -> {
@@ -169,7 +171,7 @@ public class MongoDBTaxonomyRepository extends MongoDBRepository implements ITax
 
     @Override
     public Mono<TaxonomyCollectionVersionURN> addTaxonomyCollectionVersionURN(TaxonomyCollectionVersionURN entity) {
-        entity.setCreated(new Date());
+        entity.setCreated(Instant.now());
 
         return getTaxonomyCollectionVersionURN(entity.getUrn(), entity.getVersion(), TaxonomyDataRestEntity.ReferenceType.UNKNOWN)
                 .doOnNext(api -> {

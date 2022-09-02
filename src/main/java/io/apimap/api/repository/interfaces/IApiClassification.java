@@ -19,7 +19,7 @@ under the License.
 
 package io.apimap.api.repository.interfaces;
 
-import java.util.Date;
+import java.time.Instant;
 
 public interface IApiClassification {
 
@@ -47,9 +47,9 @@ public interface IApiClassification {
 
     void setTaxonomyNid(String taxonomyNid);
 
-    Date getCreated();
+    Instant getCreated();
 
-    void setCreated(Date created);
+    void setCreated(Instant created);
 
     String getId();
 

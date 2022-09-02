@@ -5,6 +5,7 @@ plugins {
     id "com.github.johnrengelman.processes" version "0.5.0"
     id "org.springdoc.openapi-gradle-plugin" version "1.3.3"
     id 'de.gliderpilot.semantic-release' version '1.4.2'
+    id "com.github.spotbugs" version "5.0.9"
 }
 
 group = 'io.apimap.api'
@@ -34,9 +35,8 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-actuator:2.7.2'
     implementation 'org.springframework.boot:spring-boot-starter-security:2.7.2'
     implementation 'org.springframework.boot:spring-boot-starter-data-mongodb-reactive:2.7.2'
-
     implementation 'org.springdoc:springdoc-openapi-webflux-ui:1.6.9'
-
+    implementation 'com.github.spotbugs:spotbugs-annotations:4.7.1'
     implementation 'io.netty:netty-buffer:4.1.79.Final'
     implementation 'org.dizitart:nitrite:3.4.4'
     implementation 'org.commonmark:commonmark:0.19.0'

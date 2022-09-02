@@ -19,14 +19,15 @@ under the License.
 
 package io.apimap.api.repository.generic;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+
 public class StatisticsCollection {
-    protected String id;
-    protected String description;
+    protected final String id;
+    protected final String description;
 
-    public StatisticsCollection() {
-    }
-
-    public StatisticsCollection(String id, String description) {
+    @SuppressFBWarnings
+    public StatisticsCollection(final String id,
+                                final String description) {
         this.id = id;
         this.description = description;
     }
@@ -35,16 +36,8 @@ public class StatisticsCollection {
         return id;
     }
 
-    public void setId(String id) {
-        this.id = id;
-    }
-
     public String getDescription() {
         return description;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
     }
 
     @Override

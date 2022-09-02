@@ -22,12 +22,12 @@ package io.apimap.api.repository.nitrite.entities;
 import io.apimap.api.repository.interfaces.IApiVersion;
 import org.dizitart.no2.objects.Id;
 
-import java.util.Date;
+import java.time.Instant;
 import java.util.Objects;
 
 public class ApiVersion implements IApiVersion {
     protected String version;
-    protected Date created;
+    protected Instant created;
     protected String apiId;
 
     @Id
@@ -37,7 +37,7 @@ public class ApiVersion implements IApiVersion {
     }
 
     public ApiVersion(final String apiVersion,
-                      final Date created,
+                      final Instant created,
                       final String apiId) {
         this.version = apiVersion;
         this.created = created;
@@ -56,12 +56,12 @@ public class ApiVersion implements IApiVersion {
     }
 
     @Override
-    public Date getCreated() {
+    public Instant getCreated() {
         return created;
     }
 
     @Override
-    public void setCreated(Date created) {
+    public void setCreated(Instant created) {
         this.created = created;
     }
 

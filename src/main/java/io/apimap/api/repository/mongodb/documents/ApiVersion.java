@@ -23,13 +23,13 @@ import io.apimap.api.repository.interfaces.IApiVersion;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
-import java.util.Date;
+import java.time.Instant;
 
 @Document
 public class ApiVersion implements IApiVersion {
 
     protected String version;
-    protected Date created;
+    protected Instant created;
     protected String apiId;
 
     @Id
@@ -39,7 +39,7 @@ public class ApiVersion implements IApiVersion {
     }
 
     public ApiVersion(final String version,
-                      final Date created,
+                      final Instant created,
                       final String apiId) {
         this.version = version;
         this.created = created;
@@ -55,11 +55,11 @@ public class ApiVersion implements IApiVersion {
         this.version = version;
     }
 
-    public Date getCreated() {
+    public Instant getCreated() {
         return created;
     }
 
-    public void setCreated(Date created) {
+    public void setCreated(Instant created) {
         this.created = created;
     }
 

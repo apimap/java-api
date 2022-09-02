@@ -21,6 +21,7 @@ import reactor.util.function.Tuple2;
 
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
+import java.time.Instant;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -52,7 +53,7 @@ public class NitriteRESTConverter implements IRESTConverter {
         return Mono.just(
             new ApiVersion(
                 object.getData().getVersion(),
-                object.getData().getCreated(),
+                object.getData().getCreated().toInstant(),
                 api.getId()
             )
         );
@@ -77,7 +78,7 @@ public class NitriteRESTConverter implements IRESTConverter {
                         object.getData().getInterfaceSpecification(),
                         object.getData().getSystemIdentifier(),
                         object.getData().getDocumentation(),
-                        new Date()
+                        Instant.now()
                 )
         );
     }
@@ -131,7 +132,7 @@ public class NitriteRESTConverter implements IRESTConverter {
                 object.getTaxonomyVersion(),
                 object.getUrn(),
                 object.getNid(),
-                new Date()
+                Instant.now()
             )
         );
     }
@@ -162,7 +163,7 @@ public class NitriteRESTConverter implements IRESTConverter {
                         apiContext.getApiId(),
                         apiContext.getApiVersion(),
                         new String(resource.getByteArray(), StandardCharsets.UTF_8),
-                        new Date(),
+                        Instant.now(),
                         type
                 )
         );
@@ -219,7 +220,7 @@ public class NitriteRESTConverter implements IRESTConverter {
     public Mono<JsonApiRestResponseWrapper<ApiVersionDataRestEntity>> encodeApiVersion(final URI uri, final IApiVersion object, final Integer rating) {
         ApiVersionDataRestEntity content = new ApiVersionDataRestEntity(
                 object.getVersion(),
-                object.getCreated(),
+                Date.from(object.getCreated()),
                 new ApiVersionRatingEntity(rating),
                 URIUtil.fromURI(uri).append(object.getVersion()).stringValue()
         );
@@ -235,7 +236,7 @@ public class NitriteRESTConverter implements IRESTConverter {
                 .stream()
                 .map(version -> new ApiVersionDataRestEntity(
                         version.getT1().getVersion(),
-                        version.getT1().getCreated(),
+                        Date.from(version.getT1().getCreated()),
                         new ApiVersionRatingEntity(version.getT2()),
                         URIUtil.fromURI(uri).append(version.getT1().getVersion()).stringValue())
                 )

@@ -2,6 +2,7 @@ package io.apimap.api.service;
 
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import io.apimap.api.configuration.ApimapConfiguration;
 import io.apimap.api.repository.IRESTConverter;
 import io.apimap.api.repository.interfaces.IApi;
@@ -37,6 +38,7 @@ public class ApiVoteService {
     final protected ApimapConfiguration apimapConfiguration;
     final protected IRESTConverter entityMapper;
 
+    @SuppressFBWarnings
     public ApiVoteService(final IVoteRepository voteRepository,
                           final IApiRepository apiRepository,
                           final ApimapConfiguration apimapConfiguration,
