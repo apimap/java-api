@@ -71,27 +71,40 @@ public abstract class SmokeTestAllBase {
                 .is2xxSuccessful();
     }
 
+    /** test API lifecycle with POST, PUT, GET and DELETE */
     @Test
-    public void postAndRetrieveAPI() throws Exception {
+    public void testApiCRUD() throws Exception {
         var testApi = testData.createApiData();
+        var apiUpdate = new ApiDataRestEntity(testApi.getName(), "http://example.org/new_repo");
 
-        var postResult = postJsonPublic(RESPONSE_TYPE_API, new JsonApiRestRequestWrapper<>(testApi), "/api");
+        var createResult = postJsonPublic(RESPONSE_TYPE_API, new JsonApiRestRequestWrapper<>(testApi), "/api");
+        currentApiToken = createResult.getData().getMeta().getToken();
+        var updateResult = putJsonAuthed(RESPONSE_TYPE_API, new JsonApiRestRequestWrapper<>(apiUpdate), "/api/{name}", testApi.getName());
+        var retrieveResult = getJsonPublic(RESPONSE_TYPE_API, "/api/{name}", testApi.getName());
+        deleteAuthedAndVerifyGone("/api/{name}", testApi.getName());
 
-        var createdApi = postResult.getData();
-        assertThat(createdApi)
+        assertThat(createResult.getData()).as("create result")
                 .usingRecursiveComparison()
                 .ignoringFields("meta", "relationships")
                 .isEqualTo(testApi);
 
-        assertThat(createdApi.getMeta().getToken()).as("token")
+        assertThat(createResult.getData().getMeta().getToken()).as("token")
                 .isNotEmpty();
 
-        var getResult = getJsonPublic(RESPONSE_TYPE_API, "/api/{name}", testApi.getName());
-
-        assertThat(getResult.getData())
+        assertThat(updateResult.getData()).as("update result")
                 .usingRecursiveComparison()
-                .ignoringFields("relationships")
+                .comparingOnlyFields("codeRepository")
+                .isEqualTo(apiUpdate);
+
+        assertThat(retrieveResult.getData()).as("get result")
+                .usingRecursiveComparison()
+                .ignoringFields("relationships", "codeRepository")
                 .isEqualTo(testApi);
+
+        assertThat(retrieveResult.getData()).as("get result")
+                .usingRecursiveComparison()
+                .comparingOnlyFields("codeRepository")
+                .isEqualTo(apiUpdate);
     }
 
     @Test
@@ -169,5 +182,33 @@ public abstract class SmokeTestAllBase {
                 .expectBody(responseType)
                 .returnResult()
                 .getResponseBody();
+    }
+
+    /** Helper for sending a PUT request with auth for the last added API and receiving JSON in response */
+    private <T> T putJsonAuthed(ParameterizedTypeReference<T> responseType, Object requestBody, String uri, Object... uriVariables) {
+        return webClient.put().uri(uri, uriVariables)
+                .bodyValue(requestBody)
+                .accept(MediaType.APPLICATION_JSON)
+                .header("Authorization", "Bearer " + currentApiToken)
+                .exchange()
+                .expectStatus()
+                .is2xxSuccessful()
+                .expectBody(responseType)
+                .returnResult()
+                .getResponseBody();
+    }
+
+    /** Helper for sending a DELETE request with auth for the last added API */
+    private void deleteAuthedAndVerifyGone(String uri, Object... uriVariables) {
+        webClient.delete().uri(uri, uriVariables)
+                .header("Authorization", "Bearer " + currentApiToken)
+                .exchange()
+                .expectStatus().isNoContent();
+
+        // Verify that deleted resource returns 404 now
+        webClient.get().uri(uri, uriVariables)
+                .header("Authorization", "Bearer " + currentApiToken)
+                .exchange()
+                .expectStatus().isNotFound();
     }
 }
