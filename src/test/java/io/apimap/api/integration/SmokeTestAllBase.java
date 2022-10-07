@@ -1,5 +1,6 @@
 package io.apimap.api.integration;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import io.apimap.api.repository.interfaces.IApi;
 import io.apimap.api.repository.interfaces.IApiVersion;
 import io.apimap.api.repository.repository.*;
@@ -48,6 +49,7 @@ public abstract class SmokeTestAllBase {
     private IVoteRepository voteRepository;
 
     @SuppressWarnings({"ConstantConditions"})
+    @SuppressFBWarnings("NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE")
     @AfterEach
     public void clearDatabases() {
         var apis = (List<IApi>) apiRepository.all().collectList().block();
@@ -57,7 +59,6 @@ public abstract class SmokeTestAllBase {
                 apiRepository.deleteApiVersion(version.getApiId(), version.getVersion()).block();
             }
             apiRepository.delete(api.getName()).block();
-            System.err.println("deleted " + api);
         }
     }
 
