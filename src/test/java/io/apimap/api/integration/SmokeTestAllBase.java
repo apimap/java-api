@@ -75,15 +75,7 @@ public abstract class SmokeTestAllBase {
     public void postAndRetrieveAPI() throws Exception {
         var testApi = testData.createApiData();
 
-        var postResult = webClient.post().uri("/api")
-                .bodyValue(new JsonApiRestRequestWrapper<>(testApi))
-                .accept(MediaType.APPLICATION_JSON)
-                .exchange()
-                .expectStatus()
-                .is2xxSuccessful()
-                .expectBody(RESPONSE_TYPE_API)
-                .returnResult()
-                .getResponseBody();
+        var postResult = postJsonPublic(RESPONSE_TYPE_API, new JsonApiRestRequestWrapper<>(testApi), "/api");
 
         var createdApi = postResult.getData();
         assertThat(createdApi)
@@ -94,13 +86,7 @@ public abstract class SmokeTestAllBase {
         assertThat(createdApi.getMeta().getToken()).as("token")
                 .isNotEmpty();
 
-        var getResult = webClient.get().uri("/api/{name}", testApi.getName())
-                .accept(MediaType.APPLICATION_JSON)
-                .exchange()
-                .expectStatus().is2xxSuccessful()
-                .expectBody(RESPONSE_TYPE_API)
-                .returnResult()
-                .getResponseBody();
+        var getResult = getJsonPublic(RESPONSE_TYPE_API, "/api/{name}", testApi.getName());
 
         assertThat(getResult.getData())
                 .usingRecursiveComparison()
@@ -115,13 +101,7 @@ public abstract class SmokeTestAllBase {
         storeVersionForCurrentApi(testData.createApiVersion());
         storeMetadataForCurrentVersion(testData.createMetadata());
 
-        var getResult = webClient.get().uri("/api")
-                .accept(MediaType.APPLICATION_JSON)
-                .exchange()
-                .expectStatus().is2xxSuccessful()
-                .expectBody(RESPONSE_TYPE_API_LIST)
-                .returnResult()
-                .getResponseBody();
+        var getResult = getJsonPublic(RESPONSE_TYPE_API_LIST, "/api");
 
         assertThat(getResult.getData().getData())
                 .hasSize(1);
@@ -130,16 +110,7 @@ public abstract class SmokeTestAllBase {
 
     /** Helper method to store an API and keep the token and API data for further update */
     private ApiDataRestEntity storeApi(ApiDataRestEntity testApi) {
-        var postResult = webClient.post().uri("/api")
-                .bodyValue(new JsonApiRestRequestWrapper<>(testApi))
-                .accept(MediaType.APPLICATION_JSON)
-                .exchange()
-                .expectStatus()
-                .is2xxSuccessful()
-                .expectBody(RESPONSE_TYPE_API)
-                .returnResult()
-                .getResponseBody();
-
+        var postResult = postJsonPublic(RESPONSE_TYPE_API, new JsonApiRestRequestWrapper<>(testApi), "/api");
         currentApi = postResult.getData();
         currentApiToken = currentApi.getMeta().getToken();
         return currentApi;
@@ -147,34 +118,56 @@ public abstract class SmokeTestAllBase {
 
     /** Helper method to add an API version to the last added API */
     private ApiVersionDataRestEntity storeVersionForCurrentApi(ApiVersionDataRestEntity testVersion) {
-        var postResult = webClient.post().uri("/api/{name}/version", currentApi.getName())
-                .bodyValue(new JsonApiRestRequestWrapper<>(testVersion))
-                .accept(MediaType.APPLICATION_JSON)
-                .header("Authorization", "Bearer " + currentApiToken)
-                .exchange()
-                .expectStatus()
-                .is2xxSuccessful()
-                .expectBody(RESPONSE_TYPE_VERSION)
-                .returnResult()
-                .getResponseBody();
-
+        var postResult = postJsonAuthed(RESPONSE_TYPE_VERSION, new JsonApiRestRequestWrapper<>(testVersion), "/api/{name}/version", currentApi.getName());
         currentVersion = postResult.getData();
         return currentVersion;
     }
 
     /** Helper method to add metadata */
     private MetadataDataRestEntity storeMetadataForCurrentVersion(MetadataDataRestEntity testMetadata) {
-        var postResult = webClient.post().uri("/api/{name}/version/{version}/metadata", currentApi.getName(), currentVersion.getVersion())
-                .bodyValue(new JsonApiRestRequestWrapper<>(testMetadata))
+        return postJsonAuthed(
+                RESPONSE_TYPE_METADATA,
+                new JsonApiRestRequestWrapper<>(testMetadata),
+                "/api/{name}/version/{version}/metadata", currentApi.getName(), currentVersion.getVersion()
+        ).getData();
+    }
+
+    /** Helper for sending a GET request with no auth and receiving JSON in response */
+    private <T> T getJsonPublic(ParameterizedTypeReference<T> responseType, String uri, Object... uriVariables) {
+        return webClient.get().uri(uri, uriVariables)
+                .accept(MediaType.APPLICATION_JSON)
+                .exchange()
+                .expectStatus()
+                .is2xxSuccessful()
+                .expectBody(responseType)
+                .returnResult()
+                .getResponseBody();
+    }
+
+    /** Helper for sending a POST request with no auth and receiving JSON in response */
+    private <T> T postJsonPublic(ParameterizedTypeReference<T> responseType, Object requestBody, String uri, Object... uriVariables) {
+        return webClient.post().uri(uri, uriVariables)
+                .bodyValue(requestBody)
+                .accept(MediaType.APPLICATION_JSON)
+                .exchange()
+                .expectStatus()
+                .is2xxSuccessful()
+                .expectBody(responseType)
+                .returnResult()
+                .getResponseBody();
+    }
+
+    /** Helper for sending a POST request with auth for the last added API and receiving JSON in response */
+    private <T> T postJsonAuthed(ParameterizedTypeReference<T> responseType, Object requestBody, String uri, Object... uriVariables) {
+        return webClient.post().uri(uri, uriVariables)
+                .bodyValue(requestBody)
                 .accept(MediaType.APPLICATION_JSON)
                 .header("Authorization", "Bearer " + currentApiToken)
                 .exchange()
                 .expectStatus()
                 .is2xxSuccessful()
-                .expectBody(RESPONSE_TYPE_METADATA)
+                .expectBody(responseType)
                 .returnResult()
                 .getResponseBody();
-
-        return postResult.getData();
     }
 }
