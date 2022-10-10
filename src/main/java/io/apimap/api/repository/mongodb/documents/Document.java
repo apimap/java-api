@@ -4,6 +4,7 @@ import io.apimap.api.repository.interfaces.IDocument;
 import org.springframework.data.annotation.Id;
 
 import java.time.Instant;
+import java.util.Date;
 
 public class Document implements IDocument {
     protected String apiId;
@@ -18,12 +19,24 @@ public class Document implements IDocument {
     public Document() {
     }
 
-    public Document(String apiId, String apiVersion, String body, Instant created, DocumentType type) {
+    public Document(final String apiId,
+                    final String apiVersion,
+                    final String body,
+                    final Object created,
+                    final DocumentType type) {
         this.apiId = apiId;
         this.apiVersion = apiVersion;
         this.body = body;
-        this.created = created;
         this.type = type;
+
+        if(created instanceof Date){
+            this.created = ((Date) created).toInstant();
+        }else if(created instanceof Instant){
+            this.created = (Instant) created;
+        }else{
+            this.created = Instant.now();
+        }
+
         this.id = IDocument.createId(apiId, apiVersion, type);
     }
 
@@ -68,6 +81,14 @@ public class Document implements IDocument {
 
     public void setCreated(Instant created) {
         this.created = created;
+    }
+
+    public void setCreated(Date created) {
+        if(created != null){
+            this.created = created.toInstant();
+        }else{
+            this.created = null;
+        }
     }
 
     public DocumentType getType() {

@@ -25,6 +25,7 @@ import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 @Document
@@ -64,12 +65,11 @@ public class Metadata implements IMetadata {
                     final String interfaceSpecification,
                     final String systemIdentifier,
                     final List<String> documentation,
-                    final Instant created) {
+                    final Object created) {
         this.apiId = apiId;
         this.name = name;
         this.description = description;
         this.visibility = visibility;
-        this.created = created;
         this.interfaceDescriptionLanguage = interfaceDescriptionLanguage;
         this.architectureLayer = architectureLayer;
         this.businessUnit = businessUnit;
@@ -79,6 +79,15 @@ public class Metadata implements IMetadata {
         this.interfaceSpecification = interfaceSpecification;
         this.systemIdentifier = systemIdentifier;
         this.documentation = new ArrayList<String>(documentation);
+
+        if(created instanceof Date){
+            this.created = ((Date) created).toInstant();
+        }else if(created instanceof Instant){
+            this.created = (Instant) created;
+        }else{
+            this.created = Instant.now();
+        }
+
         this.id = IMetadata.createId(apiId, apiVersion);
     }
 
@@ -192,6 +201,14 @@ public class Metadata implements IMetadata {
 
     public void setCreated(Instant created) {
         this.created = created;
+    }
+
+    public void setCreated(Date created) {
+        if(created != null){
+            this.created = created.toInstant();
+        }else{
+            this.created = null;
+        }
     }
 
     public String getId() {

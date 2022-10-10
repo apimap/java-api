@@ -19,6 +19,7 @@ under the License.
 
 package io.apimap.api.repository.mongodb;
 
+import com.mongodb.client.model.Sorts;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import io.apimap.api.repository.interfaces.IDocument;
 import io.apimap.api.repository.mongodb.documents.Document;
@@ -68,9 +69,8 @@ public class MongoDBMetadataRepository extends MongoDBRepository implements IMet
                 .flatMapMany(collection -> filters
                         .filter(Objects::nonNull)
                         .filter(list -> list.size() > 0)
-                        .flatMapMany(filterList -> {
-                            return collection.find(and(filterList), org.bson.Document.class);
-                        })
+                        .flatMapMany(filterList -> collection.find(and(filterList), org.bson.Document.class)
+                                .sort(Sorts.ascending("created")))
                 )
                 .flatMap(e -> Mono.just(new Metadata(
                         e.get("apiId", String.class),
@@ -86,7 +86,7 @@ public class MongoDBMetadataRepository extends MongoDBRepository implements IMet
                         e.get("interfaceSpecification", String.class),
                         e.get("systemIdentifier", String.class),
                         e.get("documentation", List.class),
-                        e.get("created", Instant.class)
+                        e.get("created", Object.class)
                 )));
     }
 

@@ -82,7 +82,9 @@ public class NitriteClassificationRepository extends NitriteRepository implement
                     ObjectFilter objectFilter = or(filterList.toArray(ObjectFilter[]::new));
                     Cursor<ApiClassification> cursor = repository.find(objectFilter);
                     return Flux.fromIterable(cursor.toList());
-                });
+                })
+                .groupBy(ApiClassification::getApiId)
+                .flatMap(classification -> classification.reduce((api1, api2) -> api1.getCreated().compareTo(api2.getCreated()) > 0 ? api1 : api2));
     }
 
     @Override

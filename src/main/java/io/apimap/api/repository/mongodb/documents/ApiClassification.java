@@ -24,6 +24,7 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.time.Instant;
+import java.util.Date;
 
 @Document
 public class ApiClassification implements IApiClassification {
@@ -46,13 +47,21 @@ public class ApiClassification implements IApiClassification {
                              final String taxonomyVersion,
                              final String taxonomyUrn,
                              final String taxonomyNid,
-                             final Instant created) {
+                             final Object created) {
         this.apiId = apiId;
         this.taxonomyUrn = taxonomyUrn;
         this.taxonomyVersion = taxonomyVersion;
         this.apiVersion = apiVersion;
         this.taxonomyNid = taxonomyNid;
-        this.created = created;
+
+        if(created instanceof Date){
+            this.created = ((Date) created).toInstant();
+        }else if(created instanceof Instant){
+            this.created = (Instant) created;
+        }else{
+            this.created = Instant.now();
+        }
+
         this.id = IApiClassification.createId(apiId, apiVersion, taxonomyUrn);
     }
 
@@ -102,6 +111,14 @@ public class ApiClassification implements IApiClassification {
 
     public void setCreated(Instant created) {
         this.created = created;
+    }
+
+    public void setCreated(Date created) {
+        if(created != null){
+            this.created = created.toInstant();
+        }else{
+            this.created = null;
+        }
     }
 
     public String getId() {

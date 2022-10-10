@@ -24,6 +24,7 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.time.Instant;
+import java.util.Date;
 
 @Document
 public class ApiVersion implements IApiVersion {
@@ -39,11 +40,19 @@ public class ApiVersion implements IApiVersion {
     }
 
     public ApiVersion(final String version,
-                      final Instant created,
+                      final Object created,
                       final String apiId) {
         this.version = version;
-        this.created = created;
         this.apiId = apiId;
+
+        if(created instanceof Date){
+            this.created = ((Date) created).toInstant();
+        }else if(created instanceof Instant){
+            this.created = (Instant) created;
+        }else{
+            this.created = Instant.now();
+        }
+
         this.id = IApiVersion.createId(apiId, version);
     }
 
@@ -61,6 +70,14 @@ public class ApiVersion implements IApiVersion {
 
     public void setCreated(Instant created) {
         this.created = created;
+    }
+
+    public void setCreated(Date created) {
+        if(created != null){
+            this.created = created.toInstant();
+        }else{
+            this.created = null;
+        }
     }
 
     public String getApiId() {
