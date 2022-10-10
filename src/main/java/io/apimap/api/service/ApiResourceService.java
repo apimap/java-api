@@ -102,7 +102,7 @@ public class ApiResourceService {
         final URI uri = request.uri();
 
         return apiRepository
-                .allByFilters(apiRepository. queryFilters(context.getFilters()))
+                .allByFilters(apiRepository.queryFilters(context.getFilters()))
                 .flatMap(api -> apiRepository.getLatestApiVersion(((IApi) api).getId())
                                 .flatMap(apiVersion -> Mono.just(Tuples.of(api, apiVersion)))
                                 .flatMap(tuple -> metadataRepository.get(((IApi) ((Tuple2) tuple).getT1()).getId(), ((IApiVersion) ((Tuple2) tuple).getT2()).getVersion())

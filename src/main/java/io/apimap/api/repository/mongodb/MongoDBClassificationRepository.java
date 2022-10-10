@@ -20,6 +20,7 @@ under the License.
 package io.apimap.api.repository.mongodb;
 
 import com.mongodb.client.model.Filters;
+import com.mongodb.client.model.Sorts;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import io.apimap.api.repository.mongodb.documents.ApiClassification;
 import io.apimap.api.repository.mongodb.documents.TaxonomyCollectionVersionURN;
@@ -46,6 +47,7 @@ import java.util.Objects;
 
 import static com.mongodb.client.model.Filters.or;
 import static io.apimap.api.repository.nitrite.NitriteClassificationRepository.TAXONOMY_VERSION;
+import static org.springframework.data.mongodb.core.aggregation.Aggregation.group;
 
 @Repository
 @ConditionalOnBean(io.apimap.api.configuration.MongoConfiguration.class)
@@ -81,9 +83,8 @@ public class MongoDBClassificationRepository extends MongoDBRepository implement
                 .flatMapMany(collection -> filters
                         .filter(Objects::nonNull)
                         .filter(list -> list.size() > 0)
-                        .flatMapMany(filterList -> {
-                                return collection.find(or(filterList), Document.class);
-                        })
+                        .flatMapMany(filterList -> collection.find(or(filterList), Document.class)
+                                .sort(Sorts.ascending("created")))
                 )
                 .flatMap(e -> Mono.just(new ApiClassification(
                         e.get("apiId", String.class),
@@ -91,8 +92,10 @@ public class MongoDBClassificationRepository extends MongoDBRepository implement
                         e.get("taxonomyVersion", String.class),
                         e.get("taxonomyUrn", String.class),
                         e.get("taxonomyNid", String.class),
-                        e.get("created", Instant.class)
-                )));
+                        e.get("created", Object.class)
+                )))
+                .groupBy(ApiClassification::getApiId)
+                .flatMap(classification -> classification.reduce((api1, api2) -> api1.getCreated().compareTo(api2.getCreated()) > 0 ? api1 : api2));
     }
 
     @Override

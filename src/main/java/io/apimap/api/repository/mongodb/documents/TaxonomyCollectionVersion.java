@@ -24,6 +24,7 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.time.Instant;
+import java.util.Date;
 
 @Document
 public class TaxonomyCollectionVersion implements ITaxonomyCollectionVersion {
@@ -40,10 +41,18 @@ public class TaxonomyCollectionVersion implements ITaxonomyCollectionVersion {
 
     public TaxonomyCollectionVersion(final String nid,
                                      final String version,
-                                     final Instant created) {
+                                     final Object created) {
         this.version = version;
         this.nid = nid;
-        this.created = created;
+
+        if(created instanceof Date){
+            this.created = ((Date) created).toInstant();
+        }else if(created instanceof Instant){
+            this.created = (Instant) created;
+        }else{
+            this.created = Instant.now();
+        }
+
         this.id = ITaxonomyCollectionVersion.createId(nid, version);
     }
 
@@ -75,6 +84,14 @@ public class TaxonomyCollectionVersion implements ITaxonomyCollectionVersion {
     @Override
     public void setCreated(Instant created) {
         this.created = created;
+    }
+
+    public void setCreated(Date created) {
+        if(created != null){
+            this.created = created.toInstant();
+        }else{
+            this.created = null;
+        }
     }
 
     @Override

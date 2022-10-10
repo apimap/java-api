@@ -26,6 +26,7 @@ import io.apimap.api.rest.jsonapi.JsonApiError;
 import io.apimap.api.rest.jsonapi.JsonApiRestResponseWrapper;
 import io.apimap.api.rest.jsonapi.JsonApiViews;
 import io.apimap.api.utils.URIUtil;
+import org.springframework.http.CacheControl;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.codec.json.Jackson2CodecSupport;
@@ -33,10 +34,13 @@ import org.springframework.web.reactive.function.server.ServerResponse;
 import reactor.core.publisher.Mono;
 
 import java.net.URI;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.HashMap;
 
 public class ResponseBuilder {
+
+    public final Duration MAX_AGE = Duration.ofMinutes(15);
 
     protected long responseMetricsStartTime;
 
@@ -159,9 +163,12 @@ public class ResponseBuilder {
         this.relatedReferences.forEach(rel -> body.addRelatedRef((String) rel.get("rel"), (URI) rel.get("href")));
         body.appendDuration(responseMetricsStartTime, System.currentTimeMillis());
 
+        final CacheControl cacheControl = CacheControl.maxAge(MAX_AGE).cachePublic();
+
         return ServerResponse.ok()
                 .header("Access-Control-Allow-Origin", "*")
                 .header("Access-Control-Request-Method", "GET,POST,DELETE")
+                .cacheControl(cacheControl)
                 .contentType(MediaType.APPLICATION_JSON)
                 .hint(Jackson2CodecSupport.JSON_VIEW_HINT, JsonApiViews.Collection.class)
                 .body(Mono.just(body), JsonApiRestResponseWrapper.class);
@@ -173,9 +180,12 @@ public class ResponseBuilder {
         this.relatedReferences.forEach(rel -> body.addRelatedRef((String) rel.get("rel"), (URI) rel.get("href")));
         body.appendDuration(responseMetricsStartTime, System.currentTimeMillis());
 
+        final CacheControl cacheControl = CacheControl.maxAge(MAX_AGE).cachePublic();
+
         return ServerResponse.ok()
                 .header("Access-Control-Allow-Origin", "*")
                 .header("Access-Control-Request-Method", "GET,POST,DELETE")
+                .cacheControl(cacheControl)
                 .contentType(MediaType.APPLICATION_JSON)
                 .hint(Jackson2CodecSupport.JSON_VIEW_HINT, JsonApiViews.Default.class)
                 .body(Mono.just(body), JsonApiRestResponseWrapper.class);

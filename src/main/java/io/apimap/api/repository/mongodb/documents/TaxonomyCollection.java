@@ -24,6 +24,7 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.time.Instant;
+import java.util.Date;
 import java.util.UUID;
 
 @Document
@@ -104,6 +105,14 @@ public class TaxonomyCollection implements ITaxonomyCollection {
     @Override
     public Instant getCreated() {
         return this.created;
+    }
+
+    public void setCreated(Date created) {
+        if(created != null){
+            this.created = created.toInstant();
+        }else{
+            this.created = null;
+        }
     }
 
     @Override

@@ -24,6 +24,7 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.time.Instant;
+import java.util.Date;
 
 @Document
 public class Api implements IApi {
@@ -61,12 +62,20 @@ public class Api implements IApi {
     public Api(final String name,
                final String codeRepositoryUrl,
                final String token,
-               final Instant created,
+               final Object created,
                final String id) {
         this.name = name;
         this.codeRepositoryUrl = codeRepositoryUrl;
         this.token = token;
-        this.created = Instant.now();
+
+        if(created instanceof Date){
+            this.created = ((Date) created).toInstant();
+        }else if(created instanceof Instant){
+            this.created = (Instant) created;
+        }else{
+            this.created = Instant.now();
+        }
+
         this.id = id;
     }
 
@@ -120,6 +129,14 @@ public class Api implements IApi {
     @Override
     public void setCreated(Instant created) {
         this.created = created;
+    }
+
+    public void setCreated(Date created) {
+        if(created != null){
+            this.created = created.toInstant();
+        }else{
+            this.created = null;
+        }
     }
 
     @Override

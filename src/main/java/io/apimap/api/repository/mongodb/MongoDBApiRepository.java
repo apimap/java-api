@@ -19,6 +19,7 @@ under the License.
 
 package io.apimap.api.repository.mongodb;
 
+import com.mongodb.client.model.Sorts;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import io.apimap.api.repository.mongodb.documents.Api;
 import io.apimap.api.repository.mongodb.documents.ApiVersion;
@@ -78,9 +79,11 @@ public class MongoDBApiRepository extends MongoDBRepository implements IApiRepos
                 .flatMapMany(collection -> filters
                         .flatMapMany(filterList -> {
                             if(filterList.size() < 1){
-                                return collection.find(Document.class);
+                                return collection.find(Document.class)
+                                        .sort(Sorts.ascending("created"));
                             }else{
-                                return collection.find(and(filterList), Document.class);
+                                return collection.find(and(filterList), Document.class)
+                                        .sort(Sorts.ascending("created"));
                             }
                         })
                         .switchIfEmpty(collection.find(Document.class))
@@ -89,7 +92,7 @@ public class MongoDBApiRepository extends MongoDBRepository implements IApiRepos
                         e.get("name", String.class),
                         e.get("codeRepositoryUrl", String.class),
                         null,
-                        e.get("created", Instant.class),
+                        e.get("created", Object.class),
                         e.get("_id", String.class)
                 )));
     }

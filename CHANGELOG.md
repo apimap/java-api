@@ -1,6 +1,10 @@
 Changelog
 ===
 
+### 02.09.2022
+- Fixed bug when casting Date to Instance with mongodb
+- Added filter to only allow lates api version when listing classification filtered results
+
 ### 19.08.2022
 - Fixed PUT also works when no markdown document exists upfront
 
