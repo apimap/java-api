@@ -53,7 +53,7 @@ public class NitriteRESTConverter implements IRESTConverter {
         return Mono.just(
             new ApiVersion(
                 object.getData().getVersion(),
-                object.getData().getCreated().toInstant(),
+                object.getData().getCreated() != null ? object.getData().getCreated().toInstant() : null,
                 api.getId()
             )
         );
