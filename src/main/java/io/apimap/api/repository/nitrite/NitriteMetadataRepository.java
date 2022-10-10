@@ -105,8 +105,7 @@ public class NitriteMetadataRepository extends NitriteRepository implements IMet
 
     public Mono<Boolean> delete(String apiId) {
         ObjectRepository<Metadata> repository = database.getRepository(Metadata.class);
-        repository.remove(eq("apiId", apiId));
-        return Mono.empty();
+        return Mono.just(repository.remove(eq("apiId", apiId)).getAffectedCount() > 0);
     }
 
     public Mono<Boolean> delete(String apiId, String version) {

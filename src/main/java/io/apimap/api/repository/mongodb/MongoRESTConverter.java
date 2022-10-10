@@ -71,7 +71,7 @@ public class MongoRESTConverter implements IRESTConverter {
     public Mono<IApiVersion> decodeApiVersion(final IApi api, final JsonApiRestRequestWrapper<ApiVersionDataRestEntity> object) {
         return Mono.just(new ApiVersion(
                 object.getData().getVersion(),
-                object.getData().getCreated().toInstant(),
+                object.getData().getCreated() != null ? object.getData().getCreated().toInstant() : null,
                 api.getId()
         ));
     }

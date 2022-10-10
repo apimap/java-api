@@ -273,8 +273,8 @@ public class ApiResourceService {
         return apiRepository
                 .get(context.getApiName())
                 .flatMap(api -> classificationRepository.delete(((IApi) api).getId())
-                        .zipWith(metadataRepository.delete(((IApi) api).getId()), (previous, current) -> (Boolean) previous && ((Boolean) current).booleanValue())
-                        .zipWith(apiRepository.delete(((IApi) api).getName()), (previous, current) -> (Boolean) previous && ((Boolean) current).booleanValue()))
+                        .zipWith(metadataRepository.delete(((IApi) api).getId()), (previous, current) -> (Boolean) previous || ((Boolean) current).booleanValue())
+                        .zipWith(apiRepository.delete(((IApi) api).getName()), (previous, current) -> (Boolean) previous || ((Boolean) current).booleanValue()))
                 .filter(value -> (Boolean) value)
                 .flatMap(result -> ResponseBuilder
                         .builder(startTime, apimapConfiguration)
