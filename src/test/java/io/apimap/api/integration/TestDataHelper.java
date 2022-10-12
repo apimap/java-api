@@ -1,9 +1,6 @@
 package io.apimap.api.integration;
 
-import io.apimap.api.rest.ApiDataRestEntity;
-import io.apimap.api.rest.ApiVersionDataRestEntity;
-import io.apimap.api.rest.ApiVersionRatingEntity;
-import io.apimap.api.rest.MetadataDataRestEntity;
+import io.apimap.api.rest.*;
 
 import java.util.Date;
 import java.util.List;
@@ -18,12 +15,7 @@ public class TestDataHelper {
     }
 
     public ApiVersionDataRestEntity createApiVersion() {
-        return new ApiVersionDataRestEntity(
-                "v1.1",
-                new Date(),
-                new ApiVersionRatingEntity(5),
-                "https://example.org/my-api/v1"
-        );
+        return new ApiVersionDataRestEntity("v1.1");
     }
 
     public MetadataDataRestEntity createMetadata() {
@@ -40,6 +32,13 @@ public class TestDataHelper {
                 "S19999",
                 List.of("https://example.org/README.txt"),
                 "https://example.org/api"
+        );
+    }
+
+    public ClassificationDataRestEntity createClassification(String urn) {
+        return new ClassificationDataRestEntity(
+                urn,
+                "1"
         );
     }
 }
