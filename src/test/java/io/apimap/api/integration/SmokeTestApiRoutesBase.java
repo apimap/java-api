@@ -1,5 +1,6 @@
 package io.apimap.api.integration;
 
+import io.apimap.api.configuration.AccessConfiguration;
 import io.apimap.api.rest.*;
 import io.apimap.api.rest.jsonapi.JsonApiRestRequestWrapper;
 import org.junit.jupiter.api.AfterEach;
@@ -8,8 +9,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.reactive.server.WebTestClient;
 
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 
 import static io.apimap.api.integration.IntegrationTestHelper.*;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -27,6 +33,8 @@ public abstract class SmokeTestApiRoutesBase {
 
     @Autowired
     IntegrationTestHelper helper;
+    @Autowired
+    AccessConfiguration accessConfiguration;
 
     @AfterEach
     public void clearDatabases() {
@@ -89,6 +97,42 @@ public abstract class SmokeTestApiRoutesBase {
 
         assertThat(getResult.getData().getData())
                 .hasSize(1);
+    }
+
+    @Test
+    public void testGetAllApisZip() throws IOException, InterruptedException {
+        var zipMediaType = new MediaType("application", "zip");
+        helper.storeApi(testData.createApiData());
+        helper.storeVersionForCurrentApi(testData.createApiVersion());
+
+        var response = webClient.get().uri("/api")
+                .accept(zipMediaType)
+                .header("Authorization", "Bearer " + accessConfiguration.getToken())
+                .exchange()
+                .expectStatus().isOk()
+                .expectBody()
+                .returnResult()
+                .getResponseBody();
+
+        assertThat(response).isNotNull();
+
+        var zipEntries = new HashMap<String, ZipEntry>();
+        var zip = new ZipInputStream(new ByteArrayInputStream(response));
+        ZipEntry entry;
+        while ((entry = zip.getNextEntry()) != null) {
+            zipEntries.put(entry.getName(), entry);
+        }
+
+        assertThat(zipEntries)
+                .containsKeys(
+                        "apis.json",
+                        "classifications.json",
+                        "metadata.json"
+                );
+
+        var suspiciouslySmall = 10;
+        assertThat(zipEntries.get("apis.json").getSize()).as("apis.json size")
+                .isGreaterThan(suspiciouslySmall);
     }
 
     /** test API version lifecycle with POST, GET and DELETE */
