@@ -100,8 +100,7 @@ public class ApiMetadataService {
                             return Mono.justOrEmpty(metadata);
                         })
                 )
-                .flatMap(metadata -> metadataRepository.update((IMetadata) metadata)
-                        .switchIfEmpty(metadataRepository.add((IMetadata) metadata)))
+                .flatMap(metadata -> metadataRepository.update((IMetadata) metadata))
                 .flatMap(metadata -> entityMapper.encodeMetadata(uri, (IMetadata) metadata))
                 .flatMap(version -> ResponseBuilder
                         .builder(startTime, apimapConfiguration)
