@@ -77,7 +77,11 @@ class IntegrationTestHelper {
                 } catch (Exception e) {
                     System.err.println("Could not delete test API version: " + e);
                 }
-                // TODO: delete votes
+                try {
+                    voteRepository.delete(version.getApiId(), version.getVersion()).block();
+                } catch (Exception e) {
+                    System.err.println("Could not delete test votes: " + e);
+                }
             }
             apiRepository.delete(api.getName()).block();
         }
