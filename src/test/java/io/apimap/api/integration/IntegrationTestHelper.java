@@ -3,9 +3,11 @@ package io.apimap.api.integration;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import io.apimap.api.repository.interfaces.IApi;
 import io.apimap.api.repository.interfaces.IApiVersion;
+import io.apimap.api.repository.interfaces.IDocument;
 import io.apimap.api.repository.repository.IApiRepository;
 import io.apimap.api.repository.repository.IClassificationRepository;
 import io.apimap.api.repository.repository.IMetadataRepository;
+import io.apimap.api.repository.repository.IVoteRepository;
 import io.apimap.api.rest.*;
 import io.apimap.api.rest.jsonapi.JsonApiRestRequestWrapper;
 import io.apimap.api.rest.jsonapi.JsonApiRestResponseWrapper;
@@ -28,6 +30,8 @@ class IntegrationTestHelper {
     public static final ParameterizedTypeReference<JsonApiRestResponseWrapper<ApiVersionCollectionRootRestEntity>> RESPONSE_TYPE_VERSION_LIST = new ParameterizedTypeReference<>() {};
     public static final ParameterizedTypeReference<JsonApiRestResponseWrapper<ClassificationRootRestEntity>> RESPONSE_TYPE_CLASSIFICATION_LIST = new ParameterizedTypeReference<>() {};
     public static final ParameterizedTypeReference<JsonApiRestResponseWrapper<MetadataDataRestEntity>> RESPONSE_TYPE_METADATA = new ParameterizedTypeReference<>() {};
+    public static final ParameterizedTypeReference<JsonApiRestResponseWrapper<VoteDataRestEntity>> RESPONSE_TYPE_VOTE = new ParameterizedTypeReference<>() {};
+    public static final ParameterizedTypeReference<JsonApiRestResponseWrapper<VoteRootRestEntity>> RESPONSE_TYPE_VOTE_LIST = new ParameterizedTypeReference<>() {};
 
     @Autowired
     private WebTestClient webClient;
@@ -38,6 +42,8 @@ class IntegrationTestHelper {
     private IMetadataRepository metadataRepository;
     @Autowired
     private IClassificationRepository classificationRepository;
+    @Autowired
+    private IVoteRepository voteRepository;
 
     String currentApiToken;
     ApiDataRestEntity currentApi;
@@ -61,10 +67,17 @@ class IntegrationTestHelper {
                     System.err.println("Could not delete test metadata: " + e);
                 }
                 try {
+                    metadataRepository.deleteDocument(version.getApiId(), version.getVersion(), IDocument.DocumentType.README).block();
+                    metadataRepository.deleteDocument(version.getApiId(), version.getVersion(), IDocument.DocumentType.CHANGELOG).block();
+                } catch (Exception e) {
+                    System.err.println("Could not delete test documents: " + e);
+                }
+                try {
                     apiRepository.deleteApiVersion(version.getApiId(), version.getVersion()).block();
                 } catch (Exception e) {
                     System.err.println("Could not delete test API version: " + e);
                 }
+                // TODO: delete votes
             }
             apiRepository.delete(api.getName()).block();
         }

@@ -1,9 +1,6 @@
 package io.apimap.api.integration;
 
-import io.apimap.api.rest.ApiDataRestEntity;
-import io.apimap.api.rest.ClassificationDataRestEntity;
-import io.apimap.api.rest.ClassificationRootRestEntity;
-import io.apimap.api.rest.MetadataDataRestEntity;
+import io.apimap.api.rest.*;
 import io.apimap.api.rest.jsonapi.JsonApiRestRequestWrapper;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
@@ -244,5 +241,27 @@ public abstract class SmokeTestAllBase {
                 .isEqualTo(docUpdate);
         assertThat(retrieveResult).as("get result")
                 .isEqualTo(docUpdate);
+    }
+
+    @Test
+    public void testVoting() {
+        var testVote = new VoteDataRestEntity(4);
+
+        var api = helper.storeApi(testData.createApiData());
+        var version = helper.storeVersionForCurrentApi(testData.createApiVersion());
+
+        var voteResult = helper.postJsonAuthed(RESPONSE_TYPE_VOTE, new JsonApiRestRequestWrapper<>(testVote), "/api/{name}/version/{version}/vote", api.getName(), version.getVersion());
+        var retrieveResult = helper.getJsonPublic(RESPONSE_TYPE_VOTE_LIST, "/api/{name}/version/{version}/vote", api.getName(), version.getVersion());
+
+        assertThat(voteResult.getData()).as("create result")
+                .usingRecursiveComparison()
+                .ignoringFields()
+                .isEqualTo(testVote);
+
+        assertThat(retrieveResult.getData().getData()).as("get votes")
+                .hasSize(1);
+        assertThat(retrieveResult.getData().getData().get(0)).as("stored vote")
+                .usingRecursiveComparison()
+                .isEqualTo(testVote);
     }
 }
