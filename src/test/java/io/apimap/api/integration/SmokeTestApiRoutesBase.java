@@ -15,9 +15,9 @@ import static io.apimap.api.integration.IntegrationTestHelper.*;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * Base test class with common test cases that should work both when using NitriteDB and MongoDB
+ * Base test class with common test cases for API that should work both when using NitriteDB and MongoDB
  */
-public abstract class SmokeTestAllBase {
+public abstract class SmokeTestApiRoutesBase {
 
 
     private final TestDataHelper testData = new TestDataHelper();
