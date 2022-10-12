@@ -203,4 +203,46 @@ public abstract class SmokeTestAllBase {
                 .ignoringFields("links", "uri")
                 .isEqualTo(metadataUpdate);
     }
+
+    @Test
+    public void testReadmeCrud() {
+        var testDoc = testData.createMarkdownDoc();
+        var docUpdate = "# NEW TITLE\n\nhello.";
+
+        var api = helper.storeApi(testData.createApiData());
+        var version = helper.storeVersionForCurrentApi(testData.createApiVersion());
+
+        var createResult = helper.postMarkdownAuthed(testDoc, "/api/{name}/version/{version}/readme", api.getName(), version.getVersion());
+        var updateResult = helper.putMarkdownAuthed(docUpdate, "/api/{name}/version/{version}/readme", api.getName(), version.getVersion());
+        var retrieveResult = helper.getMarkdownPublic("/api/{name}/version/{version}/readme", api.getName(), version.getVersion());
+        helper.deleteAuthedAndVerifyGone("/api/{name}/version/{version}/readme", api.getName(), version.getVersion());
+
+        assertThat(createResult).as("create result")
+                .isEqualTo(testDoc);
+        assertThat(updateResult).as("update result")
+                .isEqualTo(docUpdate);
+        assertThat(retrieveResult).as("get result")
+                .isEqualTo(docUpdate);
+    }
+
+    @Test
+    public void testChangelogCrud() {
+        var testDoc = testData.createMarkdownDoc();
+        var docUpdate = "# NEW TITLE\n\nhello.";
+
+        var api = helper.storeApi(testData.createApiData());
+        var version = helper.storeVersionForCurrentApi(testData.createApiVersion());
+
+        var createResult = helper.postMarkdownAuthed(testDoc, "/api/{name}/version/{version}/changelog", api.getName(), version.getVersion());
+        var updateResult = helper.putMarkdownAuthed(docUpdate, "/api/{name}/version/{version}/changelog", api.getName(), version.getVersion());
+        var retrieveResult = helper.getMarkdownPublic("/api/{name}/version/{version}/changelog", api.getName(), version.getVersion());
+        helper.deleteAuthedAndVerifyGone("/api/{name}/version/{version}/changelog", api.getName(), version.getVersion());
+
+        assertThat(createResult).as("create result")
+                .isEqualTo(testDoc);
+        assertThat(updateResult).as("update result")
+                .isEqualTo(docUpdate);
+        assertThat(retrieveResult).as("get result")
+                .isEqualTo(docUpdate);
+    }
 }

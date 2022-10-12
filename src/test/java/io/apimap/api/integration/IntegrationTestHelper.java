@@ -166,4 +166,44 @@ class IntegrationTestHelper {
                 .exchange()
                 .expectStatus().isNotFound();
     }
+
+    /** Helper for sending a GET request with no auth and receiving Markdown in response */
+    public String getMarkdownPublic(String uri, Object... uriVariables) {
+        return webClient.get().uri(uri, uriVariables)
+                .accept(MediaType.TEXT_MARKDOWN)
+                .exchange()
+                .expectStatus()
+                .is2xxSuccessful()
+                .expectBody(String.class)
+                .returnResult()
+                .getResponseBody();
+    }
+
+    /** Helper for sending a POST request with auth for the last added API and receiving Markdown in response */
+    public String postMarkdownAuthed(String requestBody, String uri, Object... uriVariables) {
+        return webClient.post().uri(uri, uriVariables)
+                .contentType(MediaType.TEXT_MARKDOWN)
+                .bodyValue(requestBody)
+                .header("Authorization", "Bearer " + currentApiToken)
+                .exchange()
+                .expectStatus()
+                .is2xxSuccessful()
+                .expectBody(String.class)
+                .returnResult()
+                .getResponseBody();
+    }
+
+    /** Helper for sending a PUT request with auth for the last added API and receiving Markdown in response */
+    public String putMarkdownAuthed(String requestBody, String uri, Object... uriVariables) {
+        return webClient.put().uri(uri, uriVariables)
+                .contentType(MediaType.TEXT_MARKDOWN)
+                .bodyValue(requestBody)
+                .header("Authorization", "Bearer " + currentApiToken)
+                .exchange()
+                .expectStatus()
+                .is2xxSuccessful()
+                .expectBody(String.class)
+                .returnResult()
+                .getResponseBody();
+    }
 }

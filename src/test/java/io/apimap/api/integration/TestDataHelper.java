@@ -2,7 +2,6 @@ package io.apimap.api.integration;
 
 import io.apimap.api.rest.*;
 
-import java.util.Date;
 import java.util.List;
 
 /** Helper to generate dummy test data */
@@ -40,5 +39,9 @@ public class TestDataHelper {
                 urn,
                 "1"
         );
+    }
+
+    public String createMarkdownDoc() {
+        return "Title\n=====\nLorem ipsum *dolor* sit amet.";
     }
 }
