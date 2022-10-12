@@ -223,4 +223,16 @@ class IntegrationTestHelper {
                 .returnResult()
                 .getResponseBody();
     }
+
+    /** Helper for sending a GET request with no auth and receiving HTML in response */
+    public String getHtmlPublic(String uri, Object... uriVariables) {
+        return webClient.get().uri(uri, uriVariables)
+                .accept(MediaType.TEXT_HTML)
+                .exchange()
+                .expectStatus()
+                .is2xxSuccessful()
+                .expectBody(String.class)
+                .returnResult()
+                .getResponseBody();
+    }
 }

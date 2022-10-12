@@ -244,6 +244,20 @@ public abstract class SmokeTestApiRoutesBase {
     }
 
     @Test
+    public void testRenderedChangelog() {
+        var testDoc = "# Title\n\ndescription";
+
+        var api = helper.storeApi(testData.createApiData());
+        var version = helper.storeVersionForCurrentApi(testData.createApiVersion());
+
+        helper.postMarkdownAuthed(testDoc, "/api/{name}/version/{version}/changelog", api.getName(), version.getVersion());
+
+        var renderedResponse = helper.getHtmlPublic("/api/{name}/version/{version}/changelog", api.getName(), version.getVersion());
+        assertThat(renderedResponse)
+                .contains("<h1>Title</h1>");
+    }
+
+    @Test
     public void testVoting() {
         var testVote = new VoteDataRestEntity(4);
 
@@ -263,5 +277,19 @@ public abstract class SmokeTestApiRoutesBase {
         assertThat(retrieveResult.getData().getData().get(0)).as("stored vote")
                 .usingRecursiveComparison()
                 .isEqualTo(testVote);
+    }
+
+    @Test
+    public void testRenderedReadme() {
+        var testDoc = "# Title\n\ndescription";
+
+        var api = helper.storeApi(testData.createApiData());
+        var version = helper.storeVersionForCurrentApi(testData.createApiVersion());
+        helper.postMarkdownAuthed(testDoc, "/api/{name}/version/{version}/readme", api.getName(), version.getVersion());
+
+        var renderedResponse = helper.getHtmlPublic("/api/{name}/version/{version}/readme", api.getName(), version.getVersion());
+
+        assertThat(renderedResponse)
+                .contains("<h1>Title</h1>");
     }
 }
