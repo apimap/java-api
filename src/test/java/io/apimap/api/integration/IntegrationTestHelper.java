@@ -3,11 +3,12 @@ package io.apimap.api.integration;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import io.apimap.api.repository.interfaces.IApi;
 import io.apimap.api.repository.interfaces.IApiVersion;
+import io.apimap.api.repository.interfaces.IDocument;
 import io.apimap.api.repository.repository.IApiRepository;
-import io.apimap.api.rest.ApiCollectionRootRestEntity;
-import io.apimap.api.rest.ApiDataRestEntity;
-import io.apimap.api.rest.ApiVersionDataRestEntity;
-import io.apimap.api.rest.MetadataDataRestEntity;
+import io.apimap.api.repository.repository.IClassificationRepository;
+import io.apimap.api.repository.repository.IMetadataRepository;
+import io.apimap.api.repository.repository.IVoteRepository;
+import io.apimap.api.rest.*;
 import io.apimap.api.rest.jsonapi.JsonApiRestRequestWrapper;
 import io.apimap.api.rest.jsonapi.JsonApiRestResponseWrapper;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,13 +27,23 @@ class IntegrationTestHelper {
     public static final ParameterizedTypeReference<JsonApiRestResponseWrapper<ApiDataRestEntity>> RESPONSE_TYPE_API = new ParameterizedTypeReference<>() {};
     public static final ParameterizedTypeReference<JsonApiRestResponseWrapper<ApiCollectionRootRestEntity>> RESPONSE_TYPE_API_LIST = new ParameterizedTypeReference<>() {};
     public static final ParameterizedTypeReference<JsonApiRestResponseWrapper<ApiVersionDataRestEntity>> RESPONSE_TYPE_VERSION = new ParameterizedTypeReference<>() {};
+    public static final ParameterizedTypeReference<JsonApiRestResponseWrapper<ApiVersionCollectionRootRestEntity>> RESPONSE_TYPE_VERSION_LIST = new ParameterizedTypeReference<>() {};
+    public static final ParameterizedTypeReference<JsonApiRestResponseWrapper<ClassificationRootRestEntity>> RESPONSE_TYPE_CLASSIFICATION_LIST = new ParameterizedTypeReference<>() {};
     public static final ParameterizedTypeReference<JsonApiRestResponseWrapper<MetadataDataRestEntity>> RESPONSE_TYPE_METADATA = new ParameterizedTypeReference<>() {};
+    public static final ParameterizedTypeReference<JsonApiRestResponseWrapper<VoteDataRestEntity>> RESPONSE_TYPE_VOTE = new ParameterizedTypeReference<>() {};
+    public static final ParameterizedTypeReference<JsonApiRestResponseWrapper<VoteRootRestEntity>> RESPONSE_TYPE_VOTE_LIST = new ParameterizedTypeReference<>() {};
 
     @Autowired
     private WebTestClient webClient;
 
     @Autowired
     private IApiRepository apiRepository;
+    @Autowired
+    private IMetadataRepository metadataRepository;
+    @Autowired
+    private IClassificationRepository classificationRepository;
+    @Autowired
+    private IVoteRepository voteRepository;
 
     String currentApiToken;
     ApiDataRestEntity currentApi;
@@ -45,7 +56,32 @@ class IntegrationTestHelper {
         for (var api: apis) {
             var versions = (List<IApiVersion>)apiRepository.allApiVersions(api.getId()).collectList().block();
             for (var version: versions) {
-                apiRepository.deleteApiVersion(version.getApiId(), version.getVersion()).block();
+                try {
+                    classificationRepository.delete(api.getId(), currentVersion.getVersion()).block();
+                } catch (Exception e) {
+                    System.err.println("Could not delete test classification: " + e);
+                }
+                try {
+                    metadataRepository.delete(api.getId(), currentVersion.getVersion()).block();
+                } catch (Exception e) {
+                    System.err.println("Could not delete test metadata: " + e);
+                }
+                try {
+                    metadataRepository.deleteDocument(version.getApiId(), version.getVersion(), IDocument.DocumentType.README).block();
+                    metadataRepository.deleteDocument(version.getApiId(), version.getVersion(), IDocument.DocumentType.CHANGELOG).block();
+                } catch (Exception e) {
+                    System.err.println("Could not delete test documents: " + e);
+                }
+                try {
+                    apiRepository.deleteApiVersion(version.getApiId(), version.getVersion()).block();
+                } catch (Exception e) {
+                    System.err.println("Could not delete test API version: " + e);
+                }
+                try {
+                    voteRepository.delete(version.getApiId(), version.getVersion()).block();
+                } catch (Exception e) {
+                    System.err.println("Could not delete test votes: " + e);
+                }
             }
             apiRepository.delete(api.getName()).block();
         }
@@ -129,16 +165,74 @@ class IntegrationTestHelper {
     }
 
     /** Helper for sending a DELETE request with auth for the last added API */
-    public void deleteAuthedAndVerifyGone(String uri, Object... uriVariables) {
+    public void deleteAuthed(String uri, Object... uriVariables) {
         webClient.delete().uri(uri, uriVariables)
                 .header("Authorization", "Bearer " + currentApiToken)
                 .exchange()
                 .expectStatus().isNoContent();
+    }
+
+    /** Helper for sending a DELETE request with auth for the last added API
+     * Also verifies that the resource returns 404 after deletion */
+    public void deleteAuthedAndVerifyGone(String uri, Object... uriVariables) {
+        deleteAuthed(uri, uriVariables);
 
         // Verify that deleted resource returns 404 now
         webClient.get().uri(uri, uriVariables)
                 .header("Authorization", "Bearer " + currentApiToken)
                 .exchange()
                 .expectStatus().isNotFound();
+    }
+
+    /** Helper for sending a GET request with no auth and receiving Markdown in response */
+    public String getMarkdownPublic(String uri, Object... uriVariables) {
+        return webClient.get().uri(uri, uriVariables)
+                .accept(MediaType.TEXT_MARKDOWN)
+                .exchange()
+                .expectStatus()
+                .is2xxSuccessful()
+                .expectBody(String.class)
+                .returnResult()
+                .getResponseBody();
+    }
+
+    /** Helper for sending a POST request with auth for the last added API and receiving Markdown in response */
+    public String postMarkdownAuthed(String requestBody, String uri, Object... uriVariables) {
+        return webClient.post().uri(uri, uriVariables)
+                .contentType(MediaType.TEXT_MARKDOWN)
+                .bodyValue(requestBody)
+                .header("Authorization", "Bearer " + currentApiToken)
+                .exchange()
+                .expectStatus()
+                .is2xxSuccessful()
+                .expectBody(String.class)
+                .returnResult()
+                .getResponseBody();
+    }
+
+    /** Helper for sending a PUT request with auth for the last added API and receiving Markdown in response */
+    public String putMarkdownAuthed(String requestBody, String uri, Object... uriVariables) {
+        return webClient.put().uri(uri, uriVariables)
+                .contentType(MediaType.TEXT_MARKDOWN)
+                .bodyValue(requestBody)
+                .header("Authorization", "Bearer " + currentApiToken)
+                .exchange()
+                .expectStatus()
+                .is2xxSuccessful()
+                .expectBody(String.class)
+                .returnResult()
+                .getResponseBody();
+    }
+
+    /** Helper for sending a GET request with no auth and receiving HTML in response */
+    public String getHtmlPublic(String uri, Object... uriVariables) {
+        return webClient.get().uri(uri, uriVariables)
+                .accept(MediaType.TEXT_HTML)
+                .exchange()
+                .expectStatus()
+                .is2xxSuccessful()
+                .expectBody(String.class)
+                .returnResult()
+                .getResponseBody();
     }
 }

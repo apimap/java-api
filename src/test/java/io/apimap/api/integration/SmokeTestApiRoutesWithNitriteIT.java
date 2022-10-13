@@ -7,14 +7,14 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
 
 /**
- * Run smoke tests with the Nitrite database implementations
+ * Run API smoke tests with the Nitrite database implementations
  */
 @SpringBootTest
 @AutoConfigureWebTestClient
 @Import(NitriteTestConfig.class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-public class SmokeTestAllWithNitriteIT extends SmokeTestAllBase {
+public class SmokeTestApiRoutesWithNitriteIT extends SmokeTestApiRoutesBase {
 
-    // Runs tests from the SmokeTestAllBase base class
+    // Runs tests from the SmokeTestApiRoutesBase base class
 
 }

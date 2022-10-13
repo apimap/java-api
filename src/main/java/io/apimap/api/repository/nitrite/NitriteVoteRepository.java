@@ -58,4 +58,12 @@ public class NitriteVoteRepository extends NitriteRepository implements IVoteRep
 
         return Mono.just(Double.valueOf(average).intValue());
     }
+
+    @Override
+    public Mono<Boolean> delete(String apiId, String apiVersion) {
+        final ObjectRepository<Vote> repository = database.getRepository(Vote.class);
+        return Mono.just(repository.remove(
+                and(eq("apiId", apiId), eq("apiVersion", apiVersion))
+        ).getAffectedCount() > 0);
+    }
 }
