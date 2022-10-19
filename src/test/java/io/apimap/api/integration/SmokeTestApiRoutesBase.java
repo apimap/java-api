@@ -12,6 +12,7 @@ import org.springframework.test.web.reactive.server.WebTestClient;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.zip.ZipEntry;
@@ -187,6 +188,11 @@ public abstract class SmokeTestApiRoutesBase {
         helper.deleteAuthed("/api/{name}/version/{version}/classification", api.getName(), version.getVersion());
         // GET after DELETE returns an empty list of classifications
         var retrieveAfterDelete = helper.getJsonPublic(RESPONSE_TYPE_CLASSIFICATION_LIST, "/api/{name}/version/{version}/classification", api.getName(), version.getVersion());
+
+        // Classification order is not always stable, sort result to be sure
+        createResult.getData().getData().sort(Comparator.comparing(ClassificationDataRestEntity::getUrn));
+        updateResult.getData().getData().sort(Comparator.comparing(ClassificationDataRestEntity::getUrn));
+        retrieveResult.getData().getData().sort(Comparator.comparing(ClassificationDataRestEntity::getUrn));
 
         assertThat(createResult.getData()).as("create result")
                 .usingRecursiveComparison()

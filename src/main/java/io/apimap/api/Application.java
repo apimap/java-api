@@ -32,6 +32,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.data.mongo.MongoDataAutoConfiguration;
 import org.springframework.boot.autoconfigure.mongo.MongoAutoConfiguration;
 import org.springframework.boot.autoconfigure.mongo.MongoReactiveAutoConfiguration;
+import org.springframework.boot.autoconfigure.mongo.embedded.EmbeddedMongoAutoConfiguration;
 import org.springframework.boot.context.properties.ConfigurationPropertiesScan;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 
@@ -49,11 +50,11 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
                 @Tag(name = "START", description = "The HATEOAS start point for exploring the API")
         }
 )
-@SpringBootApplication
-@EnableAutoConfiguration(exclude = {
+@SpringBootApplication(exclude = {
         MongoAutoConfiguration.class,
         MongoDataAutoConfiguration.class,
-        MongoReactiveAutoConfiguration.class
+        MongoReactiveAutoConfiguration.class,
+        EmbeddedMongoAutoConfiguration.class,
 })
 @EnableConfigurationProperties({ApimapConfiguration.class, NitriteConfiguration.class})
 public class Application {
