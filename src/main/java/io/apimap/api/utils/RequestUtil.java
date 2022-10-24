@@ -180,7 +180,7 @@ public class RequestUtil {
     public static String bearerTokenFromRequest(final ServerRequest request) {
         if(request != null) {
             String authorizationHeader = request.headers().firstHeader("Authorization");
-            if (authorizationHeader != null) {
+            if (authorizationHeader != null && authorizationHeader.toLowerCase().startsWith("bearer ")) {
                 return authorizationHeader.substring(7);
             }
         }
