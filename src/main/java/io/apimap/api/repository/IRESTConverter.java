@@ -38,6 +38,7 @@ import reactor.util.function.Tuple2;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 public interface IRESTConverter {
@@ -115,7 +116,7 @@ public interface IRESTConverter {
     /* API */
     Mono<JsonApiRestResponseWrapper<ApiDataRestEntity>> encodeApi(URI uri, IApi api);
 
-    Mono<JsonApiRestResponseWrapper<ApiCollectionRootRestEntity>> encodeApis(URI uri, List<reactor.util.function.Tuple3<IApi, IMetadata, IApiVersion>> apis);
+    Mono<JsonApiRestResponseWrapper<ApiCollectionRootRestEntity>> encodeApis(URI uri, List<reactor.util.function.Tuple3<Optional<IApi>, Optional<IMetadata>, Optional<IApiVersion>>> apis);
 
     /* API Version */
     Mono<JsonApiRestResponseWrapper<ApiVersionDataRestEntity>> encodeApiVersion(URI uri, IApiVersion version, Integer rating);

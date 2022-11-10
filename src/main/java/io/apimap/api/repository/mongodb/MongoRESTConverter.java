@@ -200,24 +200,36 @@ public class MongoRESTConverter implements IRESTConverter {
     }
 
     @Override
-    public Mono<JsonApiRestResponseWrapper<ApiCollectionRootRestEntity>> encodeApis(final URI uri, final List<reactor.util.function.Tuple3<IApi, IMetadata, IApiVersion>> collection) {
+    public Mono<JsonApiRestResponseWrapper<ApiCollectionRootRestEntity>> encodeApis(final URI uri, final List<reactor.util.function.Tuple3<Optional<IApi>, Optional<IMetadata>, Optional<IApiVersion>>> collection) {
         ArrayList<ApiCollectionDataRestEntity> content = collection
                 .stream()
                 .map(e -> {
-                    JsonApiRelationships relationships = new JsonApiRelationships();
-                    relationships.addRelationshipRef(
-                            JsonApiRestResponseWrapper.VERSION_COLLECTION,
-                            URIUtil.rootLevelFromURI(uri).append("api").append(e.getT1().getName()).append("version").uriValue());
+                    if(e.getT1().isPresent()){
+                        JsonApiRelationships relationships = new JsonApiRelationships();
+                        relationships.addRelationshipRef(
+                                JsonApiRestResponseWrapper.VERSION_COLLECTION,
+                                URIUtil.rootLevelFromURI(uri).append("api").append(e.getT1().get().getName()).append("version").uriValue());
+
+                        return new ApiCollectionDataRestEntity(
+                                e.getT1().get().getName(),
+                                e.getT1().get().getCodeRepositoryUrl(),
+                                (e.getT2().isPresent()) ? e.getT2().get().getDescription() : "",
+                                (e.getT2().isPresent()) ? e.getT2().get().getReleaseStatus() : "",
+                                (e.getT3().isPresent()) ? e.getT3().get().getVersion() : "",
+                                (e.getT2().isPresent()) ? e.getT2().get().getDocumentation() : new ArrayList<>(),
+                                URIUtil.rootLevelFromURI(uri).append("api").append(e.getT1().get().getName()).stringValue(),
+                                relationships);
+                    }
 
                     return new ApiCollectionDataRestEntity(
-                            e.getT1().getName(),
-                            e.getT1().getCodeRepositoryUrl(),
-                            e.getT2().getDescription(),
-                            e.getT2().getReleaseStatus(),
-                            e.getT3().getVersion(),
-                            e.getT2().getDocumentation(),
-                            URIUtil.rootLevelFromURI(uri).append("api").append(e.getT1().getName()).stringValue(),
-                            relationships);
+                            "",
+                            "",
+                            "",
+                            "",
+                            "",
+                            new ArrayList<>(),
+                            "",
+                            null);
                 })
                 .collect(Collectors.toCollection(ArrayList::new));
 

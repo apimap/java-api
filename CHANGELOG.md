@@ -1,6 +1,9 @@
 Changelog
 ===
 
+### 10.11.2022
+- Fixed bug not returning APIs without version
+
 ### 02.09.2022
 - Fixed bug when casting Date to Instance with mongodb
 - Added filter to only allow lates api version when listing classification filtered results

@@ -61,6 +61,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
@@ -107,7 +108,8 @@ public class ApiResourceService {
                 .flatMap(api -> apiRepository.getLatestApiVersion(((IApi) api).getId())
                                 .flatMap(apiVersion -> Mono.just(Tuples.of(api, apiVersion)))
                                 .flatMap(tuple -> metadataRepository.get(((IApi) ((Tuple2) tuple).getT1()).getId(), ((IApiVersion) ((Tuple2) tuple).getT2()).getVersion())
-                                    .flatMap(metadata -> Mono.just(Tuples.of(api, metadata, ((Tuple2<?, ?>) tuple).getT2())))))
+                                    .flatMap(metadata -> Mono.just(Tuples.of(Optional.of(api), Optional.of(metadata), Optional.of(((Tuple2<?, ?>) tuple).getT2())))))
+                        .switchIfEmpty(Mono.defer(() -> Mono.just(Tuples.of(Optional.of(api), Optional.empty(), Optional.empty())))))
                 .collectList()
                 .flatMap(result -> entityMapper.encodeApis(uri, (List) result))
                 .flatMap(collection -> ResponseBuilder
