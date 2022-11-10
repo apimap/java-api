@@ -56,4 +56,14 @@ public class MongoDBVoteRepository extends MongoDBRepository implements IVoteRep
                 .take(1)
                 .single(-1);
     }
+
+    @Override
+    public Mono<Boolean> delete(String apiId, String apiVersion) {
+        final Query query = new Query()
+                .addCriteria(Criteria.where("apiId").is(apiId))
+                .addCriteria(Criteria.where("apiVersion").is(apiVersion));
+
+        return template.remove(query, Vote.class)
+                .map(result -> result.getDeletedCount() > 0);
+    }
 }

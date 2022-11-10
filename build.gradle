@@ -48,6 +48,7 @@ dependencies {
     testImplementation 'org.springframework.boot:spring-boot-starter-test:2.7.5'
     testImplementation 'org.junit.jupiter:junit-jupiter:5.9.0'
     testImplementation 'org.assertj:assertj-core:3.23.1'
+    testImplementation 'de.flapdoodle.embed:de.flapdoodle.embed.mongo:3.4.11'
 }
 
 bootRun {

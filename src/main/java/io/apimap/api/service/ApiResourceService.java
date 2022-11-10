@@ -22,6 +22,7 @@ package io.apimap.api.service;
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import io.apimap.api.configuration.ApimapConfiguration;
 import io.apimap.api.repository.IRESTConverter;
@@ -118,6 +119,7 @@ public class ApiResourceService {
                 .switchIfEmpty(Mono.defer(() -> ServerResponse.noContent().build()));
     }
 
+    @SuppressFBWarnings(value = "OS_OPEN_STREAM", justification = "in-memory buffers, can be GCed just fine")
     @NotNull
     @PreAuthorize("@Authorizer.isValidAccessToken(#request)")
     public Mono<ServerResponse> allApisZip(final ServerRequest request){
@@ -126,69 +128,78 @@ public class ApiResourceService {
 
         ReentrantLock lock = new ReentrantLock();
 
-        try(ZipOutputStream zipOutputStream = new ZipOutputStream(dataBuffer.asOutputStream())){
-            ObjectMapper mapper = new ObjectMapper();
-            mapper.configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
+        ObjectMapper mapper = new ObjectMapper()
+                .registerModule(new JavaTimeModule())
+                .configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
 
-            return Mono.when(
-                            apiRepository
-                                    .all()
-                                    .collectList()
-                                    .publishOn(Schedulers.boundedElastic())
-                                    .doOnNext(collection -> {
-                                        try {
-                                            lock.lock();
-                                            zipOutputStream.putNextEntry(new ZipEntry("apis.json"));
-                                            zipOutputStream.write(mapper.writeValueAsBytes(collection));
-                                            zipOutputStream.closeEntry();
-                                        } catch (IOException ignored) {
-                                        } finally {
-                                            lock.unlock();
-                                        }
-                                    }),
-                            classificationRepository
-                                    .all()
-                                    .collectList()
-                                    .publishOn(Schedulers.boundedElastic())
-                                    .doOnNext(collection -> {
-                                        try {
-                                            lock.lock();
-                                            zipOutputStream.putNextEntry(new ZipEntry("classifications.json"));
-                                            zipOutputStream.write(mapper.writeValueAsBytes(collection));
-                                            zipOutputStream.closeEntry();
-                                        } catch (IOException ignored) {
-                                        } finally {
-                                            lock.unlock();
-                                        }
-                                    }),
-                            metadataRepository
-                                    .all()
-                                    .collectList()
-                                    .publishOn(Schedulers.boundedElastic())
-                                    .doOnNext(collection -> {
-                                        try {
-                                            lock.lock();
-                                            zipOutputStream.putNextEntry(new ZipEntry("metadata.json"));
-                                            zipOutputStream.write(mapper.writeValueAsBytes(collection));
-                                            zipOutputStream.closeEntry();
-                                        } catch (IOException ignored) {
-                                        } finally {
-                                            lock.unlock();
-                                        }
-                                    })
-                    )
-                    .thenReturn(Boolean.TRUE)
-                    .publishOn(Schedulers.boundedElastic())
-                    .flatMap(status ->
-                          ServerResponse.status(HttpStatus.OK)
+        ZipOutputStream zipOutputStream = new ZipOutputStream(dataBuffer.asOutputStream());
+        return Mono.when(
+                        apiRepository
+                                .all()
+                                .collectList()
+                                .publishOn(Schedulers.boundedElastic())
+                                .doOnNext(collection -> {
+                                    try {
+                                        lock.lock();
+                                        zipOutputStream.putNextEntry(new ZipEntry("apis.json"));
+                                        zipOutputStream.write(mapper.writeValueAsBytes(collection));
+                                        zipOutputStream.closeEntry();
+                                    } catch (IOException e) {
+                                        LOGGER.warn("failed to serialize APIs", e);
+                                    } finally {
+                                        lock.unlock();
+                                    }
+                                }),
+                        classificationRepository
+                                .all()
+                                .collectList()
+                                .publishOn(Schedulers.boundedElastic())
+                                .doOnNext(collection -> {
+                                    try {
+                                        lock.lock();
+                                        zipOutputStream.putNextEntry(new ZipEntry("classifications.json"));
+                                        zipOutputStream.write(mapper.writeValueAsBytes(collection));
+                                        zipOutputStream.closeEntry();
+                                    } catch (IOException e) {
+                                        LOGGER.warn("failed to serialize classifications", e);
+                                    } finally {
+                                        lock.unlock();
+                                    }
+                                }),
+                        metadataRepository
+                                .all()
+                                .collectList()
+                                .publishOn(Schedulers.boundedElastic())
+                                .doOnNext(collection -> {
+                                    try {
+                                        lock.lock();
+                                        zipOutputStream.putNextEntry(new ZipEntry("metadata.json"));
+                                        zipOutputStream.write(mapper.writeValueAsBytes(collection));
+                                        zipOutputStream.closeEntry();
+                                    } catch (IOException e) {
+                                        LOGGER.warn("failed to serialize metadata", e);
+                                    } finally {
+                                        lock.unlock();
+                                    }
+                                })
+                )
+                .thenReturn(Boolean.TRUE)
+                .publishOn(Schedulers.boundedElastic())
+                .flatMap(status -> {
+                    try {
+                        zipOutputStream.finish();
+                        zipOutputStream.close();
+                        return ServerResponse.status(HttpStatus.OK)
                                 .header("Access-Control-Allow-Origin", "*")
                                 .header("Access-Control-Request-Method", "GET")
                                 .contentType(new MediaType("application", "zip"))
-                                .body(Mono.just(dataBuffer), DataBuffer.class)
-                    );
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+                                .body(Mono.just(dataBuffer), DataBuffer.class);
+                    } catch (IOException e) {
+                        LOGGER.warn("Error creating ZIP", e);
+                        return ServerResponse.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                                .bodyValue("Error creating ZIP");
+                    }
+                });
     }
 
     @NotNull
@@ -270,6 +281,7 @@ public class ApiResourceService {
 
         final ApiContext context = RequestUtil.apiContextFromRequest(request);
 
+        // TOOD: not deleting API versions?
         return apiRepository
                 .get(context.getApiName())
                 .flatMap(api -> classificationRepository.delete(((IApi) api).getId())
@@ -345,6 +357,7 @@ public class ApiResourceService {
         final JavaType type = new ObjectMapper().getTypeFactory().constructParametricType(JsonApiRestRequestWrapper.class, ApiVersionDataRestEntity.class);
         final ApiContext context = RequestUtil.apiContextFromRequest(request);
 
+        // FIXME: better error message here - e.g. if you forget the created field
         return request
                 .bodyToMono(ParameterizedTypeReference.forType(type))
                 .filter(Objects::nonNull)
@@ -372,8 +385,8 @@ public class ApiResourceService {
         return apiRepository
                 .get(context.getApiName())
                 .flatMap(api -> classificationRepository.delete(((IApi) api).getId(), context.getApiVersion())
-                        .zipWith(metadataRepository.delete(((IApi) api).getId(), context.getApiVersion()), (previous, current) -> (Boolean) previous && ((Boolean) current).booleanValue())
-                        .zipWith(apiRepository.deleteApiVersion(((IApi) api).getId(), context.getApiVersion()), (previous, current) -> (Boolean) previous && ((Boolean) current).booleanValue()))
+                        .zipWith(metadataRepository.delete(((IApi) api).getId(), context.getApiVersion()), (previous, current) -> (Boolean) previous || ((Boolean) current).booleanValue())
+                        .zipWith(apiRepository.deleteApiVersion(((IApi) api).getId(), context.getApiVersion()), (previous, current) -> (Boolean) previous || ((Boolean) current).booleanValue()))
                 .filter(value -> (Boolean) value)
                 .flatMap(result -> ResponseBuilder
                         .builder(startTime, apimapConfiguration)

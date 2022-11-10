@@ -20,6 +20,8 @@ under the License.
 package io.apimap.api.service.context;
 
 public class AuthorizationContext {
+    private static final int UUID_STRING_LENGTH = 36;
+
     final protected String token;
 
     public AuthorizationContext(String token) {
@@ -31,6 +33,6 @@ public class AuthorizationContext {
     }
 
     public boolean isEmpty() {
-        return (token != null && token.length() == 32);
+        return (token == null || token.length() != UUID_STRING_LENGTH);
     }
 }
