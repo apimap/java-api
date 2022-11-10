@@ -5,7 +5,7 @@ plugins {
     id 'com.github.johnrengelman.processes' version '0.5.0'
     id 'org.springdoc.openapi-gradle-plugin' version '1.4.0'
     id 'de.gliderpilot.semantic-release' version '1.4.2'
-    id 'com.github.spotbugs' version '5.0.12'
+    id 'com.github.spotbugs' version '5.0.13'
 }
 
 group = 'io.apimap.api'
@@ -30,22 +30,22 @@ tasks.withType( JavaCompile ).configureEach {
 }
 
 dependencies {
-    implementation 'org.springframework.boot:spring-boot-starter-webflux:2.7.4'
-    implementation 'org.springframework.boot:spring-boot-starter-jetty:2.7.4'
-    implementation 'org.springframework.boot:spring-boot-starter-actuator:2.7.4'
-    implementation 'org.springframework.boot:spring-boot-starter-security:2.7.4'
-    implementation 'org.springframework.boot:spring-boot-starter-data-mongodb-reactive:2.7.4'
-    implementation 'org.springdoc:springdoc-openapi-webflux-ui:1.6.11'
-    implementation 'com.github.spotbugs:spotbugs-annotations:4.7.2'
-    implementation 'io.netty:netty-buffer:4.1.82.Final'
+    implementation 'org.springframework.boot:spring-boot-starter-webflux:2.7.5'
+    implementation 'org.springframework.boot:spring-boot-starter-jetty:2.7.5'
+    implementation 'org.springframework.boot:spring-boot-starter-actuator:2.7.5'
+    implementation 'org.springframework.boot:spring-boot-starter-security:2.7.5'
+    implementation 'org.springframework.boot:spring-boot-starter-data-mongodb-reactive:2.7.5'
+    implementation 'org.springdoc:springdoc-openapi-webflux-ui:1.6.12'
+    implementation 'com.github.spotbugs:spotbugs-annotations:4.7.3'
+    implementation 'io.netty:netty-buffer:4.1.84.Final'
     implementation 'org.dizitart:nitrite:3.4.4'
-    implementation 'org.commonmark:commonmark:0.19.0'
+    implementation 'org.commonmark:commonmark:0.20.0'
     implementation 'io.apimap.api:rest-interface:2.2.0'
-    implementation 'io.micrometer:micrometer-core:1.9.4'
+    implementation 'io.micrometer:micrometer-core:1.9.5'
 
-    runtimeOnly 'io.micrometer:micrometer-registry-prometheus:1.9.4'
+    runtimeOnly 'io.micrometer:micrometer-registry-prometheus:1.9.5'
 
-    testImplementation 'org.springframework.boot:spring-boot-starter-test:2.7.4'
+    testImplementation 'org.springframework.boot:spring-boot-starter-test:2.7.5'
     testImplementation 'org.junit.jupiter:junit-jupiter:5.9.0'
     testImplementation 'org.assertj:assertj-core:3.23.1'
 }
